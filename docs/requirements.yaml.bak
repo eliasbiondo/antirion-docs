@@ -34,6 +34,7 @@ project:
     tenant_isolation: Every query is partitioned by org_id. Per-tenant quotas bound concurrency, CPU-seconds, queue slots and storage so a noisy tenant cannot degrade others. Tenant-isolation is continuously verified by FEAT-135.
     portability: Services are stateless Linux containers that run identically on the reference Kubernetes deployment, the self-hosted Docker-Compose deployment and the managed SaaS. No component depends on a feature specific to a single cloud provider.
     deployment_modes: Antirion ships in exactly two deployment modes. "saas" is the multi-tenant managed offering operated by Antirion staff; platform-operator surfaces (EPIC-013) are visible only to Antirion staff accounts and never to tenant workspaces. "self_hosted" is deployed inside a customer's own infrastructure; the same platform-operator surfaces are visible only to principals holding the platform_admin role on that install. The running mode is pinned at install time, surfaced to every service via config, and included on every audit record. Every feature that differs in scope, availability or data shape between the two modes declares its mode availability explicitly in its description.
+    notifications_model: Canonical audience roles for every event-notification story. Stories cite these roles instead of inventing local language, and acceptance criteria name the audience per deployment mode. Audience roles are (a) the acting principal (user_id), (b) the owning principal on the resource (Resource.owner_user_id or Team.owner), (c) the org-scoped contact fields on Org (security_contact, billing_contact, finance_contact, privacy_officer, primary_contact), (d) the platform operator — which resolves to Antirion staff in saas and to principals holding the platform_admin role in self_hosted, (e) Antirion-staff-only sub-queues in saas (trust_and_safety, support, sre, dpo, renewals, legal) that have no counterpart in self_hosted. The collapse rules across modes are fixed and every story follows them unchanged. Tenant-scoped roles (a)(b)(c) behave identically in both modes. Platform-operator role (d) is Antirion staff in saas and platform_admin in self_hosted. Antirion-staff sub-queues (e) exist only in saas; in self_hosted the same event routes to platform_admin unless the customer has opted in to Antirion phone-home support for the event class (see FEAT-179). When a tenant-contact field is unset in self_hosted the event falls back to platform_admin; when unset in saas the event falls back to Org.owner. Cross-tenant signals (isolation breaches, abuse heuristics, sustained anomalies) always reach Antirion trust_and_safety in saas and are silently dropped in self_hosted because the set of tenants is 1. Delivery channels per role are resolved by FEAT-102 notification-channels routing for user-addressable roles and by the platform operator's configured paging integration for (d) and (e). Every audit record on a notification-bearing event records the resolved audience list and the channel attempt, so routing correctness is diffable against this policy.
   tech_stack_hints:
   - next.js
   - typescript
@@ -293,6 +294,12 @@ epics:
   - FEAT-174
   - FEAT-175
   - FEAT-176
+  - FEAT-177
+  - FEAT-178
+  - FEAT-179
+  - FEAT-180
+  - FEAT-181
+  - FEAT-182
 features:
 - id: FEAT-001
   epic: EPIC-001
@@ -418,7 +425,7 @@ features:
 - id: FEAT-012
   epic: EPIC-001
   title: Role management and custom roles
-  description: List built-in roles, create/edit/delete custom roles scoped to permissions.
+  description: List built-in roles, create/edit/delete custom roles scoped to permissions. Built-in tenant roles are owner, admin, member and viewer in both deployment modes. The platform_admin role is a reserved built-in that exists only in self_hosted mode, cannot be granted to an ordinary workspace member, cannot be created as a custom role in either mode, and is rejected by the role API if requested in saas mode. Role assignment attempts that violate these constraints produce an AuditLog "role.assignment_rejected" entry.
   priority: P1
   stories:
   - STORY-031
@@ -579,7 +586,7 @@ features:
 - id: FEAT-028
   epic: EPIC-003
   title: API key leak emergency response
-  description: React to inbound secret-scan notifications from GitHub and partners — auto-revoke and rotate the leaked key, notify owners, audit.
+  description: React to inbound secret-scan notifications from GitHub and partners — auto-revoke and rotate the leaked key, notify owners, audit. In saas mode the public inbound endpoint is operated by Antirion and registered with every supported partner program; leak events also fan out to Antirion trust_and_safety for cross-tenant correlation. In self_hosted mode the inbound endpoint is optional and ships disabled; enabling it requires the platform_admin to expose the ingress publicly and register the install with each partner program, and air-gapped installs must leave it disabled — in that case STORY-067's endpoint returns 404 and the feature degrades to manual revocation via FEAT-022.
   priority: P0
   stories:
   - STORY-067
@@ -1265,7 +1272,7 @@ features:
 - id: FEAT-095
   epic: EPIC-008
   title: Billing operations
-  description: Contest invoice, request credit, update payment method, upload PO, set tax id, view invoice history.
+  description: Contest invoice, request credit, update payment method, upload PO, set tax id, view invoice history. Available in saas mode only — Antirion invoices the workspace. In self_hosted mode the Antirion commercial relationship is the license (FEAT-175), not a metered invoice, and every endpoint and screen under this feature returns 404 and is hidden from navigation.
   priority: P1
   stories:
   - STORY-209
@@ -1277,7 +1284,7 @@ features:
 - id: FEAT-096
   epic: EPIC-008
   title: Plan lifecycle
-  description: Start trial, upgrade, downgrade, cancel and view plan change history.
+  description: Start trial, upgrade, downgrade, cancel and view plan change history. Available in saas mode only — plans are Antirion subscription tiers. In self_hosted mode entitlement is governed by FEAT-175 and every endpoint and screen under this feature returns 404.
   priority: P1
   stories:
   - STORY-215
@@ -1288,7 +1295,7 @@ features:
 - id: FEAT-097
   epic: EPIC-008
   title: Finance export and showback
-  description: Monthly CSV per cost-center with scheduled dispatch to finance email.
+  description: Monthly CSV per cost-center with scheduled dispatch to finance email. Available in both modes, but the export is provider-passthrough cost only in self_hosted (no Antirion subscription line items), and in saas it includes both Antirion plan fees and provider passthrough so finance can reconcile the Antirion invoice.
   priority: P1
   stories:
   - STORY-220
@@ -1296,7 +1303,7 @@ features:
 - id: FEAT-098
   epic: EPIC-008
   title: Contract commitment burn-down UI
-  description: Visualize Billing.commitment_used and runway against contract_end.
+  description: Visualize Billing.commitment_used and runway against contract_end. Available in saas mode only — commitment is an Antirion contract construct. In self_hosted mode the analogous entitlement limits are surfaced by FEAT-175 and every endpoint and screen under this feature returns 404.
   priority: P1
   stories:
   - STORY-222
@@ -1444,7 +1451,7 @@ features:
 - id: FEAT-112
   epic: EPIC-010
   title: Data residency (view-only)
-  description: Display the workspace's pinned data residency region and the date it was pinned. The region is set once at first-run (FEAT-163/STORY-409) and is immutable for the life of the workspace — there is no migration, rotation or change path. Enforcement at the edge is FEAT-131; customer-managed key rotation is FEAT-134.
+  description: Display the workspace's pinned data residency region and the date it was pinned. The region is set once at first-run (FEAT-163/STORY-409) and is immutable for the life of the workspace — there is no migration, rotation or change path. Enforcement at the edge is FEAT-131; customer-managed key rotation is FEAT-134. In saas mode the region is selected from Antirion's published region catalog and bound to the tenant Org. In self_hosted mode the region is a free-form label set in install config by the platform_admin and stamped onto every Org created on that install; runtime enforcement under FEAT-130 still applies unchanged.
   priority: P1
   stories:
   - STORY-256
@@ -1475,7 +1482,7 @@ features:
 - id: FEAT-115
   epic: EPIC-010
   title: Audit log sinks
-  description: Stream audit events to S3, Splunk, Datadog or Snowflake, with dead-letter, replay and hash-chain tamper-proofing.
+  description: Stream audit events to S3, Splunk, Datadog or Snowflake, with dead-letter, replay and hash-chain tamper-proofing. Available in both modes. In saas the tenant provides its own sink credentials; Antirion does not operate a default audit destination on the tenant's behalf. In self_hosted all destinations are customer-owned and platform_admin enters credentials during or after the install wizard (FEAT-177); no Antirion-operated sink is pre-configured.
   priority: P1
   stories:
   - STORY-263
@@ -1565,7 +1572,7 @@ features:
 - id: FEAT-124
   epic: EPIC-010
   title: Compliance document exports
-  description: DPIA, DPA, record-of-processing export; quarterly access review.
+  description: DPIA, DPA, record-of-processing export; quarterly access review. In saas mode the exports pre-fill with Antirion-as-processor clauses, cite Antirion's latest SOC2 and ISO 27001 reports, and include the tenant's sub-processor list as Antirion publishes it. In self_hosted mode the exports pre-fill with the customer as sole controller and processor, omit any Antirion SOC2 link, and surface the Antirion license (FEAT-175) as the sole contractual artefact with Antirion rather than a DPA.
   priority: P1
   stories:
   - STORY-281
@@ -1575,7 +1582,7 @@ features:
 - id: FEAT-125
   epic: EPIC-010
   title: Data Subject Access Request (DSAR) admin
-  description: Receive a DSAR, fulfill the data export for a named data subject, audit every access.
+  description: Receive a DSAR, fulfill the data export for a named data subject, audit every access. In saas mode Antirion is the processor and Antirion's DPO queue (see FEAT-181 Antirion-side inbound support queue) can intake a DSAR on the tenant's behalf when the request lands at privacy@antirion.example; the resulting Dsar is routed to the tenant's privacy_officer for fulfillment and Antirion assists per the DPA. In self_hosted mode the customer is sole controller and processor; intake is local-only, no Antirion-side queue exists, and the Dsar notification routes to the Org's privacy_officer falling back to platform_admin.
   priority: P1
   stories:
   - STORY-285
@@ -1584,7 +1591,7 @@ features:
 - id: FEAT-126
   epic: EPIC-010
   title: GDPR right-to-erasure
-  description: Request erasure, approve, execute purge and audit — distinct from user offboarding, which keeps an audit trail.
+  description: Request erasure, approve, execute purge and audit — distinct from user offboarding, which keeps an audit trail. Every step emits a notification under the notifications_model — the data subject on intake confirmation and on completion, the tenant privacy_officer on approval and purge-complete, and in saas mode only Antirion DPO when the request was intaken through the Antirion privacy queue. In self_hosted mode there is no Antirion DPO audience and the notifications collapse to data subject plus platform_admin when privacy_officer is unset.
   priority: P1
   stories:
   - STORY-288
@@ -1594,7 +1601,7 @@ features:
 - id: FEAT-127
   epic: EPIC-010
   title: Disaster recovery
-  description: View backups, test restore, trigger restore, backup rotation policy, DR drill.
+  description: View backups, test restore, trigger restore, backup rotation policy, DR drill. In saas mode Antirion SRE owns backups, quarterly DR drills and the execute-restore action; tenant-visible surfaces are read-only timelines plus a "request restore" button that opens an Antirion-side ticket. In self_hosted mode the platform_admin owns the full surface including execute-restore and is responsible for running and evidencing the quarterly DR exercise required by the non-functional baseline.
   priority: P1
   stories:
   - STORY-292
@@ -1646,7 +1653,7 @@ features:
 - id: FEAT-133
   epic: EPIC-010
   title: Customer-managed keys (CMK)
-  description: Bring-your-own CMK setup, revocation, and multi-CMK per data class.
+  description: Bring-your-own CMK setup, revocation, and multi-CMK per data class. In saas mode the CMK is a customer KMS key bound into Antirion's envelope encryption; revocation can fall back to Antirion's emergency envelope key to prevent accidental tenant lock-out, and emergency use is always audited and reported to Antirion trust_and_safety. In self_hosted mode there is no Antirion envelope key — the install's own KMS is the root of trust, revocation strictly fails closed with no Antirion-side unwrap path, and platform_admin is solely responsible for key rotation and key escrow.
   priority: P1
   stories:
   - STORY-308
@@ -1903,7 +1910,7 @@ features:
 - id: FEAT-162
   epic: EPIC-012
   title: First-run onboarding checklist
-  description: Guide a new workspace owner through pinning data residency, inviting teammates, connecting a provider, creating a key and issuing a test request. Residency must be pinned before any tenant data can be written.
+  description: Guide a new workspace owner through pinning data residency, inviting teammates, connecting a provider, creating a key and issuing a test request. Residency must be pinned before any tenant data can be written. In saas mode the signed-up workspace owner walks the full checklist. In self_hosted mode the install wizard (FEAT-177) has already completed — residency is read-only from install config, the license is assumed valid (FEAT-175), and the checklist collapses to "invite, connect provider, create key, issue test request" for the first Org created on the install.
   priority: P1
   stories:
   - STORY-387
@@ -1916,7 +1923,7 @@ features:
 - id: FEAT-163
   epic: EPIC-012
   title: Public status page
-  description: Publish gateway availability, component status and incident history on a public URL and embed a widget in-app.
+  description: Publish gateway availability, component status and incident history on a public URL and embed a widget in-app. In saas mode the page is operated by Antirion at status.antirion.example and covers the SaaS fleet across regions. In self_hosted mode the page is operated by the local install at a platform_admin-configured host (for example status.gateway.acme.example), covers only the local install, and does not surface or link to Antirion's SaaS status; the in-app widget always points at the mode-correct page, never the other mode's page.
   priority: P1
   stories:
   - STORY-391
@@ -1926,7 +1933,7 @@ features:
 - id: FEAT-164
   epic: EPIC-012
   title: In-product support contact
-  description: Let a signed-in user open a support ticket or chat from the shell with session, org and request context attached.
+  description: Let a signed-in user open a support ticket or chat from the shell with session, org and request context attached. In saas mode tickets land in Antirion's inbound support queue (FEAT-181) and the submitter receives acknowledgement from Antirion support. In self_hosted mode tickets land in the platform_admin-configured local support queue (default — email to a configurable support_contact address, webhook to a configurable integration); a secondary escalation to Antirion is available only when the install has enabled the phone-home "support" channel under FEAT-179 and is blocked entirely on air-gapped installs. Every submitted ticket records the resolved destination (local queue, Antirion queue or both) on the SupportTicket and in AuditLog.
   priority: P2
   stories:
   - STORY-393
@@ -1936,7 +1943,7 @@ features:
 - id: FEAT-165
   epic: EPIC-012
   title: Terms of Service and legal acceptance
-  description: Capture ToS, DPA and privacy policy acceptance on sign-up and re-prompt on material changes.
+  description: Capture ToS, DPA and privacy policy acceptance on sign-up and re-prompt on material changes. In saas mode the surfaced documents are Antirion's published ToS, DPA and privacy policy; versioning is driven by Antirion legal. In self_hosted mode the ToS and DPA governing the Antirion software are folded into the license agreement (FEAT-175) and are not re-prompted per user; the ToS/DPA surface in this feature is instead populated with the customer's own end-user legal texts uploaded by the platform_admin (typical contents — acceptable-use policy, internal privacy notice). The data model and re-prompt flow are identical; only the source and legal counterparty differ.
   priority: P1
   stories:
   - STORY-395
@@ -1947,7 +1954,7 @@ features:
 - id: FEAT-166
   epic: EPIC-012
   title: In-app help and documentation
-  description: Contextual doc links, tooltips and a global "/" quick-help palette across screens.
+  description: Contextual doc links, tooltips and a global "/" quick-help palette across screens. In saas mode articles are served from Antirion's docs CDN and stay current with each release. In self_hosted mode the article catalog is bundled with the install image so help works fully offline and on air-gapped networks; the platform_admin can opt in to periodic catalog refresh only when the "docs" phone-home channel (FEAT-179) is enabled. Deep-link URLs to external docs degrade to bundled anchors when air-gapped.
   priority: P2
   stories:
   - STORY-397
@@ -1967,7 +1974,7 @@ features:
 - id: FEAT-168
   epic: EPIC-012
   title: Pricing calculator and cost forecast
-  description: Let finance model monthly spend by mix of models, volume and caching before committing to a budget.
+  description: Let finance model monthly spend by mix of models, volume and caching before committing to a budget. In saas mode projected monthly cost sums provider passthrough plus Antirion plan fees and commitments (FEAT-096/FEAT-098). In self_hosted mode there is no per-request Antirion fee — the license is a flat commercial — so the calculator hides the Antirion subscription component and reports provider passthrough only; the license renewal figure comes from FEAT-175 and is shown as a separate annualized line.
   priority: P2
   stories:
   - STORY-401
@@ -1976,7 +1983,7 @@ features:
 - id: FEAT-169
   epic: EPIC-012
   title: In-product notification inbox
-  description: Unified bell-icon inbox of user-visible notifications (alert fires, approvals, job completions, deprecations).
+  description: Unified bell-icon inbox of user-visible notifications (alert fires, approvals, job completions, deprecations). In saas mode the inbox additionally surfaces Antirion-originated platform notices — maintenance windows, plan-change confirmations, invoice-ready, security advisories — broadcast by Antirion staff through FEAT-173. In self_hosted mode there are no Antirion platform notices; the same slots are filled by local platform_admin broadcasts and by FEAT-175 license events (renewal-approaching, entitlement-breach, fail-closed-warning) and by FEAT-180 license-violation incident events.
   priority: P1
   stories:
   - STORY-402
@@ -2042,6 +2049,61 @@ features:
   stories:
   - STORY-421
   - STORY-422
+- id: FEAT-177
+  epic: EPIC-013
+  title: Self-hosted install wizard
+  description: First-boot wizard that brings a fresh self_hosted install to a usable state — TLS certificates, external Postgres/Redis/ClickHouse/object-store/queue-broker wiring and connectivity checks, SSO identity-provider configuration, platform_admin account and password bootstrap, residency label pinning (feeds FEAT-112), license install (delegates to FEAT-175) and initial Org creation. The wizard is the precondition for FEAT-162 onboarding and FEAT-171 operator gating; the control plane refuses tenant traffic until the wizard has reported "complete". Available in self_hosted mode only; in saas mode every wizard endpoint and screen returns 404 because the equivalent wiring is Antirion staff's operational concern, not a customer surface.
+  priority: P0
+  stories:
+  - STORY-423
+  - STORY-424
+  - STORY-425
+  - STORY-426
+- id: FEAT-178
+  epic: EPIC-013
+  title: Self-hosted upgrade and migration runbook
+  description: Operator-facing upgrade surface for self_hosted installs — version channels (stable, extended support), schema-migration gate that enforces the non-functional baseline's one-release backward-compatibility window, pre-flight health check, rendered changelog, air-gapped artefact import path for offline installs, staged roll-forward across the fleet × region matrix and a rollback plan. Complements FEAT-174, which covers build promotion and canary/rollback at runtime; this feature covers the on-prem artefact acquisition and schema-migration gating that saas does not need. Available in self_hosted mode only.
+  priority: P0
+  stories:
+  - STORY-427
+  - STORY-428
+  - STORY-429
+- id: FEAT-179
+  epic: EPIC-013
+  title: Telemetry and phone-home controls
+  description: Govern every outbound call from an Antirion install back to Antirion-operated endpoints. Named channels are license (license heartbeat and entitlement-usage rollup), metrics (anonymous aggregate usage for product analytics), crash (crash reports with symbol frames), security (trust_and_safety signals — key-leak events, tenant-isolation breaches, break-glass usage), support (escalation path for FEAT-164) and docs (catalog refresh for FEAT-166). Each channel has an independent opt-out, a documented payload schema (with per-field data class), a documented retention policy at Antirion and an outbound-request audit in the local AuditLog. An explicit air-gapped pin disables every channel and is enforced at the egress layer — any compiled code that attempts an Antirion-endpoint call when air-gapped is a test-suite failure. Available in both modes — saas forces every channel on (the tenant is by definition talking to Antirion), and self_hosted defaults channels off for the ENTERPRISE license tier and on for the CLOUD-ASSIST license tier.
+  priority: P0
+  stories:
+  - STORY-430
+  - STORY-431
+  - STORY-432
+- id: FEAT-180
+  epic: EPIC-013
+  title: License-violation incident flow
+  description: The defined flow for handling over-consumption beyond an installed license entitlement (seats, sustained rps, retention days, feature set) or operation past license expiry. Defines the soft-grace window (default 14 days, configurable per license tier at issue time) during which the operator sees escalating warnings but traffic continues, the hard-close transition where the control plane begins rejecting new tenant traffic with 402 while preserving observability, the operator override workflow (typed confirmation, reason, time-bounded) to extend the grace window during an active renewal, the renewal-in-flight shield that suppresses hard-close when the "license" phone-home channel under FEAT-179 has confirmed an in-flight renewal with Antirion, and the audit and restore-of-service flow once a valid license is reinstalled. Complements FEAT-175 (which declares "fail closed" as a policy) by defining the specific incident states and transitions. Available in self_hosted mode only.
+  priority: P0
+  stories:
+  - STORY-433
+  - STORY-434
+  - STORY-435
+- id: FEAT-181
+  epic: EPIC-013
+  title: Antirion-side inbound support queue
+  description: The Antirion-staff counterpart of FEAT-164 — the queue that receives tickets submitted by saas tenants and by self_hosted tenants who have opted in to Antirion escalation under FEAT-179. Supports triage (severity, SLA timer, assignee), link to tenant context pulled from FEAT-172 tenant roster and FEAT-182 CRM, canned replies, conversation thread with the submitter, and escalation into Antirion engineering with a linked internal issue. Surfaces live on the Antirion-staff console only. Available in saas mode on every install; in self_hosted mode the feature is installed only on Antirion's own operator console and is never rendered on customer installs.
+  priority: P1
+  stories:
+  - STORY-436
+  - STORY-437
+  - STORY-438
+- id: FEAT-182
+  epic: EPIC-013
+  title: Antirion platform CRM and tenant contact book
+  description: Antirion-staff CRM that complements FEAT-172. For every Org on the saas platform it stores the primary, billing, security and privacy contacts, outreach history, renewal and commitment dates, NPS and CSAT, and cross-links to the support queue (FEAT-181) and the tenant detail view (FEAT-172). Lets Antirion staff record an outreach, schedule a follow-up, attach meeting notes and trigger the tenant-contact audit trail so every staff interaction with a tenant's primary contact is evidenced. In self_hosted mode for Antirion's internal tracking of its own customers this CRM runs only on Antirion's operator console and carries one row per self_hosted install that has opted in to the "license" phone-home channel under FEAT-179; on a customer install itself, this surface is never rendered. Available in saas mode on every install, and on Antirion's own operator console for self_hosted tracking.
+  priority: P1
+  stories:
+  - STORY-439
+  - STORY-440
+  - STORY-441
 stories:
 - id: STORY-001
   feature: FEAT-001
@@ -5152,8 +5214,10 @@ stories:
     when:
     - The response job completes
     then:
-    - The key owner and security contact receive notifications with the replacement key preview and action summary
-    - An AuditLog entry records "key.leak.response" with trace of detection, revocation, rotation and notification
+    - The ApiKey.owner_user_id and the Org.security_contact receive notifications with the replacement key preview and action summary; when security_contact is unset the notification falls back to Org.owner in saas and platform_admin in self_hosted
+    - In saas mode the event additionally fans out to Antirion trust_and_safety for cross-tenant leak correlation
+    - In self_hosted mode no Antirion audience is notified unless the "security" phone-home channel (FEAT-179) is enabled, in which case a redacted event is sent to Antirion trust_and_safety per its data-minimization rules
+    - An AuditLog entry records "key.leak.response" with trace of detection, revocation, rotation and the resolved notification audience list
   data_models:
   - ApiKey
   - AuditLog
@@ -11044,7 +11108,9 @@ stories:
     - The metering pipeline writes the latest bucket
     then:
     - A BudgetEvent of type "overage" is written
-    - Notifications are sent to the Budget.owner and the org billing_contact via the configured channels
+    - Notifications are sent to Budget.owner and Org.billing_contact via the configured channels in saas mode
+    - In self_hosted mode Org.billing_contact has no meaning against Antirion billing, so the same notification falls back to Org.finance_contact if set else platform_admin
+    - Sustained overage across the tenant roster in saas mode additionally fans out to Antirion trust_and_safety as an abuse-correlation signal; this branch is silently skipped in self_hosted because the tenant set is 1
     - The notification is deduped for 1 hour on the same Budget
   ui:
     screens:
@@ -12812,12 +12878,9 @@ stories:
     - The checker runs
     then:
     - An AlertEvent fires with link to the SLO and the burn rate context
-  data_models:
-  - Slo
-  - AlertEvent
-  non_functional:
-  - Alert evaluation runs on a bounded interval; backlog or missed evaluations raise their own operational alert
-  - Notification delivery is retried with exponential backoff by the worker fleet and deduped per rule-fire
+    - For a tenant-scope SLO the event routes to the tenant's AlertRule subscribers per FEAT-102
+    - For a platform-scope SLO (gateway fleet, worker fleet, ingest pipeline) the event routes to the platform operator audience — Antirion SRE in saas, platform_admin in self_hosted — and never wakes tenant on-call
+    - The AlertEvent records the resolved audience class on the event so the Alerts UI can label it "tenant" vs "platform"
 - id: STORY-247
   feature: FEAT-107
   title: Edit workspace identity
@@ -13616,6 +13679,7 @@ stories:
     then:
     - Its status becomes "degraded"
     - An AlertEvent of severity "warn" fires for "audit.sink.degraded"
+    - The event is delivered to Org.security_contact (falling back to Org.owner) and to the platform operator audience — Antirion SRE in saas, platform_admin in self_hosted — because a broken audit path is both a tenant compliance signal and a platform-health signal
   api:
   - method: POST
     path: /api/audit/sinks
@@ -14591,6 +14655,17 @@ stories:
     - I enter requester details and scope
     then:
     - A Dsar case is created with state "intake" and 30-day SLA
+    - An intake notification is sent to Org.privacy_officer (falling back to Org.owner in saas and platform_admin in self_hosted) and an intake acknowledgement is emailed to the data subject at the verified contact address
+    - In saas mode when the case was intaken through Antirion's privacy queue the event additionally notifies Antirion DPO; in self_hosted mode no Antirion audience is notified
+  - id: AC-002
+    scenario: SLA-at-risk reminder
+    given:
+    - A Dsar case has been in a non-terminal state for 20 days (two-thirds of the 30-day SLA)
+    when:
+    - The SLA watchdog runs
+    then:
+    - A reminder is sent to Org.privacy_officer (falling back as above) and, in saas, to Antirion DPO when the case was intaken through the Antirion privacy queue
+    - A second reminder fires at 28 days with severity "warn"
   data_models:
   - Dsar
   non_functional:
@@ -14615,7 +14690,8 @@ stories:
     - I click "Build export" with the subject's identifiers
     then:
     - A ZIP with profile, sessions, tokens, Request rows (redacted as configured) is produced and delivered to the verified requester
-    - An AuditLog entry records "dsar.export"
+    - On completion a notification is sent to Org.privacy_officer and to the data subject with the export download link; in saas mode when the case was intaken through the Antirion privacy queue the completion also notifies Antirion DPO
+    - An AuditLog entry records "dsar.export" with the resolved notification audience
   data_models:
   - Dsar
   - AuditLog
@@ -14686,6 +14762,7 @@ stories:
     - I approve
     then:
     - The request state becomes "approved" and the purge job is scheduled
+    - An approval notification is sent to the data subject and to Org.privacy_officer (falling back to Org.owner in saas and platform_admin in self_hosted); in saas mode when the request was intaken through the Antirion privacy queue Antirion DPO is also notified
   data_models:
   - ErasureRequest
   - Approval
@@ -14712,6 +14789,7 @@ stories:
     then:
     - All personal data for the subject is erased or anonymized across stores per data class policy
     - The request state becomes "completed"
+    - A completion notification is sent to the data subject (Article 17 fulfillment receipt) and to Org.privacy_officer; in saas mode when the request was intaken through the Antirion privacy queue Antirion DPO is also notified; the AuditLog entry records the resolved audience
   data_models:
   - ErasureRequest
   - AuditLog
@@ -14850,6 +14928,8 @@ stories:
     - The drill runs
     then:
     - A report is produced with steps, RTO/RPO measurements and pass/fail status
+    - On a failing drill (RTO or RPO breached, or a step errored) the platform operator audience is paged — Antirion SRE in saas, platform_admin in self_hosted — with severity "crit" and a link to the report
+    - A passing drill writes the report and emits no page, only a summary into the in-product notification inbox for Org.security_contact
   data_models:
   - Backup
   - AuditLog
@@ -14941,7 +15021,8 @@ stories:
     - The delivery worker notices
     then:
     - Webhook.enabled becomes false
-    - The owner is notified and an AuditLog entry records "webhook.auto_disable"
+    - A notification is delivered to Webhook.owner_user_id and Org.security_contact (falling back to Org.owner in saas and platform_admin in self_hosted)
+    - An AuditLog entry records "webhook.auto_disable" with the resolved notification audience
   data_models:
   - Webhook
   - AuditLog
@@ -15064,6 +15145,9 @@ stories:
     then:
     - The call is rejected before connect
     - The Request is marked status_label "residency_violation"
+    - A compliance-severity event notifies Org.security_contact (falling back to Org.owner in saas and platform_admin in self_hosted)
+    - In saas mode the event additionally fans out to Antirion trust_and_safety because a residency breach is a cross-tenant compliance signal; in self_hosted the cross-tenant fanout is skipped
+    - An AuditLog entry "residency.violation" records the request_id, the configured region, the resolved provider region and the notification audience
   data_models:
   - ResidencyConfig
   - Request
@@ -15210,7 +15294,9 @@ stories:
     when:
     - It completes
     then:
-    - A report is produced with per-surface results (API, cache, DB views) and any failures page the security contact
+    - A report is produced with per-surface results (API, cache, DB views)
+    - In saas mode any failure pages Antirion trust_and_safety at severity "crit" as the primary audience because a cross-tenant leak is an Antirion-staff-level incident, not a single-tenant concern; affected-tenant security_contacts are notified only after Antirion trust_and_safety has triaged and approved disclosure per the incident runbook
+    - In self_hosted mode the tenant set is 1 so "cross-tenant" collapses to "intra-install" and any failure pages the security contact and the platform_admin at severity "crit"
   data_models:
   - TenantIsolationReport
   non_functional:
@@ -17477,6 +17563,8 @@ stories:
     - I click "Create break-glass key" with reason and duration
     then:
     - An Approval of kind "key-elevated-scope" is created for the break-glass key
+    - A creation notification is sent to Org.security_contact (falling back to Org.owner in saas and platform_admin in self_hosted)
+    - In saas mode the creation event additionally notifies Antirion trust_and_safety at severity "warn" so Antirion staff can observe elevated access in-flight; in self_hosted this fanout is skipped unless the "security" phone-home channel (FEAT-179) is enabled
   data_models:
   - ApiKey
   - Approval
@@ -17503,6 +17591,8 @@ stories:
     then:
     - Every request is tagged break_glass=true
     - An AuditLog entry records each use
+    - First-use within an incident emits a notification to Org.security_contact (falling back to Org.owner in saas and platform_admin in self_hosted); in saas mode the same event also fans out to Antirion trust_and_safety
+    - Subsequent uses are aggregated into a 15-minute dedupe window on the same key so the audit trail is complete while the notification channel is not flooded
   data_models:
   - ApiKey
   - Request
@@ -17526,7 +17616,7 @@ stories:
     when:
     - The scheduled job runs
     then:
-    - The key is revoked and a report is emailed to the security contact
+    - The key is revoked and a report is emailed to Org.security_contact (falling back to Org.owner in saas and platform_admin in self_hosted); in saas mode the same report is posted into the Antirion trust_and_safety queue
   data_models:
   - ApiKey
   - AuditLog
@@ -18178,20 +18268,56 @@ stories:
   narrative:
     as_a: signed-in user
     i_want: to open a support ticket with context attached
-    so_that: the support team can triage without a back-and-forth
+    so_that: the configured support responder can triage without a back-and-forth
   priority: P2
   acceptance_criteria:
   - id: AC-001
-    scenario: Submit a ticket
+    scenario: Submit a ticket in saas
     given:
+    - The install is running in saas mode
     - I am on any page
     when:
     - I open "Contact support" from the shell, write a description and submit
     then:
     - A SupportTicket is created with my user_id, org_id, current screen path, recent request_ids and browser info
-    - I see a confirmation with the ticket id
-    - A notification is sent to the support channel integration
+    - The SupportTicket.destination is "antirion_support_queue" and the ticket is enqueued into FEAT-181
+    - I see a confirmation with the ticket id and "Antirion support will reply by email" copy
+    - An AuditLog "support.ticket.created" records the resolved destination
   - id: AC-002
+    scenario: Submit a ticket in self_hosted with a local support queue only
+    given:
+    - The install is running in self_hosted mode
+    - platform_admin has configured support_contact and optional support_webhook
+    - The "support" phone-home channel (FEAT-179) is disabled
+    when:
+    - I open "Contact support" from the shell and submit
+    then:
+    - A SupportTicket is created with my user_id, org_id, current screen path, recent request_ids and browser info
+    - The SupportTicket.destination is "local_only" and the ticket is emailed to support_contact and posted to support_webhook when set
+    - I see a confirmation with the ticket id and "Your IT team will reply" copy
+    - No outbound call is made to Antirion and an AuditLog "support.ticket.created" records destination "local_only"
+  - id: AC-003
+    scenario: Submit a ticket in self_hosted with Antirion escalation opted-in
+    given:
+    - The install is running in self_hosted mode
+    - platform_admin has enabled the "support" phone-home channel (FEAT-179)
+    - The user ticked "Escalate to Antirion" on the dialog
+    when:
+    - I submit
+    then:
+    - The SupportTicket.destination is "local_and_antirion"
+    - The ticket is routed to the local support_contact and also enqueued into FEAT-181 with a redacted context per FEAT-179 data-minimization rules
+    - An AuditLog "support.ticket.created" records both destinations and the redaction profile used
+  - id: AC-004
+    scenario: Submit a ticket in self_hosted air-gapped
+    given:
+    - The install is running in self_hosted mode with all phone-home channels disabled
+    when:
+    - I open "Contact support"
+    then:
+    - The "Escalate to Antirion" checkbox is hidden and a note explains the install is air-gapped
+    - Submission only targets the local queue; no Antirion endpoint is contacted under any failure
+  - id: AC-005
     scenario: Attach a specific request
     given:
     - I opened the support dialog from a Request detail
@@ -18251,6 +18377,7 @@ stories:
     - I add a comment
     then:
     - The comment appears in the ticket thread with timestamp
+    - A notification is delivered to the resolved responder audience stamped on SupportTicket.destination — Antirion support in saas, local support_contact in self_hosted, both when "local_and_antirion"
   - id: AC-003
     scenario: Close and rate
     given:
@@ -18259,6 +18386,7 @@ stories:
     - I click "Close" and leave a 1-5 rating
     then:
     - The ticket status becomes "closed" and the rating is stored
+    - A close notification is delivered to the resolved responder audience on SupportTicket.destination so the responder queue can measure CSAT
   data_models:
   - SupportTicket
   non_functional:
@@ -18438,12 +18566,13 @@ stories:
   - id: AC-001
     scenario: Worker dashboard
     given:
-    - I am on /settings/workers
+    - I am on /operator/workers — the worker fleet is platform infrastructure, so the dashboard lives under the EPIC-013 operator shell, not under tenant /settings
     when:
     - The page loads
     then:
     - I see a row per WorkerQueue with depth, oldest-age, success rate and p95 processing time
     - A queue with depth above threshold is marked degraded
+    - Queue-degraded transitions page the platform operator audience — Antirion SRE in saas, platform_admin in self_hosted — with severity "warn" and link to this dashboard; the event never pages tenant on-call because worker-fleet saturation is a platform-health signal, not a tenant signal
   - id: AC-002
     scenario: Drill into failures
     given:
@@ -19244,7 +19373,8 @@ stories:
     then:
     - A PlatformIncident is created with state "investigating"
     - FEAT-164 public status page and in-app widget update within 30 seconds for every affected tenant
-    - An AuditLog "incident.declared" is written
+    - At severity "major" or higher, each affected Org.primary_contact receives an incident notification via email and the in-product notification inbox; in self_hosted mode with a single-tenant install this collapses to a single recipient
+    - An AuditLog "incident.declared" is written with the acting operator (Antirion staff id in saas, platform_admin in self_hosted), the resolved affected-tenant list and the notification audience
   - id: AC-002
     scenario: Update the incident timeline
     given:
@@ -19559,8 +19689,10 @@ stories:
     - The metric breaches the rule
     then:
     - The rollout flips to "rolled_back" and the canary replicas drain via FEAT-171 drain
-    - Operator is notified; the incident broadcast (FEAT-174) is offered as a one-click follow-up
-    - An AuditLog "release.auto_rollback" is written with the offending metric sample
+    - The platform operator audience — Antirion SRE in saas, platform_admin in self_hosted — is paged at severity "crit" with the offending metric sample
+    - In saas mode the primary_contact of each affected tenant is additionally notified at severity "info" only after an incident is declared via FEAT-173; rollback alone does not message tenants
+    - The incident broadcast (FEAT-173) is offered as a one-click follow-up
+    - An AuditLog "release.auto_rollback" is written with the offending metric sample and the resolved notification audience
   - id: AC-002
     scenario: Manual rollback
     given:
@@ -19692,6 +19824,16 @@ stories:
     - A tenant tries to enable semantic caching
     then:
     - The feature is hidden in the tenant UI and the API returns 402 "entitlement_required" at the edge
+  - id: AC-003
+    scenario: Over-consumption fail-closed notification
+    given:
+    - An entitlement (for example seats) is at or above 100% of its limit
+    when:
+    - The daily license-check worker runs
+    then:
+    - The platform_admin receives a notification naming the breached entitlement, the observed value and the path to renew
+    - When the "license" phone-home channel (FEAT-179) is enabled the same event is sent to Antirion renewals so Antirion can reach out commercially; when disabled no outbound call is made
+    - FEAT-180 (license-violation incident flow) is invoked to manage the soft-grace and hard-close transition
   ui:
     screens:
     - Operator
@@ -19733,7 +19875,8 @@ stories:
     - The daily license-check worker runs
     then:
     - A reminder is shown in /operator/license starting at 30, 14, 7, 3 and 1 days before expiry
-    - The platform_admin receives a notification on each of those days
+    - The platform_admin receives a notification on each of those days via email and in-product inbox
+    - When the "license" phone-home channel (FEAT-179) is enabled a heartbeat with the same reminder schedule is sent to Antirion renewals so Antirion can proactively contact the customer about renewal; when disabled no outbound call is made and renewal outreach depends on the customer reaching out
   - id: AC-002
     scenario: Expiry fail-closed
     given:
@@ -19844,8 +19987,11 @@ stories:
     - I pick an action (dismiss, warn, suspend-for-review, suspend) and confirm
     then:
     - The flag is resolved with the chosen action
+    - For "warn" the affected Org.primary_contact (falling back to Org.owner) receives a warn notification with the rule, evidence summary and cure-by date
+    - For "suspend-for-review" and "suspend" the affected Org.owner and Org.primary_contact are notified via email and in-product inbox with the reason and appeal path; in saas mode Antirion legal is additionally notified because platform suspension is a commercial action
+    - In self_hosted mode with a single tenant the notifications collapse to Org.owner and platform_admin; the "dismiss" action emits no tenant notification
     - For suspend actions, STORY-414 is invoked inline with the flag id as the reason
-    - An AuditLog "abuse.triaged" is written with actor, flag id and action
+    - An AuditLog "abuse.triaged" is written with actor, flag id, action and the resolved notification audience
   ui:
     screens:
     - Operator
@@ -19882,6 +20028,654 @@ stories:
   non_functional:
   - Evidence is redacted in the tenant region before any operator-plane access — raw prompts never traverse the operator path
   - Triage actions inherit the destructive_action_confirmation_policy where they affect tenant service
+- id: STORY-423
+  feature: FEAT-177
+  title: Run the self-hosted first-boot install wizard end-to-end
+  navigation: operator
+  narrative:
+    as_a: platform_admin on a fresh self_hosted install
+    i_want: a guided wizard that configures dependencies, licence, residency and the first Org
+    so_that: the install reaches a usable state without hand-editing config files and without a partial-configuration failure mode
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Wizard runs before any tenant traffic is served
+    given:
+    - A freshly deployed self_hosted install with no prior InstallState row
+    when:
+    - A client sends any tenant request to the gateway
+    then:
+    - The gateway responds 503 with a body pointing at /operator/install
+    - The control plane only exposes the wizard endpoints and /healthz until the wizard reports "complete"
+  - id: AC-002
+    scenario: Wizard step sequence
+    given:
+    - I am on /operator/install as the bootstrap principal
+    when:
+    - I walk the steps in order
+    then:
+    - Step 1 uploads and validates TLS certificates for the control-plane and gateway hostnames
+    - Step 2 captures external dependency connection strings (Postgres, Redis, ClickHouse, object store, queue broker) and runs the validator from STORY-424
+    - Step 3 configures SSO identity-provider settings (or opts for local password auth for the platform_admin only)
+    - Step 4 bootstraps the platform_admin account per STORY-425
+    - Step 5 pins a residency label that is written into ResidencyConfig and is immutable for the install
+    - Step 6 installs the license by handing off to FEAT-175
+    - Step 7 creates the first Org with its owner
+    - The wizard persists InstallState after each step so a crash resumes from the last completed step
+  data_models:
+  - InstallState
+  - ResidencyConfig
+  - License
+  - Org
+  - User
+  - AuditLog
+  non_functional:
+  - Wizard surfaces are available in self_hosted mode only — in saas mode every wizard endpoint returns 404
+  - Every step writes an AuditLog entry with actor, step, before and after
+- id: STORY-424
+  feature: FEAT-177
+  title: Validate external dependency connectivity during the install wizard
+  navigation: operator
+  narrative:
+    as_a: platform_admin running the install wizard
+    i_want: live validation that the entered Postgres, Redis, ClickHouse, object-store and queue-broker connection strings actually work
+    so_that: I find misconfigured dependencies before promoting the install rather than during first tenant traffic
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Validator per dependency
+    given:
+    - I entered connection strings on step 2 of the wizard
+    when:
+    - I click "Test connections"
+    then:
+    - For each dependency the wizard runs a read and a write probe and displays latency, version and success or a structured error with a remediation hint
+    - I cannot advance to step 3 until every required dependency validates green or I explicitly mark an optional one as skipped
+  data_models:
+  - InstallState
+  non_functional:
+  - Validation probes are idempotent and produce no persistent tenant data
+  - Every failed probe writes an AuditLog entry so a re-run can be compared
+- id: STORY-425
+  feature: FEAT-177
+  title: Bootstrap the platform_admin account
+  navigation: operator
+  narrative:
+    as_a: person deploying a self_hosted install
+    i_want: a one-shot bootstrap that creates the first platform_admin without requiring an existing user
+    so_that: there is always exactly one way to get the first operator credential with a known provenance
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Single-use bootstrap token
+    given:
+    - A fresh install emits a one-time bootstrap token to the container logs on first start
+    when:
+    - I POST the token plus a chosen email and password to /api/bootstrap
+    then:
+    - A User is created with role platform_admin
+    - The bootstrap token is invalidated and cannot be reused
+    - An AuditLog "install.platform_admin_bootstrapped" is written referencing the token id
+  - id: AC-002
+    scenario: SSO-only mode
+    given:
+    - The wizard step 3 selected SSO as the platform_admin auth source
+    when:
+    - I submit the SSO IdP metadata and a claimed identifier
+    then:
+    - The first user matching the claimed identifier on SSO sign-in is granted platform_admin
+    - No password is set and /api/bootstrap is disabled
+  data_models:
+  - User
+  - AuditLog
+  non_functional:
+  - The bootstrap token lives only in container logs and is never persisted to any store the tenant plane can read
+  - platform_admin is a reserved built-in role (see FEAT-012) and cannot be granted through normal role management
+- id: STORY-426
+  feature: FEAT-177
+  title: Complete and lock the install wizard
+  navigation: operator
+  narrative:
+    as_a: platform_admin finishing the install wizard
+    i_want: a final "complete" transition that flips the install into serving mode and prevents re-entry to the wizard
+    so_that: subsequent operator actions use the normal EPIC-013 surfaces and nobody can silently re-run install steps
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Complete transition
+    given:
+    - Every required wizard step has validated green
+    when:
+    - I click "Finish install"
+    then:
+    - InstallState.status becomes "complete" and is stamped with the completing platform_admin user_id and timestamp
+    - The tenant-serving routes come up on the gateway and the control plane
+    - /operator/install flips to a read-only summary and its mutating endpoints return 409
+    - An AuditLog "install.completed" is written
+  data_models:
+  - InstallState
+  - AuditLog
+  non_functional:
+  - Re-running any wizard endpoint after completion returns 409 and is audited as "install.rerun_blocked"
+  - Fleet version and schema-migration state at completion are snapshotted into InstallState for comparison by FEAT-178 upgrade flows
+- id: STORY-427
+  feature: FEAT-178
+  title: Acquire a signed release artefact — online and air-gapped
+  navigation: operator
+  narrative:
+    as_a: platform_admin planning an upgrade
+    i_want: to acquire the target release artefact either from Antirion's CDN (online) or from a local path (air-gapped)
+    so_that: installs without Internet access can still upgrade through a documented supply-chain path
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Online acquisition
+    given:
+    - The "license" phone-home channel (FEAT-179) is enabled and the install is entitled to the target channel
+    when:
+    - I select a release from the channel list and click "Download"
+    then:
+    - The artefact is fetched from the Antirion CDN, signature-verified against the pinned Antirion signing key, hash-verified against the release manifest and stored locally
+    - An AuditLog "upgrade.artefact_acquired" records source, version, digest and verification result
+  - id: AC-002
+    scenario: Air-gapped import
+    given:
+    - The install is air-gapped (all phone-home channels disabled)
+    when:
+    - I upload a pre-downloaded artefact plus manifest through /operator/upgrade/import
+    then:
+    - The artefact is signature- and hash-verified with the same checks as the online path
+    - A missing or invalid signature blocks the upload with a structured error naming the failing check
+  data_models:
+  - ReleaseArtefact
+  - AuditLog
+  non_functional:
+  - Signature verification is mandatory on both paths — there is no "--skip-verify" flag
+  - Artefacts are stored on the local object store with an integrity hash checked again at every install-time read
+- id: STORY-428
+  feature: FEAT-178
+  title: Pre-flight and schema-migration gate
+  navigation: operator
+  narrative:
+    as_a: platform_admin about to roll a new version
+    i_want: an explicit pre-flight that refuses the upgrade when schema migrations would break the one-release backward-compatibility window
+    so_that: rolling upgrades never collide with a breaking migration mid-fleet
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Compatibility window check
+    given:
+    - The install is on version N
+    - I selected target version M
+    when:
+    - I click "Pre-flight"
+    then:
+    - The gate refuses the upgrade when any migration in the N to M delta is not backward-compatible for one release per the non-functional baseline
+    - The gate names the offending migration and the required intermediate version
+  - id: AC-002
+    scenario: Dry-run migration
+    given:
+    - Pre-flight passed
+    when:
+    - I click "Dry-run migrations"
+    then:
+    - Migrations run against a shadow schema on the same database and a diff is produced
+    - No tenant-visible schema change is made by the dry run
+  data_models:
+  - ReleaseArtefact
+  - AuditLog
+  non_functional:
+  - Pre-flight never writes to tenant data and is safe to run against production
+  - Dry-run duration is bounded; a run exceeding the bound is aborted and reported rather than left orphaned
+- id: STORY-429
+  feature: FEAT-178
+  title: Staged roll-forward with rollback plan
+  navigation: operator
+  narrative:
+    as_a: platform_admin executing an upgrade
+    i_want: to roll the new version through the fleet × region matrix in stages and have a defined rollback if SLO breaches
+    so_that: self_hosted upgrades match the safety profile of FEAT-174 canary and rollback for saas
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Stage the rollout
+    given:
+    - The release artefact is verified and migrations dry-ran green
+    when:
+    - I pick a roll-forward plan (for example 1 replica, 10%, 50%, 100%) and start
+    then:
+    - FleetDeployment rows are written per stage and promotion between stages requires an explicit click
+    - A stuck or breaching stage blocks promotion and prompts the rollback path
+  - id: AC-002
+    scenario: Rollback on breach
+    given:
+    - A stage has breached the configured rollback rule
+    when:
+    - I click "Roll back"
+    then:
+    - The affected replicas drain per FEAT-171 and are restarted on the previous version
+    - An AuditLog "upgrade.rolled_back" is written with the breach sample
+  data_models:
+  - FleetDeployment
+  - AuditLog
+  non_functional:
+  - Stage transitions emit the same telemetry as FEAT-174 so the SRE dashboards are reusable
+  - Schema migrations committed by the new version remain backward-compatible for at least one release so rollback is safe
+- id: STORY-430
+  feature: FEAT-179
+  title: Toggle phone-home channels per install
+  navigation: operator
+  narrative:
+    as_a: platform_admin on a self_hosted install
+    i_want: per-channel on/off switches for license, metrics, crash, security, support and docs
+    so_that: I can match the install's outbound profile to my organisation's network policy
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Toggle a channel
+    given:
+    - I am on /operator/phone-home
+    when:
+    - I flip the "metrics" channel from on to off
+    then:
+    - The in-flight batcher drains any buffered metrics payload and stops producing new ones
+    - The channel row shows "disabled" with the acting user and timestamp
+    - An AuditLog "phone_home.channel.toggled" is written with the before and after value
+  - id: AC-002
+    scenario: Payload schema and data-class display
+    given:
+    - I expand a channel row
+    when:
+    - The panel renders
+    then:
+    - I see the exact payload schema, the data class of every field and the Antirion retention policy for that channel
+  ui:
+    screens:
+    - Operator
+    components:
+    - PhoneHomeChannelList
+    - PayloadSchemaDialog
+    states:
+    - enabled
+    - disabled
+    - forced_on_saas
+  api:
+  - method: GET
+    path: /api/operator/phone-home/channels
+    response:
+      items: PhoneHomeChannel[]
+    errors:
+    - 403
+    inferred: true
+  - method: POST
+    path: /api/operator/phone-home/channels/:name/toggle
+    request:
+      body:
+        enabled: bool
+        reason: string
+    response:
+      channel: PhoneHomeChannel
+    errors:
+    - 400
+    - 403
+    inferred: true
+  data_models:
+  - PhoneHomeChannel
+  - AuditLog
+  non_functional:
+  - In saas mode the toggle API returns 403 for every channel — saas installs cannot opt out
+  - Per-channel payload schemas are part of the signed release and cannot be modified at runtime
+- id: STORY-431
+  feature: FEAT-179
+  title: Pin air-gapped mode and prove no egress
+  navigation: operator
+  narrative:
+    as_a: platform_admin on a sensitive install
+    i_want: an air-gapped pin that hard-disables every phone-home channel at the egress layer
+    so_that: I can evidence to auditors that the install makes no outbound calls to Antirion
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Pin air-gapped
+    given:
+    - I am on /operator/phone-home
+    when:
+    - I pin "air-gapped" with typed confirmation of the install id
+    then:
+    - Every channel flips to disabled and is locked read-only
+    - The egress layer refuses any connection to an Antirion-controlled hostname and a refused attempt is audited as "phone_home.egress_blocked"
+  - id: AC-002
+    scenario: Unpin requires platform_admin and a reason
+    given:
+    - The install is pinned air-gapped
+    when:
+    - I click "Unpin" and provide a reason
+    then:
+    - The pin is released, but every channel remains disabled until individually re-enabled
+    - An AuditLog "phone_home.air_gapped.unpinned" is written with the reason
+  data_models:
+  - PhoneHomeChannel
+  - AuditLog
+  non_functional:
+  - Any compiled code path that dials an Antirion-controlled hostname when the air-gapped pin is set is a continuous-integration failure enforced by the egress test harness
+  - The pin is visible in the in-app status badge on every operator page so an operator never forgets the state of the install
+- id: STORY-432
+  feature: FEAT-179
+  title: Audit every outbound call and payload digest
+  navigation: operator
+  narrative:
+    as_a: platform_admin or internal auditor
+    i_want: a local record of every phone-home call including channel, endpoint, payload digest, response code and latency
+    so_that: I can evidence what left the install without needing access to Antirion's side
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Outbound call log
+    given:
+    - Phone-home channels have been active over the last 24h
+    when:
+    - I open /operator/phone-home/log
+    then:
+    - I see a row per call with timestamp, channel, endpoint, SHA-256 digest of the payload, response code, latency and a "inspect sample" action that renders the payload through the same redaction rules as the original send
+  data_models:
+  - PhoneHomeCallLog
+  non_functional:
+  - Call-log writes are append-only and hash-chained like AuditLog
+  - The "inspect sample" action never reveals fields above the channel's declared data class
+- id: STORY-433
+  feature: FEAT-180
+  title: Enter soft-grace on entitlement breach
+  navigation: operator
+  narrative:
+    as_a: platform_admin whose install has just exceeded an entitlement
+    i_want: a defined soft-grace window during which traffic continues but the operator sees escalating warnings
+    so_that: legitimate production traffic is not cut off the instant a limit is touched
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Enter soft-grace
+    given:
+    - An entitlement (for example seats) transitions from 99% to 102%
+    when:
+    - The license-check worker runs
+    then:
+    - A LicenseIncident is opened with state "soft_grace", the breached entitlement, the observed value and the grace_expires_at computed from the license tier (default 14 days)
+    - The in-product banner on every operator page reads "licence over-consumed — N days to resolve"
+    - An AuditLog "license.incident.opened" is written
+  data_models:
+  - LicenseIncident
+  - License
+  - AuditLog
+  non_functional:
+  - Tenant traffic is not impacted during soft-grace — the banner is the only visible change
+  - When the "license" phone-home channel is enabled the incident is mirrored to Antirion renewals
+- id: STORY-434
+  feature: FEAT-180
+  title: Transition to hard-close and reject tenant traffic
+  navigation: operator
+  narrative:
+    as_a: platform_admin whose soft-grace has expired without renewal
+    i_want: a predictable hard-close transition that rejects new tenant traffic with 402 while preserving observability and operator access
+    so_that: contractual obligations are enforced and diagnostics survive the transition
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Hard-close transition
+    given:
+    - A LicenseIncident in state "soft_grace" has passed grace_expires_at
+    - No renewal-in-flight shield is active
+    when:
+    - The license-check worker runs
+    then:
+    - LicenseIncident.state becomes "hard_closed"
+    - The gateway begins returning 402 "license_hard_closed" for new tenant requests within the config-reload SLA
+    - Operator surfaces, observability, audit, export and break-glass remain available
+    - Every tenant Org.primary_contact is notified that traffic is blocked and a clear renewal path is shown
+  data_models:
+  - LicenseIncident
+  - AuditLog
+  non_functional:
+  - The hard-close transition is reversible the instant a valid license is installed — no operator intervention beyond license install is required to restore service
+  - The 402 response includes a Request-Id and a retry-after header so downstream clients can surface the state cleanly
+- id: STORY-435
+  feature: FEAT-180
+  title: Operator override and renewal-in-flight shield
+  navigation: operator
+  narrative:
+    as_a: platform_admin managing an active commercial renewal
+    i_want: a time-bounded override that extends the grace window and an automatic shield when Antirion confirms the renewal is in-flight
+    so_that: a paperwork delay does not cut off production traffic
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Operator override
+    given:
+    - A LicenseIncident is in state "soft_grace"
+    when:
+    - I click "Extend grace", type the install id to confirm, enter a reason and a new grace_expires_at within the configured maximum (default +30 days)
+    then:
+    - grace_expires_at is updated and an AuditLog "license.incident.grace_extended" records actor, reason, old and new timestamp
+  - id: AC-002
+    scenario: Renewal-in-flight shield
+    given:
+    - The "license" phone-home channel is enabled
+    - Antirion renewals has confirmed an in-flight renewal against the install id
+    when:
+    - A soft-grace window would otherwise expire
+    then:
+    - The shield suppresses the hard-close transition for up to a bounded window (default 45 days)
+    - The operator banner reads "renewal in flight — hard-close suppressed by Antirion renewals"
+    - An AuditLog "license.incident.shielded" records the renewal id and the shield expiry
+  data_models:
+  - LicenseIncident
+  - AuditLog
+  non_functional:
+  - Override is audited with actor, reason, old and new values
+  - The shield is purely additive — an operator can still extend grace manually, and once a valid license is installed both the shield and the incident close
+- id: STORY-436
+  feature: FEAT-181
+  title: Triage an inbound support ticket with tenant context
+  navigation: operator
+  narrative:
+    as_a: Antirion support engineer
+    i_want: inbound tickets to arrive with the tenant roster entry and CRM contact card attached
+    so_that: I can triage severity and assign without pasting ids across tools
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Ticket lands with context
+    given:
+    - A tenant submitted a ticket through FEAT-164
+    when:
+    - I open the ticket in /antirion/support/queue
+    then:
+    - I see the ticket body plus an embedded panel showing the Org roster row (plan, rolling spend, residency, primary_contact) and the CRM contact card (FEAT-182)
+    - The panel's fields are view-only; editing is done in the tenant roster or the CRM
+  - id: AC-002
+    scenario: Triage and assign
+    given:
+    - A ticket is in state "new"
+    when:
+    - I set severity and assignee and click "Triage"
+    then:
+    - The ticket state becomes "triaged", the SLA timer starts per severity, and an AuditLog "support.ticket.triaged" is written
+  ui:
+    screens:
+    - AntirionConsole
+    components:
+    - SupportQueue
+    - TicketContextPanel
+    states:
+    - new
+    - triaged
+    - awaiting_customer
+    - resolved
+  data_models:
+  - SupportTicket
+  - Org
+  - AuditLog
+  non_functional:
+  - The support queue is rendered only on the Antirion-staff operator console — it is never exposed on a customer install in either mode
+  - Tickets originating from self_hosted installs carry the install id on SupportTicket and the redaction profile applied by FEAT-179
+- id: STORY-437
+  feature: FEAT-181
+  title: Reply to submitter and link an internal engineering issue
+  navigation: operator
+  narrative:
+    as_a: Antirion support engineer
+    i_want: to reply to the ticket's submitter and link an internal engineering issue
+    so_that: the customer sees a response and engineering has a durable artefact for follow-up
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Reply to submitter
+    given:
+    - A ticket is open
+    when:
+    - I write a reply using an optional canned-reply macro and click "Send"
+    then:
+    - The reply is delivered to the submitter through the same channel the ticket arrived on (tenant in-product inbox, email or webhook)
+    - The ticket state advances to "awaiting_customer"
+  - id: AC-002
+    scenario: Link an engineering issue
+    given:
+    - A ticket needs an engineering fix
+    when:
+    - I paste or pick an issue id from the engineering tracker integration
+    then:
+    - The issue is attached to the ticket and the ticket acquires a "linked_issue" badge
+    - Issue closure can emit a "ticket.auto_resolve_suggest" event so support can close the ticket
+  data_models:
+  - SupportTicket
+  - EngineeringIssueLink
+  non_functional:
+  - Outbound replies inherit the tenant's notification channels — we never bypass the tenant's configured routing
+  - Canned replies are templated with explicit variables; replies to self_hosted tickets redact variables not in the channel's data class
+- id: STORY-438
+  feature: FEAT-181
+  title: SLA timers and auto-escalation
+  navigation: operator
+  narrative:
+    as_a: Antirion support lead
+    i_want: SLA timers per severity that auto-escalate overdue tickets
+    so_that: nothing falls through the cracks on busy days
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Auto-escalate overdue ticket
+    given:
+    - A severity-1 ticket has been in "triaged" for longer than the severity-1 SLA
+    when:
+    - The SLA watchdog runs
+    then:
+    - The ticket is reassigned to the on-call escalation group and severity-1 pager integration fires
+    - An AuditLog "support.ticket.escalated" records the prior assignee, the new assignee and the overdue duration
+  data_models:
+  - SupportTicket
+  - AuditLog
+  non_functional:
+  - SLA thresholds are configurable per severity and are part of the signed release
+  - Escalation uses the Antirion-staff pager integration — never the tenant's paging setup
+- id: STORY-439
+  feature: FEAT-182
+  title: View and edit tenant contact fields
+  navigation: operator
+  narrative:
+    as_a: Antirion account manager
+    i_want: a CRM card per Org with primary, billing, security and privacy contacts plus renewal dates
+    so_that: staff interactions with a tenant are coherent across support, renewals and security
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Open a CRM card
+    given:
+    - I am on /antirion/crm/orgs/:id
+    when:
+    - The page loads
+    then:
+    - I see primary_contact, billing_contact, security_contact, privacy_officer, renewal_date, commitment_end, latest NPS, latest CSAT and links to the roster row, support queue filter and CRM outreach log
+  - id: AC-002
+    scenario: Edit a contact
+    given:
+    - I have the CRM edit permission
+    when:
+    - I update billing_contact and save
+    then:
+    - The Org row is updated and an AuditLog "crm.contact.updated" records actor, field, before and after
+  data_models:
+  - Org
+  - AuditLog
+  non_functional:
+  - The CRM surface is rendered only on the Antirion-staff operator console and is never visible on a customer install
+  - Contact edits propagate to tenant-side notification routing within the config-reload SLA
+- id: STORY-440
+  feature: FEAT-182
+  title: Log an outreach and schedule a follow-up
+  navigation: operator
+  narrative:
+    as_a: Antirion account manager
+    i_want: to record outreach (call, email, meeting) and schedule a follow-up reminder
+    so_that: customer relationships are managed deliberately and handovers between staff are lossless
+  priority: P2
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Log outreach
+    given:
+    - I am on a CRM card
+    when:
+    - I click "Log outreach", pick a type, summarise, attach notes and save
+    then:
+    - A CrmOutreach row is created and appears on the CRM timeline
+    - An AuditLog "crm.outreach.logged" records actor and summary
+  - id: AC-002
+    scenario: Schedule follow-up
+    given:
+    - A logged outreach
+    when:
+    - I set a follow-up date and assignee
+    then:
+    - A reminder lands in the assignee's in-product inbox on the chosen date
+    - Missed follow-ups auto-escalate to the account manager's lead after N days
+  data_models:
+  - CrmOutreach
+  - AuditLog
+  non_functional:
+  - Outreach logs are retained for the duration of the customer relationship and exported under the FEAT-124 compliance flow on request
+  - Follow-up reminders ride the standard notification-delivery worker — no custom path
+- id: STORY-441
+  feature: FEAT-182
+  title: Renewal pipeline and NPS overview
+  navigation: operator
+  narrative:
+    as_a: Antirion head of customer success
+    i_want: a dashboard of renewals in the next 90 days, at-risk accounts by NPS and by support-severity trends
+    so_that: commercial and relationship risk is visible in one place
+  priority: P2
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Renewal pipeline
+    given:
+    - Orgs have renewal_date values set
+    when:
+    - I open /antirion/crm/pipeline
+    then:
+    - I see a board with columns "in 30 days", "in 60 days", "in 90 days" and "overdue"
+    - Each card shows Org, plan, rolling spend, latest NPS and any open severity-1 support tickets
+  - id: AC-002
+    scenario: At-risk heuristic
+    given:
+    - An Org has NPS below 30 or two severity-1 tickets in the last 30 days
+    when:
+    - The heuristic worker runs
+    then:
+    - The Org card shows an "at risk" pill with the heuristic reason
+  data_models:
+  - Org
+  - CrmOutreach
+  - SupportTicket
+  non_functional:
+  - The pipeline reads from operator rollups so request-path latency is never affected
+  - All figures are recomputed on a bounded schedule — freshness is bounded rather than real-time
 models:
 - name: Org
   description: The workspace (organization) that owns everything.
@@ -23181,4 +23975,168 @@ models:
   - name: created_by_user_id
     type: FK:User
   - name: created_at
+    type: timestamp
+- name: InstallState
+  description: Singleton row capturing self_hosted install-wizard progress and completion metadata.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: status
+    type: enum[pending,in_progress,complete]
+  - name: current_step
+    type: string
+  - name: completed_at
+    type: timestamp
+  - name: completed_by_user_id
+    type: FK:User
+  - name: fleet_version_at_completion
+    type: string
+  - name: schema_version_at_completion
+    type: string
+- name: ReleaseArtefact
+  description: A verified self_hosted release artefact acquired online from the Antirion CDN or imported in air-gapped mode.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: version
+    type: string
+  - name: channel
+    type: enum[stable,extended_support]
+  - name: source
+    type: enum[cdn,airgapped_import]
+  - name: digest
+    type: string
+  - name: signature_verified_at
+    type: timestamp
+  - name: acquired_by_user_id
+    type: FK:User
+  - name: acquired_at
+    type: timestamp
+- name: FleetDeployment
+  description: A staged roll-forward of a ReleaseArtefact across the fleet with per-stage status and rollback tracking. Shared by FEAT-174 (saas) and FEAT-178 (self_hosted).
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: release_artefact_id
+    type: FK:ReleaseArtefact
+  - name: stage
+    type: string
+  - name: percent
+    type: int
+  - name: status
+    type: enum[pending,running,succeeded,breached,rolled_back]
+  - name: started_at
+    type: timestamp
+  - name: ended_at
+    type: timestamp
+  - name: acting_user_id
+    type: FK:User
+- name: PhoneHomeChannel
+  description: Configuration row for one of the named phone-home channels (license, metrics, crash, security, support, docs) on an install.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: name
+    type: enum[license,metrics,crash,security,support,docs]
+  - name: enabled
+    type: bool
+  - name: air_gapped
+    type: bool
+  - name: payload_schema_ref
+    type: string
+  - name: retention_policy_ref
+    type: string
+  - name: last_toggled_by_user_id
+    type: FK:User
+  - name: last_toggled_at
+    type: timestamp
+- name: PhoneHomeCallLog
+  description: Append-only hash-chained record of every outbound phone-home call made by an install.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: channel
+    type: enum[license,metrics,crash,security,support,docs]
+  - name: endpoint
+    type: string
+  - name: payload_digest
+    type: string
+  - name: response_code
+    type: int
+  - name: latency_ms
+    type: int
+  - name: at
+    type: timestamp
+  - name: prev_hash
+    type: string
+  - name: hash
+    type: string
+- name: LicenseIncident
+  description: An open incident tracking a breach of an installed License, with soft-grace, hard-close and renewal-shield state transitions.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: license_id
+    type: FK:License
+  - name: breached_entitlement
+    type: string
+  - name: observed_value
+    type: string
+  - name: state
+    type: enum[soft_grace,hard_closed,shielded,resolved]
+  - name: opened_at
+    type: timestamp
+  - name: grace_expires_at
+    type: timestamp
+  - name: hard_closed_at
+    type: timestamp
+  - name: shield_expires_at
+    type: timestamp
+  - name: resolved_at
+    type: timestamp
+  - name: last_actor_user_id
+    type: FK:User
+- name: EngineeringIssueLink
+  description: Link between a SupportTicket on the Antirion-side support queue and an internal engineering tracker issue.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: support_ticket_id
+    type: FK:SupportTicket
+  - name: tracker
+    type: string
+  - name: issue_id
+    type: string
+  - name: linked_by_user_id
+    type: FK:User
+  - name: linked_at
+    type: timestamp
+- name: CrmOutreach
+  description: A recorded staff-to-tenant interaction on the Antirion platform CRM, with optional follow-up scheduling.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+  - name: kind
+    type: enum[call,email,meeting,note]
+  - name: summary
+    type: string
+  - name: attachments
+    type: json
+  - name: follow_up_at
+    type: timestamp
+  - name: follow_up_assignee_user_id
+    type: FK:User
+  - name: logged_by_user_id
+    type: FK:User
+  - name: logged_at
     type: timestamp
