@@ -143,12 +143,12 @@ epics:
   - FEAT-078
   - FEAT-079
   - FEAT-080
+  - FEAT-081
 - id: EPIC-008
   title: Budgets and cost control
   description: Org, team, project and user budgets with policies, forecasts, waivers, and enforcement audit.
   priority: P0
   features:
-  - FEAT-081
   - FEAT-082
   - FEAT-083
   - FEAT-084
@@ -165,12 +165,12 @@ epics:
   - FEAT-095
   - FEAT-096
   - FEAT-097
+  - FEAT-098
 - id: EPIC-009
   title: Alerts and notifications
   description: Threshold-based alert rules, lifecycle and runbooks with multi-channel notifications.
   priority: P0
   features:
-  - FEAT-098
   - FEAT-099
   - FEAT-100
   - FEAT-101
@@ -178,12 +178,12 @@ epics:
   - FEAT-103
   - FEAT-104
   - FEAT-105
+  - FEAT-106
 - id: EPIC-010
   title: Workspace administration
   description: Org identity, billing, SSO, SCIM, MFA, residency, retention, webhooks, audit sinks, integrations, feature flags, danger zone.
   priority: P0
   features:
-  - FEAT-106
   - FEAT-107
   - FEAT-108
   - FEAT-109
@@ -212,12 +212,12 @@ epics:
   - FEAT-132
   - FEAT-133
   - FEAT-134
+  - FEAT-135
 - id: EPIC-011
   title: Gateway request pipeline
   description: The runtime that serves traffic — ingress dialects, translation, edge auth, rate limits, retries and timeouts, runtime failover, outbound provider auth, cost attribution, idempotency, health and circuit breaker, telemetry.
   priority: P0
   features:
-  - FEAT-135
   - FEAT-136
   - FEAT-137
   - FEAT-138
@@ -244,12 +244,12 @@ epics:
   - FEAT-159
   - FEAT-160
   - FEAT-161
+  - FEAT-162
 - id: EPIC-012
   title: Platform foundations and customer experience
   description: Cross-cutting capabilities that span the product — first-run onboarding, public status, in-product support, legal acceptance, in-app help, internal job/worker observability, and pricing/cost forecast tooling.
   priority: P1
   features:
-  - FEAT-162
   - FEAT-163
   - FEAT-164
   - FEAT-165
@@ -257,6 +257,7 @@ epics:
   - FEAT-167
   - FEAT-168
   - FEAT-169
+  - FEAT-170
 features:
 - id: FEAT-001
   epic: EPIC-001
@@ -591,11 +592,12 @@ features:
 - id: FEAT-032
   epic: EPIC-004
   title: Analytics
-  description: Spend trends, stacked provider breakdown, heatmap, provider SLA, model efficiency, cache impact.
+  description: Spend trends, stacked provider breakdown, heatmap, provider SLA, model efficiency, cache impact, KPI highlight strip and top-models leaderboard.
   priority: P1
   stories:
   - STORY-082
   - STORY-083
+  - STORY-084
   ui_references:
   - proto/Analytics.html
   - proto/analytics.jsx
@@ -606,7 +608,7 @@ features:
   description: Auto-detected anomalies with severity, context, and contextual actions.
   priority: P1
   stories:
-  - STORY-084
+  - STORY-085
   ui_references:
   - proto/analytics.jsx
 - id: FEAT-034
@@ -615,7 +617,7 @@ features:
   description: Preset and custom time-range picker shared across observability pages.
   priority: P0
   stories:
-  - STORY-085
+  - STORY-086
   ui_references:
   - proto/shell.jsx
   - proto/time-range.js
@@ -625,7 +627,7 @@ features:
   description: Search requests across id, user, model, and prompt text.
   priority: P1
   stories:
-  - STORY-086
+  - STORY-087
   ui_references:
   - proto/shell.jsx
   - proto/log-page.jsx
@@ -635,8 +637,8 @@ features:
   description: Export the filtered request set to CSV.
   priority: P1
   stories:
-  - STORY-087
   - STORY-088
+  - STORY-089
   ui_references:
   - proto/log-page.jsx
 - id: FEAT-037
@@ -645,7 +647,7 @@ features:
   description: Re-run a historical request, optionally changing model, parameters or prompt, to debug regressions.
   priority: P1
   stories:
-  - STORY-089
+  - STORY-090
   ui_references:
   - proto/Request Log.html
   - proto/log-page.jsx
@@ -655,7 +657,7 @@ features:
   description: Side-by-side diff of two request/response pairs for root-cause analysis.
   priority: P2
   stories:
-  - STORY-090
+  - STORY-091
   ui_references:
   - proto/Request Log.html
   - proto/log-page.jsx
@@ -665,8 +667,8 @@ features:
   description: Generate signed, scoped share links to a saved view or a specific request detail.
   priority: P2
   stories:
-  - STORY-091
   - STORY-092
+  - STORY-093
   ui_references:
   - proto/Request Log.html
   - proto/log-page.jsx
@@ -676,7 +678,7 @@ features:
   description: Break spend down by model, team, project, key and environment with input/output/cache decomposition.
   priority: P1
   stories:
-  - STORY-093
+  - STORY-094
   ui_references:
   - proto/analytics.jsx
   - proto/Analytics.html
@@ -686,41 +688,43 @@ features:
   description: Configure the anomaly detectors that drive FEAT-022 signals — list, set thresholds, enable/disable by category.
   priority: P1
   stories:
-  - STORY-094
   - STORY-095
   - STORY-096
+  - STORY-097
 - id: FEAT-042
   epic: EPIC-004
   title: Analytics saved views
   description: Save an analytics dashboard configuration, share via ShareLink with resource_type=analytics_view, load or delete.
   priority: P1
   stories:
-  - STORY-097
   - STORY-098
   - STORY-099
   - STORY-100
+  - STORY-101
 - id: FEAT-043
   epic: EPIC-004
   title: Tool-use analytics view
   description: Top tools by invocation, failure rate and latency.
   priority: P1
   stories:
-  - STORY-101
+  - STORY-102
 - id: FEAT-044
   epic: EPIC-004
   title: Streaming-specific analytics
   description: TTFT filter, client-cancelled count, mid-stream drops.
   priority: P1
   stories:
-  - STORY-102
+  - STORY-103
 - id: FEAT-045
   epic: EPIC-005
   title: Model catalog
-  description: Browse, filter and inspect every model available to the workspace.
+  description: Browse, filter and inspect every model available to the workspace; view provider headroom and the org-wide catalog policy panel.
   priority: P0
   stories:
-  - STORY-103
   - STORY-104
+  - STORY-105
+  - STORY-106
+  - STORY-107
   ui_references:
   - proto/Models.html
   - proto/models.jsx
@@ -731,8 +735,8 @@ features:
   description: Add a model; enable, disable, deprecate, restrict or promote from preview.
   priority: P0
   stories:
-  - STORY-105
-  - STORY-106
+  - STORY-108
+  - STORY-109
   ui_references:
   - proto/models.jsx
 - id: FEAT-047
@@ -741,8 +745,8 @@ features:
   description: Define human-friendly aliases that resolve to a model with a fallback.
   priority: P1
   stories:
-  - STORY-107
-  - STORY-108
+  - STORY-110
+  - STORY-111
   ui_references:
   - proto/models.jsx
 - id: FEAT-048
@@ -751,19 +755,20 @@ features:
   description: Override per-model input, output and cache pricing for billing and forecasts.
   priority: P1
   stories:
-  - STORY-109
-  - STORY-110
+  - STORY-112
+  - STORY-113
   ui_references:
   - proto/models.jsx
 - id: FEAT-049
   epic: EPIC-005
   title: Routing rule management
-  description: Create, edit, duplicate, enable and delete routing rules with priority ordering.
+  description: Create, edit, duplicate, enable and delete routing rules with priority ordering; view live router health KPIs and alerts.
   priority: P0
   stories:
-  - STORY-111
-  - STORY-112
-  - STORY-113
+  - STORY-114
+  - STORY-115
+  - STORY-116
+  - STORY-117
   ui_references:
   - proto/Routing Policy.html
   - proto/routing.jsx
@@ -771,11 +776,12 @@ features:
 - id: FEAT-050
   epic: EPIC-005
   title: Routing strategies
-  description: Single, weighted, failover, least-loaded, canary and shadow routing strategies.
+  description: Single, weighted, failover, least-loaded, canary and shadow routing strategies with an in-product reference drawer.
   priority: P0
   stories:
-  - STORY-114
-  - STORY-115
+  - STORY-118
+  - STORY-119
+  - STORY-120
   ui_references:
   - proto/routing.jsx
 - id: FEAT-051
@@ -784,7 +790,7 @@ features:
   description: Provider-level circuit breaker and per-rule fallback chain on errors, timeouts, rate-limits.
   priority: P0
   stories:
-  - STORY-116
+  - STORY-121
   ui_references:
   - proto/routing.jsx
 - id: FEAT-052
@@ -793,8 +799,8 @@ features:
   description: Test a rule against recent traffic and watch the live routing decision stream.
   priority: P1
   stories:
-  - STORY-117
-  - STORY-118
+  - STORY-122
+  - STORY-123
   ui_references:
   - proto/routing.jsx
 - id: FEAT-053
@@ -803,9 +809,9 @@ features:
   description: Manually promote a canary target to 100% or schedule automatic graduation when configurable metric thresholds pass.
   priority: P0
   stories:
-  - STORY-119
-  - STORY-120
-  - STORY-121
+  - STORY-124
+  - STORY-125
+  - STORY-126
   ui_references:
   - proto/Routing Policy.html
   - proto/routing.jsx
@@ -815,8 +821,8 @@ features:
   description: Record each change to routing rules as a versioned deploy; allow one-click rollback.
   priority: P0
   stories:
-  - STORY-122
-  - STORY-123
+  - STORY-127
+  - STORY-128
   ui_references:
   - proto/Routing Policy.html
   - proto/routing.jsx
@@ -826,7 +832,7 @@ features:
   description: When a model is deprecated, publish a migration notice, track affected keys and teams, and measure migration progress.
   priority: P1
   stories:
-  - STORY-124
+  - STORY-129
   ui_references:
   - proto/Models.html
   - proto/models.jsx
@@ -836,8 +842,8 @@ features:
   description: Permanently remove a disabled model after a retention window, blocking deletion when still referenced by rules, aliases or carrying live traffic.
   priority: P2
   stories:
-  - STORY-125
-  - STORY-126
+  - STORY-130
+  - STORY-131
   ui_references:
   - proto/models.jsx
 - id: FEAT-057
@@ -846,35 +852,35 @@ features:
   description: Request, review and decide routing rule changes that require approval via Approval of kind "routing-rule-change".
   priority: P1
   stories:
-  - STORY-127
-  - STORY-128
+  - STORY-132
+  - STORY-133
 - id: FEAT-058
   epic: EPIC-005
   title: Prompt and template registry
   description: Versioned registry of prompts/templates with owners, approvals, A/B and lineage.
   priority: P1
   stories:
-  - STORY-129
-  - STORY-130
-  - STORY-131
-  - STORY-132
-  - STORY-133
+  - STORY-134
+  - STORY-135
+  - STORY-136
+  - STORY-137
+  - STORY-138
 - id: FEAT-059
   epic: EPIC-005
   title: Model evaluation and benchmarking
   description: Golden datasets, compare models side-by-side, and a translation regression suite that exercises FEAT-072.
   priority: P1
   stories:
-  - STORY-134
-  - STORY-135
-  - STORY-136
+  - STORY-139
+  - STORY-140
+  - STORY-141
 - id: FEAT-060
   epic: EPIC-006
   title: Per-model cache configuration
   description: Configure cache backend, TTL, key strategy and size limits per model.
   priority: P0
   stories:
-  - STORY-137
+  - STORY-142
   ui_references:
   - proto/Cache.html
   - proto/cache.jsx
@@ -885,9 +891,9 @@ features:
   description: Team-scoped semantic caches with embedding model, threshold and distance metric.
   priority: P2
   stories:
-  - STORY-138
-  - STORY-139
-  - STORY-140
+  - STORY-143
+  - STORY-144
+  - STORY-145
   ui_references:
   - proto/cache.jsx
 - id: FEAT-062
@@ -896,7 +902,7 @@ features:
   description: Track cost and reuse of named prompt segments (system, tools, RAG) separately.
   priority: P2
   stories:
-  - STORY-141
+  - STORY-146
   ui_references:
   - proto/cache.jsx
 - id: FEAT-063
@@ -905,9 +911,9 @@ features:
   description: Browse, search and invalidate individual cache entries.
   priority: P2
   stories:
-  - STORY-142
-  - STORY-143
-  - STORY-144
+  - STORY-147
+  - STORY-148
+  - STORY-149
   ui_references:
   - proto/cache.jsx
 - id: FEAT-064
@@ -916,8 +922,8 @@ features:
   description: Event-driven invalidation (logout, template update, nightly refresh, break-glass).
   priority: P2
   stories:
-  - STORY-145
-  - STORY-146
+  - STORY-150
+  - STORY-151
   ui_references:
   - proto/cache.jsx
 - id: FEAT-065
@@ -926,7 +932,7 @@ features:
   description: Override cache settings per team or per API key.
   priority: P2
   stories:
-  - STORY-147
+  - STORY-152
   ui_references:
   - proto/cache.jsx
 - id: FEAT-066
@@ -935,7 +941,7 @@ features:
   description: Dashboard of hit rate, tokens saved and cost saved broken down by model, team and backend.
   priority: P1
   stories:
-  - STORY-148
+  - STORY-153
   ui_references:
   - proto/Cache.html
   - proto/cache.jsx
@@ -945,7 +951,7 @@ features:
   description: Precompute and populate cache entries for a set of prompts or prompt segments ahead of traffic.
   priority: P0
   stories:
-  - STORY-149
+  - STORY-154
   ui_references:
   - proto/cache.jsx
 - id: FEAT-068
@@ -954,8 +960,8 @@ features:
   description: Per-model eviction policy (LRU, LFU, TTL-first), size-based eviction limits, and a per-entry audit showing why each entry was evicted.
   priority: P2
   stories:
-  - STORY-150
-  - STORY-151
+  - STORY-155
+  - STORY-156
   ui_references:
   - proto/cache.jsx
 - id: FEAT-069
@@ -964,8 +970,8 @@ features:
   description: Filterable log of blocked, redacted, flagged and allowed safety events.
   priority: P0
   stories:
-  - STORY-152
-  - STORY-153
+  - STORY-157
+  - STORY-158
   ui_references:
   - proto/Safety.html
   - proto/safety.jsx
@@ -976,8 +982,8 @@ features:
   description: Twelve PII categories with strictness control and inline redaction.
   priority: P0
   stories:
-  - STORY-154
-  - STORY-155
+  - STORY-159
+  - STORY-160
   ui_references:
   - proto/safety.jsx
   - proto/safety-components.jsx
@@ -987,7 +993,7 @@ features:
   description: Detect and block prompt-injection and jailbreak attempts in inputs.
   priority: P0
   stories:
-  - STORY-156
+  - STORY-161
   ui_references:
   - proto/safety.jsx
 - id: FEAT-072
@@ -996,9 +1002,9 @@ features:
   description: Classify prompts and responses into safety categories with confidence scores.
   priority: P1
   stories:
-  - STORY-157
-  - STORY-158
-  - STORY-159
+  - STORY-162
+  - STORY-163
+  - STORY-164
   ui_references:
   - proto/safety.jsx
 - id: FEAT-073
@@ -1007,10 +1013,10 @@ features:
   description: Create, edit, toggle, save-as-draft and publish rules of regex, NER, classifier, allowlist and fingerprint types.
   priority: P0
   stories:
-  - STORY-160
-  - STORY-161
-  - STORY-162
-  - STORY-163
+  - STORY-165
+  - STORY-166
+  - STORY-167
+  - STORY-168
   ui_references:
   - proto/safety-components.jsx
 - id: FEAT-074
@@ -1019,7 +1025,7 @@ features:
   description: Override a single event action (block -> allow, flag -> block) and mark reviewed.
   priority: P1
   stories:
-  - STORY-164
+  - STORY-169
   ui_references:
   - proto/safety.jsx
 - id: FEAT-075
@@ -1028,7 +1034,7 @@ features:
   description: Track every edit to a detection rule, diff versions, and roll back to a previous version.
   priority: P1
   stories:
-  - STORY-165
+  - STORY-170
   ui_references:
   - proto/Safety.html
   - proto/safety.jsx
@@ -1038,8 +1044,8 @@ features:
   description: Evaluate a proposed rule against recent traffic or a paste-in sample before activating it; backtest an active rule over a longer window and report false-positive/false-negative rates.
   priority: P1
   stories:
-  - STORY-166
-  - STORY-167
+  - STORY-171
+  - STORY-172
   ui_references:
   - proto/safety.jsx
 - id: FEAT-077
@@ -1048,7 +1054,7 @@ features:
   description: Library of prebuilt rule packs (GDPR PII, PCI, HIPAA, corporate secrets) that can be installed with one click.
   priority: P2
   stories:
-  - STORY-168
+  - STORY-173
   ui_references:
   - proto/safety.jsx
 - id: FEAT-078
@@ -1057,8 +1063,8 @@ features:
   description: Allow a team to tighten (never loosen) the org-wide safety policy for its own traffic.
   priority: P1
   stories:
-  - STORY-169
-  - STORY-170
+  - STORY-174
+  - STORY-175
   ui_references:
   - proto/safety.jsx
   - proto/teams-users.jsx
@@ -1068,153 +1074,145 @@ features:
   description: Request, review and decide changes to safety, retention or detection policies via Approval of kind "policy-change"; enforce an SLA on pending approvals with delegation and bulk actions.
   priority: P1
   stories:
-  - STORY-171
-  - STORY-172
-  - STORY-173
+  - STORY-176
+  - STORY-177
+  - STORY-178
 - id: FEAT-080
   epic: EPIC-007
   title: PII unredact/reversal flow
   description: Let authorized reviewers request temporary reveal of a redacted PII span with reason and approval; auto-expire the reveal and audit.
   priority: P1
   stories:
-  - STORY-174
-  - STORY-175
-  - STORY-176
-  - STORY-177
+  - STORY-179
+  - STORY-180
+  - STORY-181
+  - STORY-182
 - id: FEAT-081
+  epic: EPIC-007
+  title: Live safety traffic-flow visualization
+  description: A "what leaves your walls" live flow diagram on /safety showing inbound requests from apps, the redactor stage and outbound calls to providers, with real-time req/min, redacted/min, blocked/min and a readiness score.
+  priority: P1
+  stories:
+  - STORY-183
+  ui_references:
+  - proto/safety.jsx
+  - proto/safety-components.jsx
+- id: FEAT-082
   epic: EPIC-008
   title: Org and team budget overview
   description: Dashboard of org-wide budget health with per-team cards and alerts.
   priority: P0
   stories:
-  - STORY-178
-  - STORY-179
-  - STORY-180
-  - STORY-181
+  - STORY-184
+  - STORY-185
+  - STORY-186
+  - STORY-187
   ui_references:
   - proto/Budgets.html
   - proto/budgets-data.js
-- id: FEAT-082
+- id: FEAT-083
   epic: EPIC-008
   title: Project and user budget allocation
   description: Allocate a team budget down to projects and individual users.
   priority: P1
   stories:
-  - STORY-182
+  - STORY-188
   ui_references:
   - proto/budgets-data.js
-- id: FEAT-083
+- id: FEAT-084
   epic: EPIC-008
   title: Budget policies and enforcement
   description: Set soft alert and hard cap thresholds with actions (alert, require-approval, downgrade, block).
   priority: P0
   stories:
-  - STORY-183
-  - STORY-184
+  - STORY-189
+  - STORY-190
   ui_references:
   - proto/budgets-data.js
-- id: FEAT-084
+- id: FEAT-085
   epic: EPIC-008
   title: Forecasts and runout projections
   description: Projected month-end spend and runout date driven by 7-day burn rate.
   priority: P1
   stories:
-  - STORY-185
-  - STORY-186
+  - STORY-191
+  - STORY-192
   ui_references:
   - proto/budgets-data.js
   - proto/analytics.jsx
-- id: FEAT-085
+- id: FEAT-086
   epic: EPIC-008
   title: Waivers and budget events
   description: Grant one-time budget expansion and review a timeline of budget events.
   priority: P1
   stories:
-  - STORY-187
-  - STORY-188
+  - STORY-193
+  - STORY-194
   ui_references:
   - proto/budgets-data.js
-- id: FEAT-086
+- id: FEAT-087
   epic: EPIC-008
   title: Approvals
   description: Queue of pending approvals generated by "require-approval" budget and policy actions, with approve/reject flow.
   priority: P1
   stories:
-  - STORY-189
-  - STORY-190
+  - STORY-195
+  - STORY-196
   ui_references:
   - proto/budgets-data.js
   - proto/alerts.jsx
-- id: FEAT-087
+- id: FEAT-088
   epic: EPIC-008
   title: Update budget
   description: Change a budget's amount, cycle, policy or owner with audit and optional approval.
   priority: P0
   stories:
-  - STORY-191
+  - STORY-197
   ui_references:
   - proto/Budgets.html
   - proto/budgets-data.js
-- id: FEAT-088
+- id: FEAT-089
   epic: EPIC-008
   title: Delete budget
   description: Archive or delete a budget with references (projects, users) reassigned or cleared.
   priority: P1
   stories:
-  - STORY-192
+  - STORY-198
   ui_references:
   - proto/budgets-data.js
-- id: FEAT-089
+- id: FEAT-090
   epic: EPIC-008
   title: Budget rollover and reset schedule
   description: Configure cycle reset behavior — reset to zero, roll over remaining balance up to a cap, or carry a fixed amount.
   priority: P1
   stories:
-  - STORY-193
+  - STORY-199
   ui_references:
   - proto/budgets-data.js
-- id: FEAT-090
+- id: FEAT-091
   epic: EPIC-008
   title: Overage notifications
   description: Notify designated recipients when actual spend exceeds the budget, distinct from soft-threshold alerts.
   priority: P1
   stories:
-  - STORY-194
+  - STORY-200
   ui_references:
   - proto/budgets-data.js
-- id: FEAT-091
+- id: FEAT-092
   epic: EPIC-008
   title: Multi-currency budgets
   description: Configure org reporting currency and allow budgets in non-USD currencies with FX conversion.
   priority: P2
   stories:
-  - STORY-195
-  - STORY-196
+  - STORY-201
+  - STORY-202
   ui_references:
   - proto/budgets-data.js
   - proto/settings-sections.jsx
-- id: FEAT-092
+- id: FEAT-093
   epic: EPIC-008
   title: Project lifecycle
   description: Create, list, edit, delete a Project and assign owners.
-  priority: P1
-  stories:
-  - STORY-197
-  - STORY-198
-  - STORY-199
-  - STORY-200
-  - STORY-201
-- id: FEAT-093
-  epic: EPIC-008
-  title: Budget policy library
-  description: Manage reusable BudgetPolicy records that can be attached to multiple Budgets.
-  priority: P1
-  stories:
-  - STORY-202
-- id: FEAT-094
-  epic: EPIC-008
-  title: Billing operations
-  description: Contest invoice, request credit, update payment method, upload PO, set tax id, view invoice history.
   priority: P1
   stories:
   - STORY-203
@@ -1222,11 +1220,17 @@ features:
   - STORY-205
   - STORY-206
   - STORY-207
+- id: FEAT-094
+  epic: EPIC-008
+  title: Budget policy library
+  description: Manage reusable BudgetPolicy records that can be attached to multiple Budgets.
+  priority: P1
+  stories:
   - STORY-208
 - id: FEAT-095
   epic: EPIC-008
-  title: Plan lifecycle
-  description: Start trial, upgrade, downgrade, cancel and view plan change history.
+  title: Billing operations
+  description: Contest invoice, request credit, update payment method, upload PO, set tax id, view invoice history.
   priority: P1
   stories:
   - STORY-209
@@ -1234,240 +1238,222 @@ features:
   - STORY-211
   - STORY-212
   - STORY-213
+  - STORY-214
 - id: FEAT-096
+  epic: EPIC-008
+  title: Plan lifecycle
+  description: Start trial, upgrade, downgrade, cancel and view plan change history.
+  priority: P1
+  stories:
+  - STORY-215
+  - STORY-216
+  - STORY-217
+  - STORY-218
+  - STORY-219
+- id: FEAT-097
   epic: EPIC-008
   title: Finance export and showback
   description: Monthly CSV per cost-center with scheduled dispatch to finance email.
   priority: P1
   stories:
-  - STORY-214
-  - STORY-215
-- id: FEAT-097
+  - STORY-220
+  - STORY-221
+- id: FEAT-098
   epic: EPIC-008
   title: Contract commitment burn-down UI
   description: Visualize Billing.commitment_used and runway against contract_end.
   priority: P1
   stories:
-  - STORY-216
-- id: FEAT-098
+  - STORY-222
+- id: FEAT-099
   epic: EPIC-009
   title: Alert rule management
   description: Define threshold, window, cooldown, severity and notification channels for each rule.
   priority: P0
   stories:
-  - STORY-217
-  - STORY-218
-  - STORY-219
-  - STORY-220
-  - STORY-221
+  - STORY-223
+  - STORY-224
+  - STORY-225
+  - STORY-226
+  - STORY-227
   ui_references:
   - proto/Alerts.html
   - proto/alerts.jsx
-- id: FEAT-099
+- id: FEAT-100
   epic: EPIC-009
   title: Alert lifecycle
   description: Acknowledge, resolve, snooze and escalate fired alerts.
   priority: P0
   stories:
-  - STORY-222
-  - STORY-223
+  - STORY-228
+  - STORY-229
   ui_references:
   - proto/alerts.jsx
-- id: FEAT-100
+- id: FEAT-101
   epic: EPIC-009
   title: Runbooks
   description: Attach diagnose, mitigate and escalate runbook steps to alert rules.
   priority: P1
   stories:
-  - STORY-224
-  - STORY-225
+  - STORY-230
+  - STORY-231
   ui_references:
   - proto/alerts.jsx
-- id: FEAT-101
+- id: FEAT-102
   epic: EPIC-009
   title: Notification channels
   description: Deliver notifications via email, Slack, PagerDuty and webhooks.
   priority: P0
   stories:
-  - STORY-226
+  - STORY-232
   ui_references:
   - proto/alerts.jsx
   - proto/settings-sections.jsx
-- id: FEAT-102
+- id: FEAT-103
   epic: EPIC-009
   title: Alert snooze and acknowledge
   description: Snooze an alert rule or acknowledge an active alert with a reason and duration.
   priority: P0
   stories:
-  - STORY-227
-  - STORY-228
-  - STORY-229
+  - STORY-233
+  - STORY-234
+  - STORY-235
   ui_references:
   - proto/Alerts.html
   - proto/alerts.jsx
-- id: FEAT-103
+- id: FEAT-104
   epic: EPIC-009
   title: Alert history, incidents and post-mortem
   description: Browse past alert fires with timeline, declare incidents with severity/participants/updates, and write structured post-mortems linked to affected alerts.
   priority: P1
   stories:
-  - STORY-230
-  - STORY-231
-  - STORY-232
+  - STORY-236
+  - STORY-237
+  - STORY-238
   ui_references:
   - proto/alerts.jsx
-- id: FEAT-104
+- id: FEAT-105
   epic: EPIC-009
   title: On-call schedule, rotation and escalation
   description: Define a weekly/daily on-call rotation per team so alerts page the right person, and auto-escalate when the primary does not acknowledge in time.
   priority: P1
   stories:
-  - STORY-233
-  - STORY-234
-  - STORY-235
-  - STORY-236
-  - STORY-237
+  - STORY-239
+  - STORY-240
+  - STORY-241
+  - STORY-242
+  - STORY-243
   ui_references:
   - proto/alerts.jsx
   - proto/teams-users.jsx
-- id: FEAT-105
+- id: FEAT-106
   epic: EPIC-009
   title: SLO tracking
   description: Define SLOs, render error-budget burn-down, alert on burn.
   priority: P1
   stories:
-  - STORY-238
-  - STORY-239
-  - STORY-240
-- id: FEAT-106
+  - STORY-244
+  - STORY-245
+  - STORY-246
+- id: FEAT-107
   epic: EPIC-010
   title: Workspace identity and billing
   description: Org name, slug, logo, contacts, timezone; plan, commitment, invoices, payment method.
   priority: P0
   stories:
-  - STORY-241
-  - STORY-242
+  - STORY-247
+  - STORY-248
   ui_references:
   - proto/settings.jsx
   - proto/settings-sections.jsx
   - proto/settings-data.js
-- id: FEAT-107
+- id: FEAT-108
   epic: EPIC-010
   title: SSO and identity provider configuration
   description: Enable OIDC or SAML IdP, enforce domains, pick JIT mode and default role.
   priority: P0
   stories:
-  - STORY-243
+  - STORY-249
   ui_references:
   - proto/settings-sections.jsx
-- id: FEAT-108
+- id: FEAT-109
   epic: EPIC-010
   title: SCIM provisioning
   description: Configure SCIM endpoint and bearer token; monitor sync stats and pending deprovisions; cascade deprovisioning across keys, budgets, alerts, approvals and PII.
   priority: P1
   stories:
-  - STORY-244
-  - STORY-245
-  - STORY-246
+  - STORY-250
+  - STORY-251
+  - STORY-252
   ui_references:
   - proto/settings-sections.jsx
-- id: FEAT-109
+- id: FEAT-110
   epic: EPIC-010
   title: Workspace MFA and sign-in policy
   description: Enforce MFA, choose allowed factors, set session TTL and password policy.
   priority: P0
   stories:
-  - STORY-247
+  - STORY-253
   ui_references:
   - proto/settings-sections.jsx
-- id: FEAT-110
+- id: FEAT-111
   epic: EPIC-010
   title: Workspace API access configuration
   description: Base URL, key TTL defaults, org rate limits, and staff metadata API. The canonical org-level IP allowlist lives in FEAT-107.
   priority: P0
   stories:
-  - STORY-248
-  - STORY-249
+  - STORY-254
+  - STORY-255
   ui_references:
   - proto/settings-sections.jsx
-- id: FEAT-111
+- id: FEAT-112
   epic: EPIC-010
   title: Data residency
   description: Pin region for data at rest, rotate customer-managed key, configure backups.
   priority: P1
   stories:
-  - STORY-250
+  - STORY-256
   ui_references:
   - proto/settings-sections.jsx
-- id: FEAT-112
+- id: FEAT-113
   epic: EPIC-010
   title: Data retention and PII config
   description: Configure retention for request/response bodies and metadata; toggle PII redaction and custom entities. Canonical home for per-data-class retention policies referenced by other features.
   priority: P0
   stories:
-  - STORY-251
-  - STORY-252
+  - STORY-257
+  - STORY-258
   ui_references:
   - proto/settings-sections.jsx
-- id: FEAT-113
+- id: FEAT-114
   epic: EPIC-010
   title: Webhooks
   description: HMAC-signed, at-least-once webhooks for gateway events with test and rotation.
   priority: P1
   stories:
-  - STORY-253
-  - STORY-254
-  - STORY-255
-  - STORY-256
+  - STORY-259
+  - STORY-260
+  - STORY-261
+  - STORY-262
   ui_references:
   - proto/settings-sections.jsx
-- id: FEAT-114
+- id: FEAT-115
   epic: EPIC-010
   title: Audit log sinks
   description: Stream audit events to S3, Splunk, Datadog or Snowflake, with dead-letter, replay and hash-chain tamper-proofing.
   priority: P1
   stories:
-  - STORY-257
-  - STORY-258
-  - STORY-259
-  - STORY-260
-  ui_references:
-  - proto/settings-sections.jsx
-- id: FEAT-115
-  epic: EPIC-010
-  title: Integrations
-  description: Connect, disconnect, re-auth and manage GitHub, Slack, PagerDuty, Jira, Linear, Datadog, Snowflake, Vault.
-  priority: P2
-  stories:
-  - STORY-261
-  - STORY-262
   - STORY-263
   - STORY-264
+  - STORY-265
+  - STORY-266
   ui_references:
   - proto/settings-sections.jsx
 - id: FEAT-116
   epic: EPIC-010
-  title: Workspace notification defaults
-  description: Default event-channel matrix and quiet hours for the whole workspace.
-  priority: P1
-  stories:
-  - STORY-265
-  ui_references:
-  - proto/settings-sections.jsx
-- id: FEAT-117
-  epic: EPIC-010
-  title: Feature flags (labs)
-  description: Opt-in workspace feature flags with alpha, beta and GA tiers.
+  title: Integrations
+  description: Connect, disconnect, re-auth and manage GitHub, Slack, PagerDuty, Jira, Linear, Datadog, Snowflake, Vault.
   priority: P2
-  stories:
-  - STORY-266
-  ui_references:
-  - proto/settings-sections.jsx
-- id: FEAT-118
-  epic: EPIC-010
-  title: Danger zone
-  description: Pause ingress, dry-run all traffic, purge caches, rotate org secret, export and delete org.
-  priority: P1
   stories:
   - STORY-267
   - STORY-268
@@ -1475,470 +1461,500 @@ features:
   - STORY-270
   ui_references:
   - proto/settings-sections.jsx
-- id: FEAT-119
+- id: FEAT-117
   epic: EPIC-010
-  title: Audit log viewer
-  description: Browse and filter the workspace audit log in-app, in addition to external sinks.
+  title: Workspace notification defaults
+  description: Default event-channel matrix and quiet hours for the whole workspace.
   priority: P1
   stories:
   - STORY-271
   ui_references:
   - proto/settings-sections.jsx
+- id: FEAT-118
+  epic: EPIC-010
+  title: Feature flags (labs)
+  description: Opt-in workspace feature flags with alpha, beta and GA tiers.
+  priority: P2
+  stories:
+  - STORY-272
+  ui_references:
+  - proto/settings-sections.jsx
+- id: FEAT-119
+  epic: EPIC-010
+  title: Danger zone
+  description: Pause ingress, dry-run all traffic, purge caches, rotate org secret, export and delete org.
+  priority: P1
+  stories:
+  - STORY-273
+  - STORY-274
+  - STORY-275
+  - STORY-276
+  ui_references:
+  - proto/settings-sections.jsx
 - id: FEAT-120
+  epic: EPIC-010
+  title: Audit log viewer
+  description: Browse and filter the workspace audit log in-app, in addition to external sinks.
+  priority: P1
+  stories:
+  - STORY-277
+  ui_references:
+  - proto/settings-sections.jsx
+- id: FEAT-121
   epic: EPIC-010
   title: Org-level IP allowlist
   description: Restrict all ingress to a configured set of CIDRs at the workspace level, separate from per-key allowlists.
   priority: P1
   stories:
-  - STORY-272
+  - STORY-278
   ui_references:
   - proto/settings-sections.jsx
-- id: FEAT-121
+- id: FEAT-122
   epic: EPIC-010
   title: Session idle-timeout policy
   description: Org-wide idle-timeout and absolute-session-max settings enforced for browser sessions.
   priority: P0
   stories:
-  - STORY-273
+  - STORY-279
   ui_references:
   - proto/settings-sections.jsx
-- id: FEAT-122
+- id: FEAT-123
   epic: EPIC-010
   title: Audit sink health and testing
   description: Send a test event to a configured audit sink, track delivery success and surface a degraded-sink badge.
   priority: P1
   stories:
-  - STORY-274
+  - STORY-280
   ui_references:
   - proto/settings-sections.jsx
-- id: FEAT-123
+- id: FEAT-124
   epic: EPIC-010
   title: Data residency migration
   description: Initiate a controlled migration of workspace data from one region to another with progress, cutover window, final switch and rollback.
   priority: P2
   stories:
-  - STORY-275
-  - STORY-276
-  - STORY-277
+  - STORY-281
+  - STORY-282
+  - STORY-283
   ui_references:
   - proto/settings-sections.jsx
-- id: FEAT-124
+- id: FEAT-125
   epic: EPIC-010
   title: Compliance document exports
   description: DPIA, DPA, record-of-processing export; quarterly access review.
   priority: P1
   stories:
-  - STORY-278
-  - STORY-279
-  - STORY-280
-  - STORY-281
-- id: FEAT-125
+  - STORY-284
+  - STORY-285
+  - STORY-286
+  - STORY-287
+- id: FEAT-126
   epic: EPIC-010
   title: Data Subject Access Request (DSAR) admin
   description: Receive a DSAR, fulfill the data export for a named data subject, audit every access.
   priority: P1
   stories:
-  - STORY-282
-  - STORY-283
-  - STORY-284
-- id: FEAT-126
+  - STORY-288
+  - STORY-289
+  - STORY-290
+- id: FEAT-127
   epic: EPIC-010
   title: GDPR right-to-erasure
   description: Request erasure, approve, execute purge and audit — distinct from user offboarding, which keeps an audit trail.
   priority: P1
   stories:
-  - STORY-285
-  - STORY-286
-  - STORY-287
-  - STORY-288
-- id: FEAT-127
+  - STORY-291
+  - STORY-292
+  - STORY-293
+  - STORY-294
+- id: FEAT-128
   epic: EPIC-010
   title: Disaster recovery
   description: View backups, test restore, trigger restore, backup rotation policy, DR drill.
   priority: P1
   stories:
-  - STORY-289
-  - STORY-290
-  - STORY-291
-  - STORY-292
-  - STORY-293
-- id: FEAT-128
+  - STORY-295
+  - STORY-296
+  - STORY-297
+  - STORY-298
+  - STORY-299
+- id: FEAT-129
   epic: EPIC-010
   title: Webhook dead-letter queue and replay
   description: View DLQ, inspect failed deliveries, requeue, auto-disable a webhook after N consecutive failures, and arbitrarily replay any past delivery by id.
   priority: P1
   stories:
-  - STORY-294
-  - STORY-295
-  - STORY-296
-  - STORY-297
-  - STORY-298
-- id: FEAT-129
+  - STORY-300
+  - STORY-301
+  - STORY-302
+  - STORY-303
+  - STORY-304
+- id: FEAT-130
   epic: EPIC-010
   title: Management API versioning
   description: Version schema for the management API, deprecation policy and deprecation notifications.
   priority: P1
   stories:
-  - STORY-299
-  - STORY-300
-  - STORY-301
-- id: FEAT-130
+  - STORY-305
+  - STORY-306
+  - STORY-307
+- id: FEAT-131
   epic: EPIC-010
   title: Data-residency runtime enforcement
   description: Reject outbound calls that would violate the configured residency region, distinct from residency config.
   priority: P0
   stories:
-  - STORY-302
-- id: FEAT-131
+  - STORY-308
+- id: FEAT-132
   epic: EPIC-010
   title: IP geolocation policy
   description: Country-level allowlist/blocklist for ingress, distinct from CIDR allowlists.
   priority: P1
   stories:
-  - STORY-303
-- id: FEAT-132
+  - STORY-309
+- id: FEAT-133
   epic: EPIC-010
   title: DLP export to customer S3
   description: Stream a PII-safe copy of redacted gateway data into a customer-owned S3 bucket for DLP tooling.
   priority: P2
   stories:
-  - STORY-304
-- id: FEAT-133
+  - STORY-310
+- id: FEAT-134
   epic: EPIC-010
   title: Customer-managed keys (CMK)
   description: Bring-your-own CMK setup, revocation, and multi-CMK per data class.
   priority: P1
   stories:
-  - STORY-305
-  - STORY-306
-  - STORY-307
-- id: FEAT-134
+  - STORY-311
+  - STORY-312
+  - STORY-313
+- id: FEAT-135
   epic: EPIC-010
   title: Tenant-isolation verification
   description: Routine, auditable tests that prove no data leaks across orgs.
   priority: P1
   stories:
-  - STORY-308
-- id: FEAT-135
+  - STORY-314
+- id: FEAT-136
   epic: EPIC-011
   title: OpenAI-compatible ingress
   description: Accept standard OpenAI API traffic so existing client SDKs work unchanged.
   priority: P0
   stories:
-  - STORY-309
-  - STORY-310
-  - STORY-311
-  - STORY-312
-  - STORY-313
-  - STORY-314
-- id: FEAT-136
+  - STORY-315
+  - STORY-316
+  - STORY-317
+  - STORY-318
+  - STORY-319
+  - STORY-320
+- id: FEAT-137
   epic: EPIC-011
   title: Anthropic Messages ingress
   description: Accept native Anthropic Messages API traffic with streaming.
   priority: P0
   stories:
-  - STORY-315
-  - STORY-316
-- id: FEAT-137
+  - STORY-321
+  - STORY-322
+- id: FEAT-138
   epic: EPIC-011
   title: Cross-dialect translation
   description: Accept any supported dialect and speak any supported dialect to the upstream — tools, multimodal, structured output preserved.
   priority: P0
   stories:
-  - STORY-317
-  - STORY-318
-  - STORY-319
-- id: FEAT-138
+  - STORY-323
+  - STORY-324
+  - STORY-325
+- id: FEAT-139
   epic: EPIC-011
   title: Edge authentication, authorization and rate limits
   description: Authenticate API keys, enforce scopes, model and IP allowlists, and per-key/team/org rate limits at the edge with standard rate-limit response headers.
   priority: P0
   stories:
-  - STORY-320
-  - STORY-321
-  - STORY-322
-  - STORY-323
-- id: FEAT-139
+  - STORY-326
+  - STORY-327
+  - STORY-328
+  - STORY-329
+- id: FEAT-140
   epic: EPIC-011
   title: Retry, timeout and runtime failover
   description: Retry, backoff, per-phase timeouts and cascade through the fallback chain on terminal errors.
   priority: P0
   stories:
-  - STORY-324
-  - STORY-325
-  - STORY-326
-- id: FEAT-140
+  - STORY-330
+  - STORY-331
+  - STORY-332
+- id: FEAT-141
   epic: EPIC-011
   title: Provider outbound authentication
   description: Attach the right credential to each outbound call — API key, AWS SigV4, Azure AD.
   priority: P0
   stories:
-  - STORY-327
-  - STORY-328
-- id: FEAT-141
+  - STORY-333
+  - STORY-334
+- id: FEAT-142
   epic: EPIC-011
   title: Cost attribution, metering and idempotency
   description: Count tokens, compute cost, attribute it across scopes, expose cost and token headers, and support Idempotency-Key for safe retries.
   priority: P0
   stories:
-  - STORY-329
-  - STORY-330
-  - STORY-331
-- id: FEAT-142
+  - STORY-335
+  - STORY-336
+  - STORY-337
+- id: FEAT-143
   epic: EPIC-011
   title: Provider health and circuit breaker runtime
   description: Probe provider health on a cadence, open or close circuits based on health and live error rate, and provide an admin dashboard with manual open/close and flip history.
   priority: P0
   stories:
-  - STORY-332
-  - STORY-333
-  - STORY-334
-- id: FEAT-143
+  - STORY-338
+  - STORY-339
+  - STORY-340
+- id: FEAT-144
   epic: EPIC-011
   title: Request telemetry
   description: Emit OpenTelemetry spans, propagate trace context, export Prometheus metrics for every request, and render an in-product trace waterfall with a sampling-config UI.
   priority: P0
   stories:
-  - STORY-335
-  - STORY-336
-  - STORY-337
-- id: FEAT-144
+  - STORY-341
+  - STORY-342
+  - STORY-343
+- id: FEAT-145
   epic: EPIC-011
   title: Streaming response passthrough
   description: Stream tokens and events end-to-end for SSE and chunked transfer across any dialect.
   priority: P0
   stories:
-  - STORY-338
-- id: FEAT-145
+  - STORY-344
+- id: FEAT-146
   epic: EPIC-011
   title: Multimodal request handling
   description: Accept image, audio and file content parts on ingress and translate to the upstream provider's representation.
   priority: P0
   stories:
-  - STORY-339
-- id: FEAT-146
+  - STORY-345
+- id: FEAT-147
   epic: EPIC-011
   title: Tool-calling and function-calling passthrough
   description: Preserve tool definitions, tool_use/tool_result turns and structured output when translating across dialects.
   priority: P0
   stories:
-  - STORY-340
-- id: FEAT-147
+  - STORY-346
+- id: FEAT-148
   epic: EPIC-011
   title: Request and response size limits
   description: Enforce configurable max prompt size, max response tokens and max file attachment size at the edge.
   priority: P0
   stories:
-  - STORY-341
-- id: FEAT-148
+  - STORY-347
+- id: FEAT-149
   epic: EPIC-011
   title: Graceful degradation on provider outage
   description: When all primary and fallback providers are unhealthy, optionally serve a cached response, a stub, or a structured outage error.
   priority: P0
   stories:
-  - STORY-342
-  - STORY-343
-- id: FEAT-149
+  - STORY-348
+  - STORY-349
+- id: FEAT-150
   epic: EPIC-011
   title: Trace sampling strategy
   description: Configurable head-based and tail-based sampling for request telemetry with always-sample on error.
   priority: P1
   stories:
-  - STORY-344
-- id: FEAT-150
+  - STORY-350
+- id: FEAT-151
   epic: EPIC-011
   title: Files API ingress
   description: Accept, list, delete files on ingress and pass through to upstream providers.
   priority: P1
   stories:
-  - STORY-345
-  - STORY-346
-  - STORY-347
-  - STORY-348
-- id: FEAT-151
+  - STORY-351
+  - STORY-352
+  - STORY-353
+  - STORY-354
+- id: FEAT-152
   epic: EPIC-011
   title: Batches API ingress
   description: Accept batch create/status/cancel and attribute cost at batch-item granularity.
   priority: P1
   stories:
-  - STORY-349
-  - STORY-350
-  - STORY-351
-  - STORY-352
-- id: FEAT-152
+  - STORY-355
+  - STORY-356
+  - STORY-357
+  - STORY-358
+- id: FEAT-153
   epic: EPIC-011
   title: Assistants and Responses API ingress
   description: Defines scope and basic ops for Assistants/Responses dialects if in scope for the workspace plan.
   priority: P2
   stories:
-  - STORY-353
-  - STORY-354
-- id: FEAT-153
+  - STORY-359
+  - STORY-360
+- id: FEAT-154
   epic: EPIC-011
   title: Audio endpoints ingress
   description: Accept audio transcriptions and translations on ingress.
   priority: P1
   stories:
-  - STORY-355
-  - STORY-356
-- id: FEAT-154
+  - STORY-361
+  - STORY-362
+- id: FEAT-155
   epic: EPIC-011
   title: Image endpoints ingress
   description: Accept image generations and edits on ingress.
   priority: P1
   stories:
-  - STORY-357
-  - STORY-358
-- id: FEAT-155
+  - STORY-363
+  - STORY-364
+- id: FEAT-156
   epic: EPIC-011
   title: Moderation endpoint ingress
   description: Accept moderation calls on ingress and route to the provider's moderation endpoint.
   priority: P2
   stories:
-  - STORY-359
-- id: FEAT-156
+  - STORY-365
+- id: FEAT-157
   epic: EPIC-011
   title: Embeddings-specific capabilities
   description: Dimension validation, cross-provider dimension compatibility, batch embedding cost attribution.
   priority: P1
   stories:
-  - STORY-360
-  - STORY-361
-  - STORY-362
-- id: FEAT-157
-  epic: EPIC-011
-  title: Fine-tune job management
-  description: List, create, cancel fine-tune jobs; view logs and training curves with cost attribution; download produced artifacts (weights, config, metrics).
-  priority: P2
-  stories:
-  - STORY-363
-  - STORY-364
-  - STORY-365
   - STORY-366
   - STORY-367
   - STORY-368
 - id: FEAT-158
   epic: EPIC-011
-  title: Egress proxy configuration
-  description: Configure an outbound HTTP proxy (with credentials and per-provider override) for upstream provider calls.
-  priority: P1
+  title: Fine-tune job management
+  description: List, create, cancel fine-tune jobs; view logs and training curves with cost attribution; download produced artifacts (weights, config, metrics).
+  priority: P2
   stories:
   - STORY-369
   - STORY-370
   - STORY-371
+  - STORY-372
+  - STORY-373
+  - STORY-374
 - id: FEAT-159
+  epic: EPIC-011
+  title: Egress proxy configuration
+  description: Configure an outbound HTTP proxy (with credentials and per-provider override) for upstream provider calls.
+  priority: P1
+  stories:
+  - STORY-375
+  - STORY-376
+  - STORY-377
+- id: FEAT-160
   epic: EPIC-011
   title: Private connectivity
   description: Configure PrivateLink or VPC peering for ingress/egress and verify the private endpoint.
   priority: P2
   stories:
-  - STORY-372
-  - STORY-373
-- id: FEAT-160
+  - STORY-378
+  - STORY-379
+- id: FEAT-161
   epic: EPIC-011
   title: Emergency break-glass scope
   description: Create an audited, approval-gated, auto-expiring API key with elevated scope for incident response.
   priority: P1
   stories:
-  - STORY-374
-  - STORY-375
-  - STORY-376
-  - STORY-377
-  - STORY-378
-- id: FEAT-161
+  - STORY-380
+  - STORY-381
+  - STORY-382
+  - STORY-383
+  - STORY-384
+- id: FEAT-162
   epic: EPIC-011
   title: Provider rate-limit configuration and outbound limiter
   description: Configure per-provider, per-credential and per-model upstream rate limits (rpm/tpm), pre-emptively throttle outbound calls against a sliding-window limiter, learn from provider 429 Retry-After headers, and expose utilization so the overview dashboard and alerts can render "provider rate-limit pressure".
   priority: P0
   stories:
-  - STORY-379
-  - STORY-380
-  - STORY-381
-  - STORY-382
-  - STORY-383
+  - STORY-385
+  - STORY-386
+  - STORY-387
+  - STORY-388
+  - STORY-389
   ui_references:
   - proto/models.jsx
   - proto/routing.jsx
   - proto/overview.jsx
-- id: FEAT-162
+- id: FEAT-163
   epic: EPIC-012
   title: First-run onboarding checklist
   description: Guide a new workspace owner through inviting teammates, connecting a provider, creating a key and issuing a test request.
   priority: P1
   stories:
-  - STORY-384
-  - STORY-385
-  - STORY-386
+  - STORY-390
+  - STORY-391
+  - STORY-392
   ui_references:
   - proto/Gateway.html
   - proto/overview.jsx
-- id: FEAT-163
+- id: FEAT-164
   epic: EPIC-012
   title: Public status page
   description: Publish gateway availability, component status and incident history on a public URL and embed a widget in-app.
   priority: P1
   stories:
-  - STORY-387
-  - STORY-388
+  - STORY-393
+  - STORY-394
   ui_references:
   - proto/shell.jsx
-- id: FEAT-164
+- id: FEAT-165
   epic: EPIC-012
   title: In-product support contact
   description: Let a signed-in user open a support ticket or chat from the shell with session, org and request context attached.
   priority: P2
   stories:
-  - STORY-389
-  - STORY-390
+  - STORY-395
+  - STORY-396
   ui_references:
   - proto/shell.jsx
-- id: FEAT-165
+- id: FEAT-166
   epic: EPIC-012
   title: Terms of Service and legal acceptance
   description: Capture ToS, DPA and privacy policy acceptance on sign-up and re-prompt on material changes.
   priority: P1
   stories:
-  - STORY-391
-  - STORY-392
+  - STORY-397
+  - STORY-398
   ui_references:
   - proto/Login.html
   - proto/login.jsx
-- id: FEAT-166
+- id: FEAT-167
   epic: EPIC-012
   title: In-app help and documentation
   description: Contextual doc links, tooltips and a global "/" quick-help palette across screens.
   priority: P2
   stories:
-  - STORY-393
-  - STORY-394
+  - STORY-399
+  - STORY-400
   ui_references:
   - proto/shell.jsx
-- id: FEAT-167
+- id: FEAT-168
   epic: EPIC-012
   title: Background worker observability
   description: Surface internal job queues (metric aggregation, webhook delivery, cache eviction, retention) and their health.
   priority: P1
   stories:
-  - STORY-395
-  - STORY-396
+  - STORY-401
+  - STORY-402
   ui_references:
   - proto/settings-sections.jsx
-- id: FEAT-168
+- id: FEAT-169
   epic: EPIC-012
   title: Pricing calculator and cost forecast
   description: Let finance model monthly spend by mix of models, volume and caching before committing to a budget.
   priority: P2
   stories:
-  - STORY-397
+  - STORY-403
   ui_references:
   - proto/budgets-data.js
-- id: FEAT-169
+- id: FEAT-170
   epic: EPIC-012
   title: In-product notification inbox
   description: Unified bell-icon inbox of user-visible notifications (alert fires, approvals, job completions, deprecations).
   priority: P1
   stories:
-  - STORY-398
+  - STORY-404
 stories:
 - id: STORY-001
   feature: FEAT-001
@@ -5031,6 +5047,25 @@ stories:
     then:
     - The empty state "No requests match these filters" shows
     - A "clear filters" shortcut is offered
+  - id: AC-004
+    scenario: Latency-histogram range filter in the filter rail
+    given:
+    - The filter rail is expanded
+    when:
+    - The rail renders
+    then:
+    - A 24-bucket histogram of the current time window's latency distribution is visible
+    - I can click-drag across the histogram to set a min-max range, which applies as min_latency_ms and max_latency_ms filters
+    - The 0, mid and max-ms axis labels are shown below the histogram
+    - The histogram updates when other filters change
+  - id: AC-005
+    scenario: Active-filter chips are removable
+    given:
+    - Several filters are active (including latency min/max)
+    when:
+    - I click the × on a chip
+    then:
+    - Only that filter is removed and the table recomputes
   ui:
     screens:
     - RequestLog
@@ -5145,36 +5180,72 @@ stories:
   title: Keyboard-navigate the request log
   narrative:
     as_a: power user
-    i_want: keyboard shortcuts for search, navigate, open and close
+    i_want: keyboard shortcuts for search, row navigation, opening, closing, toggling filters, and exporting
     so_that: I stay in the keyboard while triaging
   priority: P2
   depends_on:
   - STORY-072
   acceptance_criteria:
   - id: AC-001
-    scenario: Shortcut catalog
+    scenario: / focuses the search input
     given:
     - I am on /requests
     when:
     - I press "/"
     then:
-    - The search input takes focus
+    - The search input takes focus and any native browser quick-find is prevented
   - id: AC-002
-    scenario: Open drawer on Enter
+    scenario: Arrow keys navigate rows
     given:
-    - A row is selected in the table
+    - The request table has rows and no input is focused
+    when:
+    - I press Down or Up
+    then:
+    - The row cursor moves by one and the selected row scrolls into view
+    - Holding Shift extends the multi-row selection for bulk actions
+  - id: AC-003
+    scenario: Enter opens the drawer
+    given:
+    - A row is focused in the table
     when:
     - I press Enter
     then:
     - The detail drawer opens for that request
-  - id: AC-003
-    scenario: Esc closes drawer
+  - id: AC-004
+    scenario: Esc closes drawer or clears selection
     given:
-    - The detail drawer is open
+    - The detail drawer is open OR rows are multi-selected
     when:
     - I press Esc
     then:
-    - The drawer closes and focus returns to the row
+    - The drawer closes, or if closed already, the row selection clears
+    - Focus returns to the last focused row
+  - id: AC-005
+    scenario: f toggles the filter rail
+    given:
+    - I am on /requests and no input is focused
+    when:
+    - I press "f"
+    then:
+    - The filter rail toggles between expanded and collapsed
+    - The preference is remembered per user
+  - id: AC-006
+    scenario: e triggers export of the current filtered set
+    given:
+    - I am on /requests with filters applied and no input is focused
+    when:
+    - I press "e"
+    then:
+    - The CSV export flow starts for the current filtered view (see STORY for CSV export)
+  - id: AC-007
+    scenario: Shortcut hints footer
+    given:
+    - I am on /requests
+    when:
+    - The page renders
+    then:
+    - A footer strip shows "/ search", "↑↓ navigate", "⏎ open", "esc close", "f toggle filters", "e export" with kbd-styled keys
+    - A tooltip or "?" key opens a full shortcut cheatsheet
   data_models:
   - Request
 - id: STORY-075
@@ -5495,6 +5566,7 @@ stories:
     - The page loads
     then:
     - The SLA table lists each provider's success %, p95, p99 and 30-day availability
+    - Rows are colour-coded success <95% red, <99% warn, >=99% ok
   - id: AC-003
     scenario: Model efficiency scatter
     given:
@@ -5504,6 +5576,29 @@ stories:
     then:
     - The scatter plots each model's average latency (x) vs average cost per request (y)
     - Bubble size reflects request volume
+  - id: AC-004
+    scenario: Highlight strip with four operational KPIs
+    given:
+    - I am on /analytics for the selected time range
+    when:
+    - The page loads
+    then:
+    - A four-tile highlight strip renders above the main grid showing "Cache savings", "Fallback triggers", "Token throughput" and "Guardrail flags"
+    - Cache savings shows $ saved vs monthly estimate and count of hits, with a green delta vs prior 7d average and a MiniSpark of cache hit rate
+    - Fallback triggers shows count of routes that triggered fallbacks in-range, delta vs the previous period, and a primary offender label (e.g. "mostly gpt-5 → sonnet")
+    - Token throughput shows total M tokens with an input→output split
+    - Guardrail flags shows count split across PII, toxicity and error reviews
+    - Each tile displays a MiniSpark and the range label (e.g. "· 7d")
+  - id: AC-005
+    scenario: Top-models leaderboard by spend
+    given:
+    - I am on /analytics
+    when:
+    - The page loads
+    then:
+    - A leaderboard lists the top 8 models ordered by spend descending
+    - Columns are rank, model id, requests, average latency, spend and a horizontal share-bar coloured by the provider
+    - Clicking a row deep-links to that model's detail panel on /models
   ui:
     screens:
     - Analytics
@@ -5514,6 +5609,8 @@ stories:
     - HeatmapA
     - ScatterA
     - MiniSpark
+    - HighlightStrip
+    - TopModelsLeaderboard
     states:
     - loading
     - populated
@@ -5591,6 +5688,56 @@ stories:
   data_models:
   - Request
 - id: STORY-084
+  feature: FEAT-032
+  title: Cache impact by team
+  narrative:
+    as_a: engineering manager
+    i_want: to see cache hit rate and estimated savings per team on the analytics page
+    so_that: I can reward efficient teams and identify teams that should enable caching
+  priority: P1
+  depends_on:
+  - STORY-082
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Per-team hit-rate lane renders
+    given:
+    - Teams have cache traffic in the selected range
+    when:
+    - I am on /analytics
+    then:
+    - A "Cache impact" card lists one lane per team sorted by savings descending
+    - Each lane shows the team name with its colour swatch, a dual-bar (hit vs miss) and a hit-rate percent label
+    - The card header shows total savings across all teams
+  - id: AC-002
+    scenario: Team with no cache traffic
+    given:
+    - A team has zero cache hits in the range
+    when:
+    - The card renders
+    then:
+    - The lane shows a 0% hit bar and "enable caching" hint link
+  api:
+  - method: GET
+    path: /api/analytics/cache-impact
+    request:
+      query:
+        from: timestamp
+        to: timestamp
+    response:
+      teams:
+      - team_id: uuid
+        name: string
+        color: string
+        hit_rate: number
+        saved_cost: number
+    errors:
+    - 401
+    inferred: true
+  data_models:
+  - Team
+  - Request
+  - CacheEntry
+- id: STORY-085
   feature: FEAT-033
   title: Act on anomaly signals
   narrative:
@@ -5640,7 +5787,7 @@ stories:
   data_models:
   - Anomaly
   - User
-- id: STORY-085
+- id: STORY-086
   feature: FEAT-034
   title: Pick a time range (preset or custom)
   narrative:
@@ -5686,7 +5833,7 @@ stories:
     - open
     - custom
     - invalid
-- id: STORY-086
+- id: STORY-087
   feature: FEAT-035
   title: Global search across requests
   narrative:
@@ -5728,7 +5875,7 @@ stories:
   - Request
   non_functional:
   - Full-text search on prompt handled by a dedicated index (e.g. Postgres tsvector or an OpenSearch cluster)
-- id: STORY-087
+- id: STORY-088
   feature: FEAT-036
   title: Export filtered requests to CSV
   narrative:
@@ -5773,7 +5920,7 @@ stories:
     inferred: true
   data_models:
   - Request
-- id: STORY-088
+- id: STORY-089
   feature: FEAT-036
   title: Export request data in JSONL or Parquet to S3
   narrative:
@@ -5782,7 +5929,7 @@ stories:
     so_that: my pipelines can ingest them without CSV conversion
   priority: P1
   depends_on:
-  - STORY-087
+  - STORY-088
   acceptance_criteria:
   - id: AC-001
     scenario: JSONL export
@@ -5802,7 +5949,7 @@ stories:
     - Parquet files are written to s3://bucket/prefix/ and I get a completion notification
   data_models:
   - Request
-- id: STORY-089
+- id: STORY-090
   feature: FEAT-037
   title: Replay a historical request with mutation
   narrative:
@@ -5872,7 +6019,7 @@ stories:
   non_functional:
   - Replays are subject to the caller's budget and rate limits, not the original's
   - Replays are excluded from anomaly spike detection by a synthetic tag
-- id: STORY-090
+- id: STORY-091
   feature: FEAT-038
   title: Compare two requests side-by-side
   narrative:
@@ -5926,7 +6073,7 @@ stories:
     inferred: true
   data_models:
   - Request
-- id: STORY-091
+- id: STORY-092
   feature: FEAT-039
   title: Share a signed link to a view or request
   narrative:
@@ -5984,7 +6131,7 @@ stories:
   - Request
   non_functional:
   - Tokens are signed with a rotating key; only the hash is stored
-- id: STORY-092
+- id: STORY-093
   feature: FEAT-039
   title: Share an analytics view via signed link
   narrative:
@@ -6014,7 +6161,7 @@ stories:
   data_models:
   - ShareLink
   - SavedView
-- id: STORY-093
+- id: STORY-094
   feature: FEAT-040
   title: View spend broken down by model, team and cost component
   narrative:
@@ -6067,7 +6214,7 @@ stories:
   - MetricSeries
   non_functional:
   - Query uses pre-aggregated MetricSeries when the range exceeds 7 days
-- id: STORY-094
+- id: STORY-095
   feature: FEAT-041
   title: List anomaly detectors
   narrative:
@@ -6086,7 +6233,7 @@ stories:
     - I see each detector with category, enabled status, threshold summary and last_fired_at
   data_models:
   - Anomaly
-- id: STORY-095
+- id: STORY-096
   feature: FEAT-041
   title: Configure anomaly detector thresholds
   narrative:
@@ -6106,7 +6253,7 @@ stories:
   data_models:
   - Anomaly
   - AuditLog
-- id: STORY-096
+- id: STORY-097
   feature: FEAT-041
   title: Enable or disable anomaly category
   narrative:
@@ -6127,7 +6274,7 @@ stories:
   data_models:
   - Anomaly
   - AuditLog
-- id: STORY-097
+- id: STORY-098
   feature: FEAT-042
   title: Save an analytics view
   narrative:
@@ -6146,7 +6293,7 @@ stories:
     - A SavedView with view_type="analytics" is created
   data_models:
   - SavedView
-- id: STORY-098
+- id: STORY-099
   feature: FEAT-042
   title: Share a saved analytics view via ShareLink
   narrative:
@@ -6155,7 +6302,7 @@ stories:
     so_that: colleagues can open the same view
   priority: P1
   depends_on:
-  - STORY-097
+  - STORY-098
   acceptance_criteria:
   - id: AC-001
     scenario: Create share link
@@ -6168,7 +6315,7 @@ stories:
   data_models:
   - SavedView
   - ShareLink
-- id: STORY-099
+- id: STORY-100
   feature: FEAT-042
   title: Load a saved analytics view
   narrative:
@@ -6187,7 +6334,7 @@ stories:
     - The dashboard is restored with that view's filters, time range and charts
   data_models:
   - SavedView
-- id: STORY-100
+- id: STORY-101
   feature: FEAT-042
   title: Delete a saved analytics view
   narrative:
@@ -6206,7 +6353,7 @@ stories:
     - The SavedView is deleted
   data_models:
   - SavedView
-- id: STORY-101
+- id: STORY-102
   feature: FEAT-043
   title: Tool-use analytics view
   narrative:
@@ -6225,7 +6372,7 @@ stories:
     - I see top 20 tools with invocations, failure rate and p50/p95 latency
   data_models:
   - Request
-- id: STORY-102
+- id: STORY-103
   feature: FEAT-044
   title: Streaming-specific analytics
   narrative:
@@ -6252,7 +6399,7 @@ stories:
     - I see counts of client_cancelled and mid-stream drops over time
   data_models:
   - Request
-- id: STORY-103
+- id: STORY-104
   feature: FEAT-045
   title: Browse the model catalog
   narrative:
@@ -6301,7 +6448,7 @@ stories:
   data_models:
   - Model
   - Provider
-- id: STORY-104
+- id: STORY-105
   feature: FEAT-045
   title: Inspect a model's detail panel
   narrative:
@@ -6310,7 +6457,7 @@ stories:
     so_that: I can choose the right model for a workload
   priority: P1
   depends_on:
-  - STORY-103
+  - STORY-104
   acceptance_criteria:
   - id: AC-001
     scenario: Panel renders populated
@@ -6346,7 +6493,126 @@ stories:
   data_models:
   - Model
   - Team
-- id: STORY-105
+- id: STORY-106
+  feature: FEAT-045
+  title: View provider headroom strip on the models page
+  narrative:
+    as_a: platform engineer on /models
+    i_want: a persistent strip showing upstream rpm and tpm utilization per provider with their negotiated tier
+    so_that: I can see at a glance how close each upstream account is to its ceiling while I pick models
+  priority: P1
+  depends_on:
+  - STORY-388
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Headroom row per provider
+    given:
+    - Providers have configured rate limits (see STORY-379/380) and have live traffic
+    when:
+    - I view the lower strip on /models
+    then:
+    - A row per provider shows its logo chip, name and tier label (e.g. "Scale")
+    - Two stacked bars show rpm and tpm utilization with colour classes ""|warn|over at 80%/95% thresholds
+    - Numeric labels show used/ceiling for rpm and used for tpm
+    - The strip is distinct from FEAT-161's overview gauge: it is always visible on the models page and uses a 60-second rolling window
+  - id: AC-002
+    scenario: Unconfigured provider
+    given:
+    - A provider has no ProviderRateLimit
+    when:
+    - The row renders
+    then:
+    - Bars show "limits not configured" with a deep-link to Providers settings
+  api:
+  - method: GET
+    path: /api/providers/headroom
+    request:
+      query:
+        window_s: int
+    response:
+      rows:
+      - provider_id: string
+        tier: string
+        rpm_used: int
+        rpm_ceiling: int
+        tpm_used: int
+        tpm_ceiling: int
+        binding_layer: string
+    errors:
+    - 401
+    inferred: true
+  data_models:
+  - Provider
+  - ProviderRateLimit
+  - ProviderRateLimitWindow
+- id: STORY-107
+  feature: FEAT-045
+  title: View and edit the catalog policy panel
+  narrative:
+    as_a: workspace admin on /models
+    i_want: a single panel listing org-wide catalog defaults and policies
+    so_that: everyone can see the defaults their keys inherit and admins can change them in one place
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Panel renders current policy
+    given:
+    - A CatalogPolicy row exists for the org
+    when:
+    - I view the lower strip on /models
+    then:
+    - A key-value panel titled "Catalog policy" shows default_chat_alias, default_embed_alias, fallback_on_5xx (with max hops), retry_on_429 (with backoff range), prompt_caching_policy, preview_access, allowed_regions and pii_to_provider
+    - A footer shows "last edit · {user} · {rel time}" linking to the audit log
+  - id: AC-002
+    scenario: Edit a policy value inline
+    given:
+    - I have the manage-catalog permission
+    when:
+    - I click "Edit" on a row and change the value
+    then:
+    - The CatalogPolicy is updated and an AuditLog entry records action "catalog_policy.update" with old and new values
+    - Downstream resolvers (router, edge auth) pick up the change within 60 seconds
+  - id: AC-003
+    scenario: Read-only for non-admins
+    given:
+    - I lack the manage-catalog permission
+    when:
+    - The panel renders
+    then:
+    - Values are shown but no Edit controls appear
+    - The footer tooltip explains "Only admins can change catalog policy"
+  api:
+  - method: GET
+    path: /api/catalog-policy
+    response:
+      policy: CatalogPolicy
+    errors:
+    - 401
+    inferred: true
+  - method: PATCH
+    path: /api/catalog-policy
+    request:
+      body:
+        default_chat_alias: string
+        default_embed_alias: string
+        fallback_on_5xx: object
+        retry_on_429: object
+        prompt_caching_policy: object
+        preview_access: string
+        allowed_regions:
+        - string
+        pii_to_provider: string
+    response:
+      policy: CatalogPolicy
+    errors:
+    - 400
+    - 401
+    - 403
+    inferred: true
+  data_models:
+  - CatalogPolicy
+  - AuditLog
+- id: STORY-108
   feature: FEAT-046
   title: Add a new model to the catalog
   narrative:
@@ -6395,7 +6661,7 @@ stories:
   - Model
   - Provider
   - AuditLog
-- id: STORY-106
+- id: STORY-109
   feature: FEAT-046
   title: Change model lifecycle status
   narrative:
@@ -6404,7 +6670,7 @@ stories:
     so_that: I can manage rollout and retirement
   priority: P0
   depends_on:
-  - STORY-105
+  - STORY-108
   acceptance_criteria:
   - id: AC-001
     scenario: Disable a model
@@ -6443,7 +6709,7 @@ stories:
   - Model
   - Team
   - AuditLog
-- id: STORY-107
+- id: STORY-110
   feature: FEAT-047
   title: Manage model aliases
   narrative:
@@ -6489,7 +6755,7 @@ stories:
   data_models:
   - ModelAlias
   - Model
-- id: STORY-108
+- id: STORY-111
   feature: FEAT-047
   title: Edit or delete a model alias
   narrative:
@@ -6498,7 +6764,7 @@ stories:
     so_that: aliases keep track as the model landscape changes
   priority: P1
   depends_on:
-  - STORY-107
+  - STORY-110
   acceptance_criteria:
   - id: AC-001
     scenario: Edit resolution
@@ -6556,7 +6822,7 @@ stories:
   - ModelAlias
   - RoutingRule
   - AuditLog
-- id: STORY-109
+- id: STORY-112
   feature: FEAT-048
   title: Override per-model pricing
   narrative:
@@ -6595,7 +6861,7 @@ stories:
   data_models:
   - Model
   - AuditLog
-- id: STORY-110
+- id: STORY-113
   feature: FEAT-048
   title: View model pricing history and roll back
   narrative:
@@ -6604,7 +6870,7 @@ stories:
     so_that: I can correct a bad entry
   priority: P1
   depends_on:
-  - STORY-109
+  - STORY-112
   acceptance_criteria:
   - id: AC-001
     scenario: View history
@@ -6627,7 +6893,7 @@ stories:
   - Model
   - ModelPricingHistory
   - AuditLog
-- id: STORY-111
+- id: STORY-114
   feature: FEAT-049
   title: Create a routing rule
   narrative:
@@ -6691,7 +6957,7 @@ stories:
   data_models:
   - RoutingRule
   - Model
-- id: STORY-112
+- id: STORY-115
   feature: FEAT-049
   title: Reorder, duplicate, enable or delete a rule
   narrative:
@@ -6700,7 +6966,7 @@ stories:
     so_that: I can safely refactor routing
   priority: P0
   depends_on:
-  - STORY-111
+  - STORY-114
   acceptance_criteria:
   - id: AC-001
     scenario: Reorder priority
@@ -6755,7 +7021,7 @@ stories:
   data_models:
   - RoutingRule
   - AuditLog
-- id: STORY-113
+- id: STORY-116
   feature: FEAT-049
   title: Edit an existing routing rule
   narrative:
@@ -6764,7 +7030,7 @@ stories:
     so_that: I can evolve routing without rebuilding from scratch
   priority: P0
   depends_on:
-  - STORY-111
+  - STORY-114
   acceptance_criteria:
   - id: AC-001
     scenario: Edit strategy and save
@@ -6786,7 +7052,79 @@ stories:
   data_models:
   - RoutingRule
   - RoutingDeploy
-- id: STORY-114
+- id: STORY-117
+  feature: FEAT-049
+  title: Routing page hero with KPIs and live health alerts
+  narrative:
+    as_a: platform engineer on /routing
+    i_want: a hero banner with decision-rate KPIs and a side panel of live routing health alerts
+    so_that: I understand router health at a glance before editing rules
+  priority: P1
+  depends_on:
+  - STORY-114
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Hero KPI strip
+    given:
+    - The router has 24 hours of decision history
+    when:
+    - I am on /routing
+    then:
+    - A hero shows "N decisions in 24 hours" as the primary metric
+    - A strip of four cells shows "Per second" (current + peak with time), "Decision p95" (with p99), "Fallbacks" (count and % of decisions), and "Guardrail blocks" (count with PII/safety/residency breakdown)
+    - A "live · all environments" pill with a pulsing indicator is visible
+  - id: AC-002
+    scenario: Circuit-open alert
+    given:
+    - A provider circuit breaker is open
+    when:
+    - The hero renders
+    then:
+    - A danger alert appears in the side panel showing "Circuit open · {provider}" with reason and cooldown seconds
+  - id: AC-003
+    scenario: Canary auto-rollback armed alert
+    given:
+    - A canary RoutingRule has currentErrorRate exceeding its errorBudget
+    when:
+    - The hero renders
+    then:
+    - A warn alert appears showing "Canary auto-rollback armed" with the rule name, current error rate, budget and the persistence window
+  - id: AC-004
+    scenario: Healthy fallback
+    given:
+    - No anomalies or circuit opens
+    when:
+    - The hero renders
+    then:
+    - A success "Routing healthy" alert shows decision p95 and concurrency used/cap
+  api:
+  - method: GET
+    path: /api/routing/hero
+    response:
+      decisions_24h: int
+      per_second: int
+      peak_per_second: int
+      peak_at: timestamp
+      decision_p95_ms: int
+      decision_p99_ms: int
+      fallbacks_24h: int
+      blocks_24h:
+        total: int
+        pii: int
+        safety: int
+        residency: int
+      alerts:
+      - kind: string
+        severity: string
+        title: string
+        description: string
+    errors:
+    - 401
+    inferred: true
+  data_models:
+  - RoutingRule
+  - ProviderHealth
+- id: STORY-118
   feature: FEAT-050
   title: Configure a canary routing rule
   narrative:
@@ -6795,7 +7133,7 @@ stories:
     so_that: I can adopt a new model safely
   priority: P1
   depends_on:
-  - STORY-111
+  - STORY-114
   acceptance_criteria:
   - id: AC-001
     scenario: Auto-rollback fires
@@ -6813,7 +7151,7 @@ stories:
   - AlertEvent
   non_functional:
   - Canary health evaluated at least every 30 seconds
-- id: STORY-115
+- id: STORY-119
   feature: FEAT-050
   title: Configure a shadow routing rule
   narrative:
@@ -6822,7 +7160,7 @@ stories:
     so_that: I can evaluate a candidate without impacting users
   priority: P2
   depends_on:
-  - STORY-111
+  - STORY-114
   acceptance_criteria:
   - id: AC-001
     scenario: Shadow traffic logged not served
@@ -6845,7 +7183,43 @@ stories:
   data_models:
   - RoutingRule
   - Request
-- id: STORY-116
+- id: STORY-120
+  feature: FEAT-050
+  title: Open the routing strategies reference drawer
+  narrative:
+    as_a: engineer unfamiliar with the routing system
+    i_want: an in-product reference drawer that explains each routing strategy with when-to-use guidance
+    so_that: I can choose the right strategy without leaving the app
+  priority: P2
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Drawer lists all six strategies
+    given:
+    - I am on /routing
+    when:
+    - I click "Strategies reference" or press the ? helper in the rule editor
+    then:
+    - A side drawer opens with a card per strategy for single, weighted, failover, least-loaded, canary and shadow
+    - Each card shows a small diagram, a one-sentence summary, a "use this when" bullet list and the count of enabled rules currently using it
+  - id: AC-002
+    scenario: Jump to a strategy's rules
+    given:
+    - The drawer is open
+    when:
+    - I click "3 rules using weighted"
+    then:
+    - The drawer closes and the rules table pre-filters to strategy=weighted
+  - id: AC-003
+    scenario: Accessible and dismissable
+    given:
+    - The drawer is open
+    when:
+    - I press Esc or click the backdrop
+    then:
+    - The drawer closes and focus returns to the trigger
+  data_models:
+  - RoutingRule
+- id: STORY-121
   feature: FEAT-051
   title: Fall back on error, timeout or rate-limit
   narrative:
@@ -6854,7 +7228,7 @@ stories:
     so_that: users never see an upstream failure when alternatives exist
   priority: P0
   depends_on:
-  - STORY-111
+  - STORY-114
   acceptance_criteria:
   - id: AC-001
     scenario: Fallback on 5xx
@@ -6883,7 +7257,7 @@ stories:
   - AlertEvent
   non_functional:
   - Circuit breaker state persists in Redis (or equivalent) with TTL = cooldown
-- id: STORY-117
+- id: STORY-122
   feature: FEAT-052
   title: Dry-run a routing rule against recent traffic
   narrative:
@@ -6892,7 +7266,7 @@ stories:
     so_that: I can confirm its effect before enabling
   priority: P1
   depends_on:
-  - STORY-111
+  - STORY-114
   acceptance_criteria:
   - id: AC-001
     scenario: Dry-run returns a sample decision set
@@ -6932,7 +7306,7 @@ stories:
   data_models:
   - RoutingRule
   - Request
-- id: STORY-118
+- id: STORY-123
   feature: FEAT-052
   title: Watch live routing decisions
   narrative:
@@ -6971,7 +7345,7 @@ stories:
   non_functional:
   - Stream delivered via Server-Sent Events or WebSocket
   - Backpressure drops oldest when buffer full
-- id: STORY-119
+- id: STORY-124
   feature: FEAT-053
   title: Promote a canary to primary
   narrative:
@@ -6980,7 +7354,7 @@ stories:
     so_that: a successful rollout lands without hand-editing weights
   priority: P0
   depends_on:
-  - STORY-114
+  - STORY-118
   acceptance_criteria:
   - id: AC-001
     scenario: Manual promote
@@ -7026,7 +7400,7 @@ stories:
   - RoutingRule
   - RoutingDeploy
   - AuditLog
-- id: STORY-120
+- id: STORY-125
   feature: FEAT-053
   title: Auto-graduate canary when metrics pass
   narrative:
@@ -7035,7 +7409,7 @@ stories:
     so_that: I do not have to babysit the promotion
   priority: P0
   depends_on:
-  - STORY-119
+  - STORY-124
   acceptance_criteria:
   - id: AC-001
     scenario: Auto-graduate on success
@@ -7060,7 +7434,7 @@ stories:
   - RoutingRule
   - RoutingDeploy
   - AuditLog
-- id: STORY-121
+- id: STORY-126
   feature: FEAT-053
   title: Configure canary graduation metric thresholds
   narrative:
@@ -7069,7 +7443,7 @@ stories:
     so_that: graduation rules are explicit and reviewable
   priority: P0
   depends_on:
-  - STORY-120
+  - STORY-125
   acceptance_criteria:
   - id: AC-001
     scenario: Define thresholds per rule
@@ -7089,7 +7463,7 @@ stories:
     - The org default thresholds are used and shown as "inherited" in the rule UI
   data_models:
   - RoutingRule
-- id: STORY-122
+- id: STORY-127
   feature: FEAT-054
   title: Record every routing-rule change as a deploy
   narrative:
@@ -7126,7 +7500,7 @@ stories:
   - RoutingDeploy
   non_functional:
   - Snapshots are immutable and retained for 365 days
-- id: STORY-123
+- id: STORY-128
   feature: FEAT-054
   title: Roll back a routing deploy
   narrative:
@@ -7135,7 +7509,7 @@ stories:
     so_that: I can recover from a bad change quickly
   priority: P0
   depends_on:
-  - STORY-122
+  - STORY-127
   acceptance_criteria:
   - id: AC-001
     scenario: One-click rollback
@@ -7174,7 +7548,7 @@ stories:
   - RoutingRule
   - RoutingDeploy
   - AuditLog
-- id: STORY-124
+- id: STORY-129
   feature: FEAT-055
   title: Deprecate a model with migration runbook
   narrative:
@@ -7233,7 +7607,7 @@ stories:
   - AuditLog
   non_functional:
   - Weekly reminder email until the deadline
-- id: STORY-125
+- id: STORY-130
   feature: FEAT-056
   title: Hard-delete a disabled model
   narrative:
@@ -7289,7 +7663,7 @@ stories:
   - AuditLog
   non_functional:
   - Deletion is executed in a background job to drop associated indexes safely
-- id: STORY-126
+- id: STORY-131
   feature: FEAT-056
   title: Block model hard-delete when live traffic is present
   narrative:
@@ -7298,7 +7672,7 @@ stories:
     so_that: I cannot accidentally break production
   priority: P2
   depends_on:
-  - STORY-125
+  - STORY-130
   acceptance_criteria:
   - id: AC-001
     scenario: Live traffic blocks delete
@@ -7322,7 +7696,7 @@ stories:
   - Model
   - Request
   - AuditLog
-- id: STORY-127
+- id: STORY-132
   feature: FEAT-057
   title: Request a routing rule change
   narrative:
@@ -7343,7 +7717,7 @@ stories:
   data_models:
   - Approval
   - RoutingRule
-- id: STORY-128
+- id: STORY-133
   feature: FEAT-057
   title: Approve or reject a routing rule change
   narrative:
@@ -7352,7 +7726,7 @@ stories:
     so_that: only sanctioned changes reach production
   priority: P1
   depends_on:
-  - STORY-127
+  - STORY-132
   acceptance_criteria:
   - id: AC-001
     scenario: Approve applies change
@@ -7375,7 +7749,7 @@ stories:
   - Approval
   - RoutingRule
   - RoutingDeploy
-- id: STORY-129
+- id: STORY-134
   feature: FEAT-058
   title: Version prompts and templates
   narrative:
@@ -7395,7 +7769,7 @@ stories:
   data_models:
   - PromptTemplate
   - PromptTemplateVersion
-- id: STORY-130
+- id: STORY-135
   feature: FEAT-058
   title: Assign owners to a prompt template
   narrative:
@@ -7415,7 +7789,7 @@ stories:
   data_models:
   - PromptTemplate
   - User
-- id: STORY-131
+- id: STORY-136
   feature: FEAT-058
   title: Approval gate for template changes
   narrative:
@@ -7435,7 +7809,7 @@ stories:
   data_models:
   - PromptTemplate
   - Approval
-- id: STORY-132
+- id: STORY-137
   feature: FEAT-058
   title: A/B test prompt templates
   narrative:
@@ -7456,7 +7830,7 @@ stories:
   - PromptTemplate
   - PromptTemplateVersion
   - Request
-- id: STORY-133
+- id: STORY-138
   feature: FEAT-058
   title: Template lineage
   narrative:
@@ -7476,7 +7850,7 @@ stories:
   data_models:
   - Request
   - PromptTemplateVersion
-- id: STORY-134
+- id: STORY-139
   feature: FEAT-059
   title: Define a golden dataset
   narrative:
@@ -7495,7 +7869,7 @@ stories:
     - A GoldenDataset is created with versioned records
   data_models:
   - GoldenDataset
-- id: STORY-135
+- id: STORY-140
   feature: FEAT-059
   title: Compare models on a golden dataset
   narrative:
@@ -7515,7 +7889,7 @@ stories:
   data_models:
   - GoldenDataset
   - Model
-- id: STORY-136
+- id: STORY-141
   feature: FEAT-059
   title: Translation regression suite for FEAT-072
   narrative:
@@ -7534,7 +7908,7 @@ stories:
     - A report lists pass/fail per case and any translation fidelity regressions
   data_models:
   - GoldenDataset
-- id: STORY-137
+- id: STORY-142
   feature: FEAT-060
   title: Configure caching per model
   narrative:
@@ -7603,7 +7977,7 @@ stories:
   data_models:
   - CacheConfig
   - Model
-- id: STORY-138
+- id: STORY-143
   feature: FEAT-061
   title: Create a semantic cache config
   narrative:
@@ -7612,7 +7986,7 @@ stories:
     so_that: paraphrased questions reuse prior answers
   priority: P2
   depends_on:
-  - STORY-137
+  - STORY-142
   acceptance_criteria:
   - id: AC-001
     scenario: Create semantic cache
@@ -7655,7 +8029,7 @@ stories:
   - SemanticCacheConfig
   - Team
   - Model
-- id: STORY-139
+- id: STORY-144
   feature: FEAT-061
   title: Edit or delete a semantic cache
   narrative:
@@ -7664,7 +8038,7 @@ stories:
     so_that: I can iterate on quality/cost of my cache
   priority: P2
   depends_on:
-  - STORY-138
+  - STORY-143
   acceptance_criteria:
   - id: AC-001
     scenario: Tighten threshold
@@ -7714,7 +8088,7 @@ stories:
   data_models:
   - SemanticCacheConfig
   - CacheEntry
-- id: STORY-140
+- id: STORY-145
   feature: FEAT-061
   title: Clarify billing reconciliation for cache reads
   narrative:
@@ -7743,7 +8117,7 @@ stories:
   - Request
   - CacheConfig
   - Model
-- id: STORY-141
+- id: STORY-146
   feature: FEAT-062
   title: Track prompt-segment reuse and cost
   narrative:
@@ -7780,7 +8154,7 @@ stories:
   data_models:
   - PromptSegment
   - Model
-- id: STORY-142
+- id: STORY-147
   feature: FEAT-063
   title: Browse and invalidate cache entries
   narrative:
@@ -7848,7 +8222,7 @@ stories:
   - Model
   - Team
   - AuditLog
-- id: STORY-143
+- id: STORY-148
   feature: FEAT-063
   title: Invalidate cache entries on BYOK rotation
   narrative:
@@ -7870,7 +8244,7 @@ stories:
   - CacheEntry
   - BYOKCredential
   - AuditLog
-- id: STORY-144
+- id: STORY-149
   feature: FEAT-063
   title: Invalidate cache entries on retention policy change
   narrative:
@@ -7892,7 +8266,7 @@ stories:
   - CacheEntry
   - RetentionConfig
   - AuditLog
-- id: STORY-145
+- id: STORY-150
   feature: FEAT-064
   title: Automate cache invalidation with event rules
   narrative:
@@ -7948,7 +8322,7 @@ stories:
     inferred: true
   data_models:
   - InvalidationRule
-- id: STORY-146
+- id: STORY-151
   feature: FEAT-064
   title: Edit or delete an invalidation rule
   narrative:
@@ -7957,7 +8331,7 @@ stories:
     so_that: policies stay in sync with application behavior
   priority: P2
   depends_on:
-  - STORY-145
+  - STORY-150
   acceptance_criteria:
   - id: AC-001
     scenario: Edit match condition
@@ -8005,7 +8379,7 @@ stories:
     inferred: true
   data_models:
   - InvalidationRule
-- id: STORY-147
+- id: STORY-152
   feature: FEAT-065
   title: Override cache settings per team or key
   narrative:
@@ -8014,7 +8388,7 @@ stories:
     so_that: sensitive or deterministic workflows can disable cache or tighten threshold
   priority: P2
   depends_on:
-  - STORY-137
+  - STORY-142
   acceptance_criteria:
   - id: AC-001
     scenario: Disable cache for legal-rev team
@@ -8046,7 +8420,7 @@ stories:
   - CacheOverride
   - Team
   - ApiKey
-- id: STORY-148
+- id: STORY-153
   feature: FEAT-066
   title: View cache hit rate and savings
   narrative:
@@ -8098,7 +8472,7 @@ stories:
   - Request
   - CacheEntry
   - MetricSeries
-- id: STORY-149
+- id: STORY-154
   feature: FEAT-067
   title: Warm up the cache from prompt segments
   narrative:
@@ -8146,7 +8520,7 @@ stories:
   - Model
   non_functional:
   - Warmup jobs respect provider rate limits via the outbound rate-limiter
-- id: STORY-150
+- id: STORY-155
   feature: FEAT-068
   title: Configure cache eviction policy per model
   narrative:
@@ -8199,7 +8573,7 @@ stories:
   - CacheEntry
   non_functional:
   - Eviction never drops an entry that was written in the last 60 seconds
-- id: STORY-151
+- id: STORY-156
   feature: FEAT-068
   title: Audit cache evictions
   narrative:
@@ -8208,7 +8582,7 @@ stories:
     so_that: I can diagnose cache churn and policy changes
   priority: P2
   depends_on:
-  - STORY-150
+  - STORY-155
   acceptance_criteria:
   - id: AC-001
     scenario: Eviction events captured
@@ -8229,7 +8603,7 @@ stories:
   data_models:
   - CacheEntry
   - CacheConfig
-- id: STORY-152
+- id: STORY-157
   feature: FEAT-069
   title: Browse safety events
   narrative:
@@ -8292,7 +8666,7 @@ stories:
     inferred: true
   data_models:
   - SafetyEvent
-- id: STORY-153
+- id: STORY-158
   feature: FEAT-069
   title: Inspect a safety event in detail
   narrative:
@@ -8301,7 +8675,7 @@ stories:
     so_that: I can decide what to do about this class of signals
   priority: P0
   depends_on:
-  - STORY-152
+  - STORY-157
   acceptance_criteria:
   - id: AC-001
     scenario: View detail
@@ -8326,7 +8700,7 @@ stories:
   data_models:
   - SafetyEvent
   - DetectionRule
-- id: STORY-154
+- id: STORY-159
   feature: FEAT-070
   title: Redact PII inline
   narrative:
@@ -8363,7 +8737,7 @@ stories:
   non_functional:
   - Inline redaction p95 latency <= 50 ms per request
   - Reversible redaction keys stored in a vault with workspace-scoped access
-- id: STORY-155
+- id: STORY-160
   feature: FEAT-070
   title: Set per-workspace PII strictness
   narrative:
@@ -8372,7 +8746,7 @@ stories:
     so_that: I can tune false positives vs coverage
   priority: P1
   depends_on:
-  - STORY-154
+  - STORY-159
   acceptance_criteria:
   - id: AC-001
     scenario: Switch strictness
@@ -8399,7 +8773,7 @@ stories:
   data_models:
   - PiiCategory
   - AuditLog
-- id: STORY-156
+- id: STORY-161
   feature: FEAT-071
   title: Detect and block prompt injections and jailbreaks
   narrative:
@@ -8431,7 +8805,7 @@ stories:
   data_models:
   - SafetyEvent
   - DetectionRule
-- id: STORY-157
+- id: STORY-162
   feature: FEAT-072
   title: Classify prompt and response content
   narrative:
@@ -8454,7 +8828,7 @@ stories:
   - SafetyEvent
   - DetectionRule
   - Request
-- id: STORY-158
+- id: STORY-163
   feature: FEAT-072
   title: Export safety events
   narrative:
@@ -8473,7 +8847,7 @@ stories:
     - A CSV with event id, time, category, rule, action, redacted content and request id is produced
   data_models:
   - SafetyEvent
-- id: STORY-159
+- id: STORY-164
   feature: FEAT-072
   title: Bulk action on safety events
   narrative:
@@ -8494,7 +8868,7 @@ stories:
   data_models:
   - SafetyEvent
   - AuditLog
-- id: STORY-160
+- id: STORY-165
   feature: FEAT-073
   title: Manage detection rules
   narrative:
@@ -8555,7 +8929,7 @@ stories:
   data_models:
   - DetectionRule
   - AuditLog
-- id: STORY-161
+- id: STORY-166
   feature: FEAT-073
   title: Edit or delete a detection rule
   narrative:
@@ -8564,7 +8938,7 @@ stories:
     so_that: guardrails can evolve without re-creating rules
   priority: P0
   depends_on:
-  - STORY-160
+  - STORY-165
   acceptance_criteria:
   - id: AC-001
     scenario: Edit regex and severity
@@ -8618,7 +8992,7 @@ stories:
   - DetectionRule
   - SafetyEvent
   - AuditLog
-- id: STORY-162
+- id: STORY-167
   feature: FEAT-073
   title: False-positive feedback updates DetectionRule.fp_rate
   narrative:
@@ -8639,7 +9013,7 @@ stories:
   data_models:
   - SafetyEvent
   - DetectionRule
-- id: STORY-163
+- id: STORY-168
   feature: FEAT-073
   title: Save, edit, publish and discard a draft detection rule
   narrative:
@@ -8648,7 +9022,7 @@ stories:
     so_that: I can prepare and review rule changes without exposing them to live traffic
   priority: P1
   depends_on:
-  - STORY-160
+  - STORY-165
   acceptance_criteria:
   - id: AC-001
     scenario: Save a new rule as draft
@@ -8745,7 +9119,7 @@ stories:
   - DetectionRule
   - SafetyRuleVersion
   - AuditLog
-- id: STORY-164
+- id: STORY-169
   feature: FEAT-074
   title: Override action on a single safety event
   narrative:
@@ -8754,7 +9128,7 @@ stories:
     so_that: I can correct a false positive or escalate a false negative
   priority: P1
   depends_on:
-  - STORY-153
+  - STORY-158
   acceptance_criteria:
   - id: AC-001
     scenario: Mark reviewed
@@ -8792,7 +9166,7 @@ stories:
   data_models:
   - SafetyEvent
   - AuditLog
-- id: STORY-165
+- id: STORY-170
   feature: FEAT-075
   title: Version every change to a detection rule
   narrative:
@@ -8851,7 +9225,7 @@ stories:
   - DetectionRule
   - SafetyRuleVersion
   - AuditLog
-- id: STORY-166
+- id: STORY-171
   feature: FEAT-076
   title: Dry-run a detection rule against recent traffic
   narrative:
@@ -8907,7 +9281,7 @@ stories:
   - Request
   non_functional:
   - Dry-run never writes SafetyEvent or enforces an action
-- id: STORY-167
+- id: STORY-172
   feature: FEAT-076
   title: Backtest a rule and report FP/FN
   narrative:
@@ -8916,7 +9290,7 @@ stories:
     so_that: I can measure false positives and false negatives
   priority: P1
   depends_on:
-  - STORY-166
+  - STORY-171
   acceptance_criteria:
   - id: AC-001
     scenario: Backtest over 7 days
@@ -8941,7 +9315,7 @@ stories:
   - Request
   non_functional:
   - Backtest never enforces actions or writes SafetyEvent rows
-- id: STORY-168
+- id: STORY-173
   feature: FEAT-077
   title: Install a rule template pack
   narrative:
@@ -8997,7 +9371,7 @@ stories:
   - SafetyRuleTemplate
   - DetectionRule
   - AuditLog
-- id: STORY-169
+- id: STORY-174
   feature: FEAT-078
   title: Tighten the safety policy for one team
   narrative:
@@ -9052,7 +9426,7 @@ stories:
   - AuditLog
   non_functional:
   - Policy evaluation is cached for 60s keyed by (team_id, category)
-- id: STORY-170
+- id: STORY-175
   feature: FEAT-078
   title: List team safety policy overrides and resolve effective policy
   narrative:
@@ -9080,7 +9454,7 @@ stories:
   data_models:
   - TeamSafetyPolicy
   - Team
-- id: STORY-171
+- id: STORY-176
   feature: FEAT-079
   title: Request a policy change that creates an Approval
   narrative:
@@ -9101,7 +9475,7 @@ stories:
   data_models:
   - Approval
   - AuditLog
-- id: STORY-172
+- id: STORY-177
   feature: FEAT-079
   title: Approve or reject a policy change
   narrative:
@@ -9110,7 +9484,7 @@ stories:
     so_that: only authorized changes land
   priority: P1
   depends_on:
-  - STORY-171
+  - STORY-176
   acceptance_criteria:
   - id: AC-001
     scenario: Approve applies change
@@ -9133,7 +9507,7 @@ stories:
   data_models:
   - Approval
   - AuditLog
-- id: STORY-173
+- id: STORY-178
   feature: FEAT-079
   title: Approval SLA, delegation and bulk decide
   narrative:
@@ -9142,7 +9516,7 @@ stories:
     so_that: reviews do not block incident velocity
   priority: P1
   depends_on:
-  - STORY-172
+  - STORY-177
   acceptance_criteria:
   - id: AC-001
     scenario: SLA and breach
@@ -9172,7 +9546,7 @@ stories:
   - Approval
   - AlertEvent
   - AuditLog
-- id: STORY-174
+- id: STORY-179
   feature: FEAT-080
   title: Request PII unredact with reason
   narrative:
@@ -9194,7 +9568,7 @@ stories:
   - PiiUnredactRequest
   - Approval
   - Request
-- id: STORY-175
+- id: STORY-180
   feature: FEAT-080
   title: Approve an unredact request
   narrative:
@@ -9203,7 +9577,7 @@ stories:
     so_that: only justified reveals happen
   priority: P1
   depends_on:
-  - STORY-174
+  - STORY-179
   acceptance_criteria:
   - id: AC-001
     scenario: Approve
@@ -9225,7 +9599,7 @@ stories:
   data_models:
   - PiiUnredactRequest
   - Approval
-- id: STORY-176
+- id: STORY-181
   feature: FEAT-080
   title: Audit every unredact
   narrative:
@@ -9245,7 +9619,7 @@ stories:
   data_models:
   - PiiUnredactRequest
   - AuditLog
-- id: STORY-177
+- id: STORY-182
   feature: FEAT-080
   title: Auto-expire unredact reveals
   narrative:
@@ -9265,8 +9639,76 @@ stories:
     - The request state becomes "expired"
   data_models:
   - PiiUnredactRequest
-- id: STORY-178
+- id: STORY-183
   feature: FEAT-081
+  title: View the live safety traffic-flow diagram
+  narrative:
+    as_a: security and compliance officer on /safety
+    i_want: a live flow visualization showing what requests leave our walls, split by apps, redactor stage and provider destinations
+    so_that: I can explain and audit our data-exfiltration posture at a glance
+  priority: P1
+  depends_on:
+  - STORY-157
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Three-stage flow renders
+    given:
+    - Traffic is flowing through the gateway
+    when:
+    - I am on /safety with "Show data-flow diagram" enabled in preferences
+    then:
+    - A three-stage diagram renders titled "What leaves your walls" with a "live · {N}/min" outbound badge
+    - Left column "Your apps" lists top calling apps (support-ai, copilot, analytics, …) with a pulse dot and shows inbound_per_min
+    - Middle stage "Redactor" shows number of active policies and "-{redacted+blocked}/min" throughput
+    - Right column "Providers" lists destination regions with per-region req/min and shows outbound_per_min
+    - A footer legend shows blocked/min (red), redacted/min (amber) and readiness %
+  - id: AC-002
+    scenario: Readiness score explained
+    given:
+    - The diagram is visible
+    when:
+    - I hover the readiness % badge
+    then:
+    - A tooltip explains the score is composed of redactor coverage, allowlist compliance and residency-policy enforcement, with a link to the underlying SafetyPosture entry
+  - id: AC-003
+    scenario: Live refresh and disconnected state
+    given:
+    - The diagram is visible
+    when:
+    - The telemetry stream pauses for more than 15 seconds
+    then:
+    - The live badge switches to "stale" and numbers are greyed
+    - A retry affordance is shown consistent with ui_baseline.error_state
+  api:
+  - method: GET
+    path: /api/safety/flow
+    request:
+      query:
+        window_s: int
+    response:
+      inbound_per_min: int
+      outbound_per_min: int
+      redacted_per_min: int
+      blocked_per_min: int
+      redactors_active: int
+      readiness: number
+      apps:
+      - name: string
+        reqs_per_min: int
+      regions:
+      - id: string
+        label: string
+        reqs_per_min: int
+    errors:
+    - 401
+    - 403
+    inferred: true
+  data_models:
+  - SafetyPosture
+  - DetectionRule
+  - Request
+- id: STORY-184
+  feature: FEAT-082
   title: View org-wide budget health
   narrative:
     as_a: finance operations lead
@@ -9318,8 +9760,8 @@ stories:
   - Team
   non_functional:
   - Dashboard reads roll up MTD spend from the Request stream (materialized daily + intraday cache)
-- id: STORY-179
-  feature: FEAT-081
+- id: STORY-185
+  feature: FEAT-082
   title: Drill into a team budget
   narrative:
     as_a: team lead
@@ -9327,7 +9769,7 @@ stories:
     so_that: I know who is burning it
   priority: P0
   depends_on:
-  - STORY-178
+  - STORY-184
   acceptance_criteria:
   - id: AC-001
     scenario: Team detail
@@ -9357,8 +9799,8 @@ stories:
   - Team
   - Project
   - UserBudget
-- id: STORY-180
-  feature: FEAT-081
+- id: STORY-186
+  feature: FEAT-082
   title: Create a budget
   narrative:
     as_a: finance operations lead
@@ -9417,8 +9859,8 @@ stories:
   - Budget
   - Team
   - AuditLog
-- id: STORY-181
-  feature: FEAT-081
+- id: STORY-187
+  feature: FEAT-082
   title: Reconcile direct-waiver and Approval-based budget paths
   narrative:
     as_a: finance operations lead
@@ -9450,8 +9892,8 @@ stories:
   - BudgetPolicy
   - BudgetEvent
   - Approval
-- id: STORY-182
-  feature: FEAT-082
+- id: STORY-188
+  feature: FEAT-083
   title: Allocate project and user budgets
   narrative:
     as_a: team lead
@@ -9459,7 +9901,7 @@ stories:
     so_that: each owner knows their allocation
   priority: P1
   depends_on:
-  - STORY-179
+  - STORY-185
   acceptance_criteria:
   - id: AC-001
     scenario: Allocate across projects
@@ -9498,8 +9940,8 @@ stories:
   - Budget
   - Project
   - UserBudget
-- id: STORY-183
-  feature: FEAT-083
+- id: STORY-189
+  feature: FEAT-084
   title: Set a budget policy with soft and hard thresholds
   narrative:
     as_a: finance operations lead
@@ -9507,7 +9949,7 @@ stories:
     so_that: enforcement matches our comfort level per team
   priority: P0
   depends_on:
-  - STORY-179
+  - STORY-185
   acceptance_criteria:
   - id: AC-001
     scenario: Alert-only policy fires
@@ -9549,8 +9991,8 @@ stories:
   - BudgetPolicy
   - BudgetEvent
   - AlertEvent
-- id: STORY-184
-  feature: FEAT-083
+- id: STORY-190
+  feature: FEAT-084
   title: Downgrade to a cheaper model near budget cap
   narrative:
     as_a: platform engineer
@@ -9558,7 +10000,7 @@ stories:
     so_that: work continues at lower cost instead of failing
   priority: P1
   depends_on:
-  - STORY-183
+  - STORY-189
   acceptance_criteria:
   - id: AC-001
     scenario: Downgrade applied
@@ -9577,8 +10019,8 @@ stories:
   - RoutingRule
   - BudgetEvent
   - Request
-- id: STORY-185
-  feature: FEAT-084
+- id: STORY-191
+  feature: FEAT-085
   title: See projected spend and runout date
   narrative:
     as_a: finance operations lead
@@ -9586,7 +10028,7 @@ stories:
     so_that: I can preempt overages
   priority: P1
   depends_on:
-  - STORY-179
+  - STORY-185
   acceptance_criteria:
   - id: AC-001
     scenario: Projection under budget
@@ -9611,8 +10053,8 @@ stories:
   non_functional:
   - Burn rate computed on a 7-day rolling window
   - Projection recomputed at least every hour
-- id: STORY-186
-  feature: FEAT-084
+- id: STORY-192
+  feature: FEAT-085
   title: Backtest forecast accuracy
   narrative:
     as_a: finance operations lead
@@ -9638,8 +10080,8 @@ stories:
     - An alert fires to notify the finance contact
   data_models:
   - Budget
-- id: STORY-187
-  feature: FEAT-085
+- id: STORY-193
+  feature: FEAT-086
   title: Grant a one-time budget waiver
   narrative:
     as_a: admin
@@ -9647,7 +10089,7 @@ stories:
     so_that: urgent work can continue
   priority: P1
   depends_on:
-  - STORY-183
+  - STORY-189
   acceptance_criteria:
   - id: AC-001
     scenario: Waiver allows spend
@@ -9679,8 +10121,8 @@ stories:
   - Budget
   - BudgetEvent
   - AuditLog
-- id: STORY-188
-  feature: FEAT-085
+- id: STORY-194
+  feature: FEAT-086
   title: Review the budget event timeline
   narrative:
     as_a: finance operations lead
@@ -9688,7 +10130,7 @@ stories:
     so_that: I can answer "what happened to the budget this month"
   priority: P1
   depends_on:
-  - STORY-178
+  - STORY-184
   acceptance_criteria:
   - id: AC-001
     scenario: Timeline populated
@@ -9700,8 +10142,8 @@ stories:
     - Each event shows type, severity, scope, title, body, actor and timestamp
   data_models:
   - BudgetEvent
-- id: STORY-189
-  feature: FEAT-086
+- id: STORY-195
+  feature: FEAT-087
   title: View the approvals queue
   narrative:
     as_a: admin or team lead
@@ -9747,8 +10189,8 @@ stories:
   data_models:
   - Approval
   - User
-- id: STORY-190
-  feature: FEAT-086
+- id: STORY-196
+  feature: FEAT-087
   title: Approve or reject a pending request
   narrative:
     as_a: approver
@@ -9756,7 +10198,7 @@ stories:
     so_that: the original requester can proceed or adjust
   priority: P1
   depends_on:
-  - STORY-189
+  - STORY-195
   acceptance_criteria:
   - id: AC-001
     scenario: Approve budget overage
@@ -9807,8 +10249,8 @@ stories:
   - Approval
   - BudgetEvent
   - AuditLog
-- id: STORY-191
-  feature: FEAT-087
+- id: STORY-197
+  feature: FEAT-088
   title: Update a budget
   narrative:
     as_a: finance operations lead
@@ -9816,7 +10258,7 @@ stories:
     so_that: allocations stay aligned with the business
   priority: P0
   depends_on:
-  - STORY-182
+  - STORY-188
   acceptance_criteria:
   - id: AC-001
     scenario: Edit amount within policy
@@ -9866,8 +10308,8 @@ stories:
   - Budget
   - BudgetEvent
   - Approval
-- id: STORY-192
-  feature: FEAT-088
+- id: STORY-198
+  feature: FEAT-089
   title: Delete a budget
   narrative:
     as_a: finance operations lead
@@ -9875,7 +10317,7 @@ stories:
     so_that: stale budgets do not clutter reports
   priority: P1
   depends_on:
-  - STORY-191
+  - STORY-197
   acceptance_criteria:
   - id: AC-001
     scenario: Delete with reassignment
@@ -9924,8 +10366,8 @@ stories:
   - Project
   - BudgetEvent
   - Approval
-- id: STORY-193
-  feature: FEAT-089
+- id: STORY-199
+  feature: FEAT-090
   title: Configure budget rollover at cycle reset
   narrative:
     as_a: finance operations lead
@@ -9977,8 +10419,8 @@ stories:
   - BudgetEvent
   non_functional:
   - Cycle rollover is performed by a single transactional job per org
-- id: STORY-194
-  feature: FEAT-090
+- id: STORY-200
+  feature: FEAT-091
   title: Notify on budget overage
   narrative:
     as_a: finance operations lead
@@ -10016,8 +10458,8 @@ stories:
   - NotificationPreference
   non_functional:
   - Overage notifications are independent from BudgetPolicy soft_alert_pct
-- id: STORY-195
-  feature: FEAT-091
+- id: STORY-201
+  feature: FEAT-092
   title: Budget in a non-USD currency with FX conversion
   narrative:
     as_a: finance operations lead in a multinational org
@@ -10068,8 +10510,8 @@ stories:
   - FxRate
   non_functional:
   - FX conversion caches rates for 24h
-- id: STORY-196
-  feature: FEAT-091
+- id: STORY-202
+  feature: FEAT-092
   title: View FX history, force override and alert on stale rate
   narrative:
     as_a: finance operations lead
@@ -10104,8 +10546,8 @@ stories:
   data_models:
   - FxRate
   - AuditLog
-- id: STORY-197
-  feature: FEAT-092
+- id: STORY-203
+  feature: FEAT-093
   title: Create a project
   narrative:
     as_a: team lead
@@ -10124,8 +10566,8 @@ stories:
   data_models:
   - Project
   - AuditLog
-- id: STORY-198
-  feature: FEAT-092
+- id: STORY-204
+  feature: FEAT-093
   title: List projects
   narrative:
     as_a: team lead
@@ -10143,8 +10585,8 @@ stories:
     - I see each with name, owner, budget status and created_at
   data_models:
   - Project
-- id: STORY-199
-  feature: FEAT-092
+- id: STORY-205
+  feature: FEAT-093
   title: Edit a project
   narrative:
     as_a: project owner
@@ -10163,8 +10605,8 @@ stories:
   data_models:
   - Project
   - AuditLog
-- id: STORY-200
-  feature: FEAT-092
+- id: STORY-206
+  feature: FEAT-093
   title: Delete a project
   narrative:
     as_a: team lead
@@ -10191,8 +10633,8 @@ stories:
   data_models:
   - Project
   - AuditLog
-- id: STORY-201
-  feature: FEAT-092
+- id: STORY-207
+  feature: FEAT-093
   title: Assign project owners
   narrative:
     as_a: team lead
@@ -10211,8 +10653,8 @@ stories:
   data_models:
   - Project
   - User
-- id: STORY-202
-  feature: FEAT-093
+- id: STORY-208
+  feature: FEAT-094
   title: CRUD reusable budget policies
   narrative:
     as_a: finance operations lead
@@ -10255,8 +10697,8 @@ stories:
   data_models:
   - BudgetPolicy
   - Budget
-- id: STORY-203
-  feature: FEAT-094
+- id: STORY-209
+  feature: FEAT-095
   title: Contest an invoice
   narrative:
     as_a: finance operations lead
@@ -10276,8 +10718,8 @@ stories:
   data_models:
   - Billing
   - SupportTicket
-- id: STORY-204
-  feature: FEAT-094
+- id: STORY-210
+  feature: FEAT-095
   title: Request a credit
   narrative:
     as_a: finance operations lead
@@ -10295,8 +10737,8 @@ stories:
     - A credit request is created and support is notified
   data_models:
   - Billing
-- id: STORY-205
-  feature: FEAT-094
+- id: STORY-211
+  feature: FEAT-095
   title: Update payment method
   narrative:
     as_a: finance operations lead
@@ -10316,8 +10758,8 @@ stories:
   data_models:
   - Billing
   - AuditLog
-- id: STORY-206
-  feature: FEAT-094
+- id: STORY-212
+  feature: FEAT-095
   title: Upload a purchase order
   narrative:
     as_a: finance operations lead
@@ -10335,8 +10777,8 @@ stories:
     - Billing.po_number is set and the file is attached
   data_models:
   - Billing
-- id: STORY-207
-  feature: FEAT-094
+- id: STORY-213
+  feature: FEAT-095
   title: Set tax id
   narrative:
     as_a: finance operations lead
@@ -10354,8 +10796,8 @@ stories:
     - Billing.tax_id updates and it appears on the next invoice
   data_models:
   - Billing
-- id: STORY-208
-  feature: FEAT-094
+- id: STORY-214
+  feature: FEAT-095
   title: View invoice history
   narrative:
     as_a: finance operations lead
@@ -10373,8 +10815,8 @@ stories:
     - I see a list with period, total, status and a download link
   data_models:
   - Billing
-- id: STORY-209
-  feature: FEAT-095
+- id: STORY-215
+  feature: FEAT-096
   title: Start a trial
   narrative:
     as_a: workspace owner
@@ -10394,8 +10836,8 @@ stories:
   data_models:
   - Billing
   - AuditLog
-- id: STORY-210
-  feature: FEAT-095
+- id: STORY-216
+  feature: FEAT-096
   title: Upgrade plan
   narrative:
     as_a: workspace owner
@@ -10415,8 +10857,8 @@ stories:
   data_models:
   - Billing
   - AuditLog
-- id: STORY-211
-  feature: FEAT-095
+- id: STORY-217
+  feature: FEAT-096
   title: Downgrade plan
   narrative:
     as_a: workspace owner
@@ -10436,8 +10878,8 @@ stories:
   data_models:
   - Billing
   - AuditLog
-- id: STORY-212
-  feature: FEAT-095
+- id: STORY-218
+  feature: FEAT-096
   title: Cancel plan
   narrative:
     as_a: workspace owner
@@ -10457,8 +10899,8 @@ stories:
   data_models:
   - Billing
   - AuditLog
-- id: STORY-213
-  feature: FEAT-095
+- id: STORY-219
+  feature: FEAT-096
   title: View plan change history
   narrative:
     as_a: workspace owner
@@ -10476,8 +10918,8 @@ stories:
     - I see each entry with plan, effective_at and actor
   data_models:
   - Billing
-- id: STORY-214
-  feature: FEAT-096
+- id: STORY-220
+  feature: FEAT-097
   title: Monthly CSV showback per cost-center
   narrative:
     as_a: finance operations lead
@@ -10496,8 +10938,8 @@ stories:
   data_models:
   - Billing
   - Request
-- id: STORY-215
-  feature: FEAT-096
+- id: STORY-221
+  feature: FEAT-097
   title: Scheduled dispatch to finance email
   narrative:
     as_a: finance operations lead
@@ -10515,8 +10957,8 @@ stories:
     - On that day each month, the CSV is emailed with a link to the full archive
   data_models:
   - Billing
-- id: STORY-216
-  feature: FEAT-097
+- id: STORY-222
+  feature: FEAT-098
   title: Contract commitment burn-down UI
   narrative:
     as_a: finance operations lead
@@ -10534,8 +10976,8 @@ stories:
     - I see a burn-down chart and projected end-of-contract spend with a runway indicator
   data_models:
   - Billing
-- id: STORY-217
-  feature: FEAT-098
+- id: STORY-223
+  feature: FEAT-099
   title: Create an alert rule
   narrative:
     as_a: platform engineer
@@ -10688,8 +11130,8 @@ stories:
   - AuditLog
   ui_references:
   - proto/alerts.jsx
-- id: STORY-218
-  feature: FEAT-098
+- id: STORY-224
+  feature: FEAT-099
   title: Toggle an alert rule
   narrative:
     as_a: on-call engineer
@@ -10697,7 +11139,7 @@ stories:
     so_that: I can silence expected noise during maintenance
   priority: P1
   depends_on:
-  - STORY-217
+  - STORY-223
   acceptance_criteria:
   - id: AC-001
     scenario: Disable rule
@@ -10723,8 +11165,8 @@ stories:
     inferred: true
   data_models:
   - AlertRule
-- id: STORY-219
-  feature: FEAT-098
+- id: STORY-225
+  feature: FEAT-099
   title: Edit an alert rule
   narrative:
     as_a: platform engineer
@@ -10732,7 +11174,7 @@ stories:
     so_that: rules stay tuned to real incidents
   priority: P1
   depends_on:
-  - STORY-217
+  - STORY-223
   acceptance_criteria:
   - id: AC-001
     scenario: Raise threshold
@@ -10778,8 +11220,8 @@ stories:
   data_models:
   - AlertRule
   - AuditLog
-- id: STORY-220
-  feature: FEAT-098
+- id: STORY-226
+  feature: FEAT-099
   title: Delete an alert rule
   narrative:
     as_a: platform engineer
@@ -10787,7 +11229,7 @@ stories:
     so_that: the rule list stays focused
   priority: P1
   depends_on:
-  - STORY-217
+  - STORY-223
   acceptance_criteria:
   - id: AC-001
     scenario: Delete rule without active alerts
@@ -10838,8 +11280,8 @@ stories:
   - AlertRule
   - AlertEvent
   - AuditLog
-- id: STORY-221
-  feature: FEAT-098
+- id: STORY-227
+  feature: FEAT-099
   title: Subscribe to alert rule fires as an individual user
   narrative:
     as_a: team member
@@ -10859,8 +11301,8 @@ stories:
   data_models:
   - AlertRule
   - NotificationPreference
-- id: STORY-222
-  feature: FEAT-099
+- id: STORY-228
+  feature: FEAT-100
   title: Triage an active alert
   narrative:
     as_a: on-call engineer
@@ -10921,8 +11363,8 @@ stories:
   data_models:
   - AlertEvent
   - AlertTimelineEntry
-- id: STORY-223
-  feature: FEAT-099
+- id: STORY-229
+  feature: FEAT-100
   title: Snooze or escalate an alert
   narrative:
     as_a: on-call engineer
@@ -10930,7 +11372,7 @@ stories:
     so_that: I can pace response correctly
   priority: P1
   depends_on:
-  - STORY-222
+  - STORY-228
   acceptance_criteria:
   - id: AC-001
     scenario: Snooze for 1h
@@ -10976,8 +11418,8 @@ stories:
   data_models:
   - AlertEvent
   - AlertTimelineEntry
-- id: STORY-224
-  feature: FEAT-100
+- id: STORY-230
+  feature: FEAT-101
   title: Attach a runbook to an alert rule
   narrative:
     as_a: platform engineer
@@ -10985,7 +11427,7 @@ stories:
     so_that: on-call does not hunt for tribal knowledge
   priority: P1
   depends_on:
-  - STORY-217
+  - STORY-223
   acceptance_criteria:
   - id: AC-001
     scenario: View runbook from alert
@@ -11008,8 +11450,8 @@ stories:
   data_models:
   - Runbook
   - AlertRule
-- id: STORY-225
-  feature: FEAT-100
+- id: STORY-231
+  feature: FEAT-101
   title: Create or edit a runbook
   narrative:
     as_a: platform engineer
@@ -11017,7 +11459,7 @@ stories:
     so_that: on-call has the playbook when an alert fires
   priority: P1
   depends_on:
-  - STORY-224
+  - STORY-230
   acceptance_criteria:
   - id: AC-001
     scenario: Create runbook
@@ -11077,8 +11519,8 @@ stories:
   - Runbook
   - AlertRule
   - AuditLog
-- id: STORY-226
-  feature: FEAT-101
+- id: STORY-232
+  feature: FEAT-102
   title: Deliver notifications via email, Slack, PagerDuty, webhook
   narrative:
     as_a: platform engineer
@@ -11086,7 +11528,7 @@ stories:
     so_that: the right people are reached with minimum friction
   priority: P0
   depends_on:
-  - STORY-217
+  - STORY-223
   acceptance_criteria:
   - id: AC-001
     scenario: Slack notification on fire
@@ -11112,8 +11554,8 @@ stories:
   non_functional:
   - At-least-once delivery with exponential backoff to 6h
   - PagerDuty webhook events verified via signature
-- id: STORY-227
-  feature: FEAT-102
+- id: STORY-233
+  feature: FEAT-103
   title: Snooze an alert rule
   narrative:
     as_a: on-call engineer
@@ -11156,8 +11598,8 @@ stories:
   - AlertRule
   - AlertSnooze
   - AlertTimelineEntry
-- id: STORY-228
-  feature: FEAT-102
+- id: STORY-234
+  feature: FEAT-103
   title: Acknowledge an active alert
   narrative:
     as_a: on-call engineer
@@ -11208,8 +11650,8 @@ stories:
   data_models:
   - AlertEvent
   - AlertTimelineEntry
-- id: STORY-229
-  feature: FEAT-102
+- id: STORY-235
+  feature: FEAT-103
   title: Mute alerts by fingerprint instead of whole rule
   narrative:
     as_a: on-call engineer
@@ -11229,8 +11671,8 @@ stories:
   data_models:
   - AlertSnooze
   - AlertEvent
-- id: STORY-230
-  feature: FEAT-103
+- id: STORY-236
+  feature: FEAT-104
   title: Browse alert history and add a post-mortem
   narrative:
     as_a: engineering manager
@@ -11289,8 +11731,8 @@ stories:
   data_models:
   - AlertEvent
   - PostMortem
-- id: STORY-231
-  feature: FEAT-103
+- id: STORY-237
+  feature: FEAT-104
   title: Declare and manage an incident
   narrative:
     as_a: on-call engineer
@@ -11328,8 +11770,8 @@ stories:
   - StatusPageIncident
   - AlertEvent
   - AuditLog
-- id: STORY-232
-  feature: FEAT-103
+- id: STORY-238
+  feature: FEAT-104
   title: Write a structured post-mortem
   narrative:
     as_a: engineering manager
@@ -11337,7 +11779,7 @@ stories:
     so_that: retrospectives are consistent and action items are tracked
   priority: P1
   depends_on:
-  - STORY-230
+  - STORY-236
   acceptance_criteria:
   - id: AC-001
     scenario: Template enforced
@@ -11360,8 +11802,8 @@ stories:
   - PostMortem
   - AlertEvent
   - StatusPageIncident
-- id: STORY-233
-  feature: FEAT-104
+- id: STORY-239
+  feature: FEAT-105
   title: Create an on-call schedule for a team
   narrative:
     as_a: engineering manager
@@ -11414,8 +11856,8 @@ stories:
   - OncallSchedule
   - OncallShift
   - AuditLog
-- id: STORY-234
-  feature: FEAT-104
+- id: STORY-240
+  feature: FEAT-105
   title: Page the current on-call user
   narrative:
     as_a: system
@@ -11423,7 +11865,7 @@ stories:
     so_that: the right person is paged without hard-coding users in alert rules
   priority: P1
   depends_on:
-  - STORY-233
+  - STORY-239
   acceptance_criteria:
   - id: AC-001
     scenario: Resolve at fire time
@@ -11458,8 +11900,8 @@ stories:
   - OncallSchedule
   - OncallShift
   - AlertEvent
-- id: STORY-235
-  feature: FEAT-104
+- id: STORY-241
+  feature: FEAT-105
   title: Edit, rename, delete schedule; change rotation; add/remove member; swap shift
   narrative:
     as_a: team lead
@@ -11467,7 +11909,7 @@ stories:
     so_that: it reflects current membership and rotation
   priority: P1
   depends_on:
-  - STORY-233
+  - STORY-239
   acceptance_criteria:
   - id: AC-001
     scenario: Rename schedule
@@ -11513,8 +11955,8 @@ stories:
   - OncallSchedule
   - OncallShift
   - AuditLog
-- id: STORY-236
-  feature: FEAT-104
+- id: STORY-242
+  feature: FEAT-105
   title: On-call handoff digest / upcoming shift preview
   narrative:
     as_a: on-call engineer
@@ -11542,8 +11984,8 @@ stories:
   - OncallSchedule
   - OncallShift
   - AlertEvent
-- id: STORY-237
-  feature: FEAT-104
+- id: STORY-243
+  feature: FEAT-105
   title: Escalate when the primary does not acknowledge
   narrative:
     as_a: engineering manager
@@ -11551,7 +11993,7 @@ stories:
     so_that: pages never go unanswered
   priority: P1
   depends_on:
-  - STORY-234
+  - STORY-240
   acceptance_criteria:
   - id: AC-001
     scenario: Escalate after no-ack window
@@ -11576,8 +12018,8 @@ stories:
   - OncallShift
   - AlertEvent
   - AlertTimelineEntry
-- id: STORY-238
-  feature: FEAT-105
+- id: STORY-244
+  feature: FEAT-106
   title: Define an SLO
   narrative:
     as_a: SRE
@@ -11595,8 +12037,8 @@ stories:
     - An SLO row is created and the error budget is initialized
   data_models:
   - Slo
-- id: STORY-239
-  feature: FEAT-105
+- id: STORY-245
+  feature: FEAT-106
   title: View error-budget burn-down
   narrative:
     as_a: SRE
@@ -11614,8 +12056,8 @@ stories:
     - I see current error budget, burn rate and a burn-down chart
   data_models:
   - Slo
-- id: STORY-240
-  feature: FEAT-105
+- id: STORY-246
+  feature: FEAT-106
   title: Alert on SLO error-budget burn
   narrative:
     as_a: SRE
@@ -11634,8 +12076,8 @@ stories:
   data_models:
   - Slo
   - AlertEvent
-- id: STORY-241
-  feature: FEAT-106
+- id: STORY-247
+  feature: FEAT-107
   title: Edit workspace identity
   narrative:
     as_a: admin
@@ -11695,8 +12137,8 @@ stories:
   data_models:
   - Org
   - AuditLog
-- id: STORY-242
-  feature: FEAT-106
+- id: STORY-248
+  feature: FEAT-107
   title: View plan, commitment and invoices
   narrative:
     as_a: finance operations
@@ -11733,8 +12175,8 @@ stories:
     inferred: true
   data_models:
   - Billing
-- id: STORY-243
-  feature: FEAT-107
+- id: STORY-249
+  feature: FEAT-108
   title: Configure SSO and enforce domains
   narrative:
     as_a: admin
@@ -11793,8 +12235,8 @@ stories:
   data_models:
   - SsoConfig
   - AuditLog
-- id: STORY-244
-  feature: FEAT-108
+- id: STORY-250
+  feature: FEAT-109
   title: Configure SCIM provisioning
   narrative:
     as_a: admin
@@ -11831,8 +12273,8 @@ stories:
   data_models:
   - ScimConfig
   - AuditLog
-- id: STORY-245
-  feature: FEAT-108
+- id: STORY-251
+  feature: FEAT-109
   title: Resolve a failed SCIM sync conflict
   narrative:
     as_a: workspace admin
@@ -11840,7 +12282,7 @@ stories:
     so_that: a failed sync does not leave users in an inconsistent state
   priority: P1
   depends_on:
-  - STORY-244
+  - STORY-250
   acceptance_criteria:
   - id: AC-001
     scenario: List pending conflicts
@@ -11862,8 +12304,8 @@ stories:
   data_models:
   - ScimConfig
   - AuditLog
-- id: STORY-246
-  feature: FEAT-108
+- id: STORY-252
+  feature: FEAT-109
   title: Cascade deprovisioning when SCIM removes a user
   narrative:
     as_a: security officer
@@ -11871,7 +12313,7 @@ stories:
     so_that: no orphan access remains
   priority: P1
   depends_on:
-  - STORY-244
+  - STORY-250
   acceptance_criteria:
   - id: AC-001
     scenario: Cascade on deprovision
@@ -11898,8 +12340,8 @@ stories:
   - AuditLog
   non_functional:
   - Cascade runs in a single transactional job and is retried on partial failure
-- id: STORY-247
-  feature: FEAT-109
+- id: STORY-253
+  feature: FEAT-110
   title: Enforce org MFA and session TTL
   narrative:
     as_a: admin
@@ -11948,8 +12390,8 @@ stories:
   - User
   - Session
   - AuditLog
-- id: STORY-248
-  feature: FEAT-110
+- id: STORY-254
+  feature: FEAT-111
   title: Configure org-level API access
   narrative:
     as_a: admin
@@ -11999,8 +12441,8 @@ stories:
   data_models:
   - ApiAccessConfig
   - AuditLog
-- id: STORY-249
-  feature: FEAT-110
+- id: STORY-255
+  feature: FEAT-111
   title: Document and authenticate the staff metadata API
   narrative:
     as_a: platform engineer
@@ -12034,8 +12476,8 @@ stories:
     - They see purpose, listed endpoints, authn model and required scopes
   data_models:
   - ApiAccessConfig
-- id: STORY-250
-  feature: FEAT-111
+- id: STORY-256
+  feature: FEAT-112
   title: Pick data residency region
   narrative:
     as_a: compliance officer
@@ -12087,8 +12529,8 @@ stories:
   data_models:
   - ResidencyConfig
   - AuditLog
-- id: STORY-251
-  feature: FEAT-112
+- id: STORY-257
+  feature: FEAT-113
   title: Configure retention and PII redaction policy
   narrative:
     as_a: compliance officer
@@ -12135,8 +12577,8 @@ stories:
   data_models:
   - RetentionConfig
   - AuditLog
-- id: STORY-252
-  feature: FEAT-112
+- id: STORY-258
+  feature: FEAT-113
   title: Centralize per-class retention in RetentionConfig
   narrative:
     as_a: compliance officer
@@ -12155,8 +12597,8 @@ stories:
     - Any NFR that previously hardcoded a retention defers to RetentionConfig
   data_models:
   - RetentionConfig
-- id: STORY-253
-  feature: FEAT-113
+- id: STORY-259
+  feature: FEAT-114
   title: Manage webhooks
   narrative:
     as_a: admin
@@ -12223,8 +12665,8 @@ stories:
   - HMAC-SHA256 signature in `X-Antirion-Signature`
   - At-least-once delivery with exponential backoff up to 6h
   - 5-minute signature replay window
-- id: STORY-254
-  feature: FEAT-113
+- id: STORY-260
+  feature: FEAT-114
   title: Edit, pause or delete a webhook
   narrative:
     as_a: admin
@@ -12232,7 +12674,7 @@ stories:
     so_that: downstream systems stay in sync with our intent
   priority: P1
   depends_on:
-  - STORY-253
+  - STORY-259
   acceptance_criteria:
   - id: AC-001
     scenario: Edit URL and events
@@ -12292,8 +12734,8 @@ stories:
   data_models:
   - Webhook
   - AuditLog
-- id: STORY-255
-  feature: FEAT-113
+- id: STORY-261
+  feature: FEAT-114
   title: View webhook delivery history
   narrative:
     as_a: admin
@@ -12301,7 +12743,7 @@ stories:
     so_that: I can diagnose why downstream systems did not react
   priority: P2
   depends_on:
-  - STORY-253
+  - STORY-259
   acceptance_criteria:
   - id: AC-001
     scenario: Delivery list populated
@@ -12351,8 +12793,8 @@ stories:
     inferred: true
   data_models:
   - Webhook
-- id: STORY-256
-  feature: FEAT-113
+- id: STORY-262
+  feature: FEAT-114
   title: Replay the last real webhook event
   narrative:
     as_a: workspace admin
@@ -12371,8 +12813,8 @@ stories:
     - A new delivery attempt row is recorded
   data_models:
   - Webhook
-- id: STORY-257
-  feature: FEAT-114
+- id: STORY-263
+  feature: FEAT-115
   title: Stream audit events to an external sink
   narrative:
     as_a: security officer
@@ -12418,8 +12860,8 @@ stories:
   - AuditSink
   - AuditLog
   - AlertEvent
-- id: STORY-258
-  feature: FEAT-114
+- id: STORY-264
+  feature: FEAT-115
   title: Test or delete an audit sink
   narrative:
     as_a: security officer
@@ -12427,7 +12869,7 @@ stories:
     so_that: I can validate configuration and clean up stale sinks
   priority: P1
   depends_on:
-  - STORY-257
+  - STORY-263
   acceptance_criteria:
   - id: AC-001
     scenario: Test sink
@@ -12471,8 +12913,8 @@ stories:
   data_models:
   - AuditSink
   - AuditLog
-- id: STORY-259
-  feature: FEAT-114
+- id: STORY-265
+  feature: FEAT-115
   title: Dead-letter and replay failed audit-sink deliveries
   narrative:
     as_a: security officer
@@ -12480,7 +12922,7 @@ stories:
     so_that: the external audit trail never silently loses events
   priority: P1
   depends_on:
-  - STORY-257
+  - STORY-263
   acceptance_criteria:
   - id: AC-001
     scenario: Persistent failure dead-letters
@@ -12503,8 +12945,8 @@ stories:
   data_models:
   - AuditSink
   - AuditLog
-- id: STORY-260
-  feature: FEAT-114
+- id: STORY-266
+  feature: FEAT-115
   title: Tamper-proof audit export with hash chain
   narrative:
     as_a: compliance officer
@@ -12531,8 +12973,8 @@ stories:
     - A tampered row breaks verification and the manifest reports the break
   data_models:
   - AuditLog
-- id: STORY-261
-  feature: FEAT-115
+- id: STORY-267
+  feature: FEAT-116
   title: Connect a third-party integration
   narrative:
     as_a: admin
@@ -12580,8 +13022,8 @@ stories:
   data_models:
   - Integration
   - AuditLog
-- id: STORY-262
-  feature: FEAT-115
+- id: STORY-268
+  feature: FEAT-116
   title: Reconnect a degraded integration
   narrative:
     as_a: admin
@@ -12589,7 +13031,7 @@ stories:
     so_that: workflows depending on it resume
   priority: P2
   depends_on:
-  - STORY-261
+  - STORY-267
   acceptance_criteria:
   - id: AC-001
     scenario: Reconnect via OAuth
@@ -12624,8 +13066,8 @@ stories:
   - Integration
   - AlertEvent
   - AuditLog
-- id: STORY-263
-  feature: FEAT-115
+- id: STORY-269
+  feature: FEAT-116
   title: Handle orphaned routes when an integration is deleted
   narrative:
     as_a: workspace admin
@@ -12654,8 +13096,8 @@ stories:
   - Integration
   - AlertRule
   - AuditLog
-- id: STORY-264
-  feature: FEAT-115
+- id: STORY-270
+  feature: FEAT-116
   title: Disconnect or re-auth an integration
   narrative:
     as_a: admin
@@ -12663,7 +13105,7 @@ stories:
     so_that: integrations stay current and revocable
   priority: P2
   depends_on:
-  - STORY-261
+  - STORY-267
   acceptance_criteria:
   - id: AC-001
     scenario: Disconnect revokes tokens
@@ -12685,8 +13127,8 @@ stories:
   data_models:
   - Integration
   - AuditLog
-- id: STORY-265
-  feature: FEAT-116
+- id: STORY-271
+  feature: FEAT-117
   title: Set workspace notification defaults
   narrative:
     as_a: admin
@@ -12728,8 +13170,8 @@ stories:
   data_models:
   - NotificationPreference
   - AuditLog
-- id: STORY-266
-  feature: FEAT-117
+- id: STORY-272
+  feature: FEAT-118
   title: Toggle feature flags (labs)
   narrative:
     as_a: admin
@@ -12770,8 +13212,8 @@ stories:
     inferred: true
   data_models:
   - FeatureFlag
-- id: STORY-267
-  feature: FEAT-118
+- id: STORY-273
+  feature: FEAT-119
   title: Pause ingress or dry-run all traffic
   narrative:
     as_a: admin handling an incident
@@ -12827,8 +13269,8 @@ stories:
     inferred: true
   data_models:
   - AuditLog
-- id: STORY-268
-  feature: FEAT-118
+- id: STORY-274
+  feature: FEAT-119
   title: Export and delete the organization
   narrative:
     as_a: owner
@@ -12881,8 +13323,8 @@ stories:
   - AuditLog
   non_functional:
   - 30-day grace before physical deletion; backups expire per retention policy afterwards
-- id: STORY-269
-  feature: FEAT-118
+- id: STORY-275
+  feature: FEAT-119
   title: Resume ingress, purge caches and rotate org secret
   narrative:
     as_a: admin closing out an incident
@@ -12890,7 +13332,7 @@ stories:
     so_that: the platform returns to normal after a break-glass action
   priority: P1
   depends_on:
-  - STORY-267
+  - STORY-273
   acceptance_criteria:
   - id: AC-001
     scenario: Resume ingress before timeout
@@ -12955,8 +13397,8 @@ stories:
   data_models:
   - CacheEntry
   - AuditLog
-- id: STORY-270
-  feature: FEAT-118
+- id: STORY-276
+  feature: FEAT-119
   title: Per-model emergency pause
   narrative:
     as_a: workspace admin
@@ -12977,8 +13419,8 @@ stories:
   data_models:
   - Model
   - AuditLog
-- id: STORY-271
-  feature: FEAT-119
+- id: STORY-277
+  feature: FEAT-120
   title: Browse and filter the audit log
   narrative:
     as_a: security officer
@@ -13063,8 +13505,8 @@ stories:
   non_functional:
   - Audit log entries are immutable; the in-app viewer is read-only
   - Retention of in-app entries matches ResidencyConfig and RetentionConfig
-- id: STORY-272
-  feature: FEAT-120
+- id: STORY-278
+  feature: FEAT-121
   title: Enforce an org-level IP allowlist
   narrative:
     as_a: security officer
@@ -13120,8 +13562,8 @@ stories:
   - DryRunDenial
   non_functional:
   - CIDR validation must reject overlapping and malformed ranges
-- id: STORY-273
-  feature: FEAT-121
+- id: STORY-279
+  feature: FEAT-122
   title: Enforce org-wide session idle and absolute timeouts
   narrative:
     as_a: security officer
@@ -13169,8 +13611,8 @@ stories:
   data_models:
   - SessionPolicy
   - Session
-- id: STORY-274
-  feature: FEAT-122
+- id: STORY-280
+  feature: FEAT-123
   title: Test and monitor an audit sink
   narrative:
     as_a: security officer
@@ -13221,8 +13663,8 @@ stories:
   - AuditSink
   - AuditSinkHealthCheck
   - AuditLog
-- id: STORY-275
-  feature: FEAT-123
+- id: STORY-281
+  feature: FEAT-124
   title: Migrate workspace data to another region
   narrative:
     as_a: workspace owner
@@ -13281,8 +13723,8 @@ stories:
   - AuditLog
   non_functional:
   - Migration job pauses automatically on consecutive checksum mismatches
-- id: STORY-276
-  feature: FEAT-123
+- id: STORY-282
+  feature: FEAT-124
   title: Abort a residency migration mid-flight
   narrative:
     as_a: workspace admin
@@ -13290,7 +13732,7 @@ stories:
     so_that: I can roll back if something goes wrong before cutover
   priority: P2
   depends_on:
-  - STORY-275
+  - STORY-281
   acceptance_criteria:
   - id: AC-001
     scenario: Abort before cutover
@@ -13312,8 +13754,8 @@ stories:
   data_models:
   - ResidencyMigration
   - AuditLog
-- id: STORY-277
-  feature: FEAT-123
+- id: STORY-283
+  feature: FEAT-124
   title: Perform the residency migration cutover
   narrative:
     as_a: compliance officer
@@ -13321,7 +13763,7 @@ stories:
     so_that: a migration lands cleanly or aborts safely
   priority: P2
   depends_on:
-  - STORY-275
+  - STORY-281
   acceptance_criteria:
   - id: AC-001
     scenario: Cutover succeeds
@@ -13348,8 +13790,8 @@ stories:
   - ResidencyConfig
   - AlertEvent
   - AuditLog
-- id: STORY-278
-  feature: FEAT-124
+- id: STORY-284
+  feature: FEAT-125
   title: Export DPIA
   narrative:
     as_a: privacy officer
@@ -13367,8 +13809,8 @@ stories:
     - A PDF is generated with org info, processing purposes, data categories, safeguards and signature placeholders
   data_models:
   - ComplianceDocument
-- id: STORY-279
-  feature: FEAT-124
+- id: STORY-285
+  feature: FEAT-125
   title: Export DPA
   narrative:
     as_a: privacy officer
@@ -13386,8 +13828,8 @@ stories:
     - A PDF DPA with standard clauses and annexes is produced
   data_models:
   - ComplianceDocument
-- id: STORY-280
-  feature: FEAT-124
+- id: STORY-286
+  feature: FEAT-125
   title: Export record of processing activities
   narrative:
     as_a: privacy officer
@@ -13405,8 +13847,8 @@ stories:
     - A CSV/PDF with processing activities, legal basis, retention and recipients is produced
   data_models:
   - ComplianceDocument
-- id: STORY-281
-  feature: FEAT-124
+- id: STORY-287
+  feature: FEAT-125
   title: Quarterly access review export
   narrative:
     as_a: security officer
@@ -13426,8 +13868,8 @@ stories:
   - User
   - ApiKey
   - ComplianceDocument
-- id: STORY-282
-  feature: FEAT-125
+- id: STORY-288
+  feature: FEAT-126
   title: Receive a DSAR
   narrative:
     as_a: privacy officer
@@ -13445,8 +13887,8 @@ stories:
     - A Dsar case is created with state "intake" and 30-day SLA
   data_models:
   - Dsar
-- id: STORY-283
-  feature: FEAT-125
+- id: STORY-289
+  feature: FEAT-126
   title: Fulfill DSAR with data export
   narrative:
     as_a: privacy officer
@@ -13454,7 +13896,7 @@ stories:
     so_that: we satisfy the DSAR
   priority: P1
   depends_on:
-  - STORY-282
+  - STORY-288
   acceptance_criteria:
   - id: AC-001
     scenario: Export subject data
@@ -13468,8 +13910,8 @@ stories:
   data_models:
   - Dsar
   - AuditLog
-- id: STORY-284
-  feature: FEAT-125
+- id: STORY-290
+  feature: FEAT-126
   title: Audit DSAR activity
   narrative:
     as_a: privacy officer
@@ -13488,8 +13930,8 @@ stories:
   data_models:
   - Dsar
   - AuditLog
-- id: STORY-285
-  feature: FEAT-126
+- id: STORY-291
+  feature: FEAT-127
   title: Request erasure
   narrative:
     as_a: data subject or delegate
@@ -13507,8 +13949,8 @@ stories:
     - An ErasureRequest is created in state "pending_review"
   data_models:
   - ErasureRequest
-- id: STORY-286
-  feature: FEAT-126
+- id: STORY-292
+  feature: FEAT-127
   title: Approve erasure
   narrative:
     as_a: privacy officer
@@ -13516,7 +13958,7 @@ stories:
     so_that: lawful-basis and retention exceptions are validated
   priority: P1
   depends_on:
-  - STORY-285
+  - STORY-291
   acceptance_criteria:
   - id: AC-001
     scenario: Approve
@@ -13529,8 +13971,8 @@ stories:
   data_models:
   - ErasureRequest
   - Approval
-- id: STORY-287
-  feature: FEAT-126
+- id: STORY-293
+  feature: FEAT-127
   title: Execute erasure purge
   narrative:
     as_a: privacy officer
@@ -13538,7 +13980,7 @@ stories:
     so_that: data is actually removed
   priority: P1
   depends_on:
-  - STORY-286
+  - STORY-292
   acceptance_criteria:
   - id: AC-001
     scenario: Purge
@@ -13552,8 +13994,8 @@ stories:
   data_models:
   - ErasureRequest
   - AuditLog
-- id: STORY-288
-  feature: FEAT-126
+- id: STORY-294
+  feature: FEAT-127
   title: Audit erasure — distinct from offboarding
   narrative:
     as_a: privacy officer
@@ -13573,8 +14015,8 @@ stories:
   data_models:
   - AuditLog
   - ErasureRequest
-- id: STORY-289
-  feature: FEAT-127
+- id: STORY-295
+  feature: FEAT-128
   title: View backups
   narrative:
     as_a: workspace admin
@@ -13592,8 +14034,8 @@ stories:
     - I see each Backup with timestamp, size, region and integrity status
   data_models:
   - Backup
-- id: STORY-290
-  feature: FEAT-127
+- id: STORY-296
+  feature: FEAT-128
   title: Test restore into sandbox
   narrative:
     as_a: workspace admin
@@ -13613,8 +14055,8 @@ stories:
   data_models:
   - Backup
   - AuditLog
-- id: STORY-291
-  feature: FEAT-127
+- id: STORY-297
+  feature: FEAT-128
   title: Trigger production restore
   narrative:
     as_a: workspace owner
@@ -13633,8 +14075,8 @@ stories:
   data_models:
   - Backup
   - AuditLog
-- id: STORY-292
-  feature: FEAT-127
+- id: STORY-298
+  feature: FEAT-128
   title: Backup rotation policy
   narrative:
     as_a: workspace admin
@@ -13652,8 +14094,8 @@ stories:
     - The rotation job honors the policy and expired backups are deleted
   data_models:
   - Backup
-- id: STORY-293
-  feature: FEAT-127
+- id: STORY-299
+  feature: FEAT-128
   title: Run a DR drill
   narrative:
     as_a: workspace admin
@@ -13672,8 +14114,8 @@ stories:
   data_models:
   - Backup
   - AuditLog
-- id: STORY-294
-  feature: FEAT-128
+- id: STORY-300
+  feature: FEAT-129
   title: View webhook DLQ
   narrative:
     as_a: workspace admin
@@ -13692,8 +14134,8 @@ stories:
   data_models:
   - Webhook
   - WebhookDeadLetter
-- id: STORY-295
-  feature: FEAT-128
+- id: STORY-301
+  feature: FEAT-129
   title: Inspect failed delivery
   narrative:
     as_a: workspace admin
@@ -13711,8 +14153,8 @@ stories:
     - I see the payload, headers, response code, response body and stack of attempts
   data_models:
   - WebhookDeadLetter
-- id: STORY-296
-  feature: FEAT-128
+- id: STORY-302
+  feature: FEAT-129
   title: Requeue a dead-lettered webhook delivery
   narrative:
     as_a: workspace admin
@@ -13731,8 +14173,8 @@ stories:
   data_models:
   - WebhookDeadLetter
   - AuditLog
-- id: STORY-297
-  feature: FEAT-128
+- id: STORY-303
+  feature: FEAT-129
   title: Auto-disable a webhook after N consecutive failures
   narrative:
     as_a: workspace admin
@@ -13752,8 +14194,8 @@ stories:
   data_models:
   - Webhook
   - AuditLog
-- id: STORY-298
-  feature: FEAT-128
+- id: STORY-304
+  feature: FEAT-129
   title: Replay an arbitrary past webhook delivery
   narrative:
     as_a: workspace admin
@@ -13761,7 +14203,7 @@ stories:
     so_that: I can reconstruct downstream state beyond the "last event" story
   priority: P1
   depends_on:
-  - STORY-256
+  - STORY-262
   acceptance_criteria:
   - id: AC-001
     scenario: Replay by id
@@ -13784,8 +14226,8 @@ stories:
   - Webhook
   - WebhookDeadLetter
   - AuditLog
-- id: STORY-299
-  feature: FEAT-129
+- id: STORY-305
+  feature: FEAT-130
   title: Version the management API schema
   narrative:
     as_a: API consumer
@@ -13802,8 +14244,8 @@ stories:
     then:
     - Each version is pinned and documented
   data_models: []
-- id: STORY-300
-  feature: FEAT-129
+- id: STORY-306
+  feature: FEAT-130
   title: Define a deprecation policy
   narrative:
     as_a: API consumer
@@ -13820,8 +14262,8 @@ stories:
     then:
     - Minimum notice window, EOL date and migration guide are shown
   data_models: []
-- id: STORY-301
-  feature: FEAT-129
+- id: STORY-307
+  feature: FEAT-130
   title: Deprecation notifications
   narrative:
     as_a: API consumer
@@ -13838,8 +14280,8 @@ stories:
     then:
     - Workspace admins receive an email and in-app notification with links
   data_models: []
-- id: STORY-302
-  feature: FEAT-130
+- id: STORY-308
+  feature: FEAT-131
   title: Runtime enforce data residency region
   narrative:
     as_a: compliance officer
@@ -13859,8 +14301,8 @@ stories:
   data_models:
   - ResidencyConfig
   - Request
-- id: STORY-303
-  feature: FEAT-131
+- id: STORY-309
+  feature: FEAT-132
   title: Country-level allowlist and blocklist
   narrative:
     as_a: security officer
@@ -13886,8 +14328,8 @@ stories:
     - The request is allowed and a warning is logged (configurable to fail-closed)
   data_models:
   - Request
-- id: STORY-304
-  feature: FEAT-132
+- id: STORY-310
+  feature: FEAT-133
   title: Stream a PII-safe copy to customer S3
   narrative:
     as_a: security officer
@@ -13905,8 +14347,8 @@ stories:
     - A redacted JSONL copy is streamed into s3://.../
   data_models:
   - Request
-- id: STORY-305
-  feature: FEAT-133
+- id: STORY-311
+  feature: FEAT-134
   title: Set up a customer-managed key (CMK)
   narrative:
     as_a: security officer
@@ -13926,8 +14368,8 @@ stories:
   data_models:
   - ResidencyConfig
   - CmkBinding
-- id: STORY-306
-  feature: FEAT-133
+- id: STORY-312
+  feature: FEAT-134
   title: Revoke a CMK
   narrative:
     as_a: security officer
@@ -13946,8 +14388,8 @@ stories:
   data_models:
   - CmkBinding
   - AuditLog
-- id: STORY-307
-  feature: FEAT-133
+- id: STORY-313
+  feature: FEAT-134
   title: Multiple CMKs per data class
   narrative:
     as_a: security officer
@@ -13965,8 +14407,8 @@ stories:
     - Writes use the class-specific CMK
   data_models:
   - CmkBinding
-- id: STORY-308
-  feature: FEAT-134
+- id: STORY-314
+  feature: FEAT-135
   title: Routine tenant-isolation tests
   narrative:
     as_a: security officer
@@ -13984,8 +14426,8 @@ stories:
     - A report is produced with per-surface results (API, cache, DB views) and any failures page the security contact
   data_models:
   - TenantIsolationReport
-- id: STORY-309
-  feature: FEAT-135
+- id: STORY-315
+  feature: FEAT-136
   title: Serve /v1/chat/completions (non-streaming)
   narrative:
     as_a: application client built for OpenAI
@@ -14065,8 +14507,8 @@ stories:
   non_functional:
   - Wire-compatible with OpenAI v1 chat.completion schema
   - p95 overhead (gateway decision + ingress/egress) <= 15 ms excluding upstream
-- id: STORY-310
-  feature: FEAT-135
+- id: STORY-316
+  feature: FEAT-136
   title: Serve /v1/chat/completions with SSE streaming
   narrative:
     as_a: OpenAI SDK user
@@ -14074,7 +14516,7 @@ stories:
     so_that: I get token-by-token output as I do with OpenAI
   priority: P0
   depends_on:
-  - STORY-309
+  - STORY-315
   acceptance_criteria:
   - id: AC-001
     scenario: Streaming chunks
@@ -14117,8 +14559,8 @@ stories:
   non_functional:
   - TTFT p95 <= 250 ms excluding upstream
   - Client disconnect cancels the outbound stream within 100 ms
-- id: STORY-311
-  feature: FEAT-135
+- id: STORY-317
+  feature: FEAT-136
   title: Serve /v1/embeddings
   narrative:
     as_a: OpenAI-compatible client
@@ -14126,7 +14568,7 @@ stories:
     so_that: RAG and classification pipelines work unchanged
   priority: P0
   depends_on:
-  - STORY-309
+  - STORY-315
   acceptance_criteria:
   - id: AC-001
     scenario: Batch of inputs
@@ -14169,8 +14611,8 @@ stories:
   data_models:
   - Request
   - ApiKey
-- id: STORY-312
-  feature: FEAT-135
+- id: STORY-318
+  feature: FEAT-136
   title: Serve /v1/models (list and retrieve)
   narrative:
     as_a: OpenAI-compatible client
@@ -14178,7 +14620,7 @@ stories:
     so_that: SDK discovery features work
   priority: P1
   depends_on:
-  - STORY-309
+  - STORY-315
   acceptance_criteria:
   - id: AC-001
     scenario: List returns allowed models only
@@ -14218,8 +14660,8 @@ stories:
   data_models:
   - Model
   - ApiKey
-- id: STORY-313
-  feature: FEAT-135
+- id: STORY-319
+  feature: FEAT-136
   title: Propagate client cancellation to upstream
   narrative:
     as_a: gateway operator
@@ -14248,8 +14690,8 @@ stories:
     - If cancellation is not supported, the request completes and is logged with client_cancelled=true
   data_models:
   - Request
-- id: STORY-314
-  feature: FEAT-135
+- id: STORY-320
+  feature: FEAT-136
   title: Disable or enable an ingress endpoint
   narrative:
     as_a: gateway operator
@@ -14276,8 +14718,8 @@ stories:
     - Traffic resumes and an AuditLog entry records "endpoint.enable"
   data_models:
   - AuditLog
-- id: STORY-315
-  feature: FEAT-136
+- id: STORY-321
+  feature: FEAT-137
   title: Serve /v1/messages (Anthropic Messages API)
   narrative:
     as_a: Anthropic-SDK client
@@ -14335,8 +14777,8 @@ stories:
   data_models:
   - Request
   - ApiKey
-- id: STORY-316
-  feature: FEAT-136
+- id: STORY-322
+  feature: FEAT-137
   title: Stream /v1/messages events
   narrative:
     as_a: Anthropic-SDK client
@@ -14344,7 +14786,7 @@ stories:
     so_that: my SDK sees the expected message_start, content_block_delta and message_stop events
   priority: P0
   depends_on:
-  - STORY-315
+  - STORY-321
   acceptance_criteria:
   - id: AC-001
     scenario: Native Anthropic event sequence
@@ -14376,8 +14818,8 @@ stories:
   - Request
   non_functional:
   - Event ordering strictly preserved — no coalescing across deltas
-- id: STORY-317
-  feature: FEAT-137
+- id: STORY-323
+  feature: FEAT-138
   title: Translate OpenAI chat requests to Anthropic Messages and back
   narrative:
     as_a: application that speaks OpenAI chat natively
@@ -14385,8 +14827,8 @@ stories:
     so_that: I can use Anthropic models without rewriting my client
   priority: P0
   depends_on:
-  - STORY-309
   - STORY-315
+  - STORY-321
   acceptance_criteria:
   - id: AC-001
     scenario: OpenAI in, Anthropic out
@@ -14432,8 +14874,8 @@ stories:
   non_functional:
   - Translation is deterministic and reversible for supported features
   - Unsupported features return a 400 with a clear "unsupported_in_target_dialect" error
-- id: STORY-318
-  feature: FEAT-137
+- id: STORY-324
+  feature: FEAT-138
   title: Preserve tool / function calling across dialects
   narrative:
     as_a: application using tool calling
@@ -14441,7 +14883,7 @@ stories:
     so_that: agent loops keep working when I switch providers
   priority: P0
   depends_on:
-  - STORY-317
+  - STORY-323
   acceptance_criteria:
   - id: AC-001
     scenario: OpenAI tools, Anthropic upstream
@@ -14466,8 +14908,8 @@ stories:
     - The final chunk carries finish_reason "tool_calls"
   data_models:
   - Request
-- id: STORY-319
-  feature: FEAT-137
+- id: STORY-325
+  feature: FEAT-138
   title: Pass multimodal content through translation
   narrative:
     as_a: application sending images or audio
@@ -14475,7 +14917,7 @@ stories:
     so_that: vision and audio models keep working through the gateway
   priority: P1
   depends_on:
-  - STORY-317
+  - STORY-323
   acceptance_criteria:
   - id: AC-001
     scenario: OpenAI image_url into Anthropic image block
@@ -14501,8 +14943,8 @@ stories:
   - Model
   non_functional:
   - Large images may be streamed from object storage to upstream without buffering in memory
-- id: STORY-320
-  feature: FEAT-138
+- id: STORY-326
+  feature: FEAT-139
   title: Authenticate API key and resolve scopes
   narrative:
     as_a: gateway
@@ -14562,8 +15004,8 @@ stories:
   non_functional:
   - Key lookup uses a salted hash; constant-time compare
   - Hot path caches key resolution in memory with a short TTL and is invalidated on revoke/rotate
-- id: STORY-321
-  feature: FEAT-138
+- id: STORY-327
+  feature: FEAT-139
   title: Enforce model and IP allowlists at the edge
   narrative:
     as_a: gateway
@@ -14571,7 +15013,7 @@ stories:
     so_that: credentials leaked out of their allowed environment are useless
   priority: P0
   depends_on:
-  - STORY-320
+  - STORY-326
   acceptance_criteria:
   - id: AC-001
     scenario: Model not allowed
@@ -14602,8 +15044,8 @@ stories:
   - ApiKey
   - ApiAccessConfig
   - AuditLog
-- id: STORY-322
-  feature: FEAT-138
+- id: STORY-328
+  feature: FEAT-139
   title: Enforce rate limits with Retry-After
   narrative:
     as_a: gateway
@@ -14611,7 +15053,7 @@ stories:
     so_that: runaway clients do not starve the rest of the workspace
   priority: P0
   depends_on:
-  - STORY-320
+  - STORY-326
   acceptance_criteria:
   - id: AC-001
     scenario: Per-key rpm exceeded
@@ -14646,8 +15088,8 @@ stories:
   non_functional:
   - Distributed token-bucket backed by Redis; lock-free hot path (CRC-sharded)
   - Edge synchronization within 60 seconds of config changes
-- id: STORY-323
-  feature: FEAT-138
+- id: STORY-329
+  feature: FEAT-139
   title: Return standard rate-limit response headers
   narrative:
     as_a: application developer
@@ -14674,8 +15116,8 @@ stories:
     - A non-intrusive toast shows "Key <last4> nearing rate limit"
   data_models:
   - ApiKey
-- id: STORY-324
-  feature: FEAT-139
+- id: STORY-330
+  feature: FEAT-140
   title: Retry upstream with exponential backoff and jitter
   narrative:
     as_a: gateway
@@ -14717,8 +15159,8 @@ stories:
   - Request
   non_functional:
   - Retries respect Retry-After header when present
-- id: STORY-325
-  feature: FEAT-139
+- id: STORY-331
+  feature: FEAT-140
   title: Enforce per-phase timeouts
   narrative:
     as_a: gateway operator
@@ -14755,8 +15197,8 @@ stories:
   data_models:
   - RoutingRule
   - Request
-- id: STORY-326
-  feature: FEAT-139
+- id: STORY-332
+  feature: FEAT-140
   title: Fall back through the target chain on terminal errors
   narrative:
     as_a: gateway
@@ -14764,7 +15206,7 @@ stories:
     so_that: user-facing success rates stay above SLO
   priority: P0
   depends_on:
-  - STORY-324
+  - STORY-330
   acceptance_criteria:
   - id: AC-001
     scenario: Fallback on 5xx
@@ -14793,8 +15235,8 @@ stories:
   - Request
   non_functional:
   - Fallback translation must re-run dialect translation if target uses a different upstream dialect
-- id: STORY-327
-  feature: FEAT-140
+- id: STORY-333
+  feature: FEAT-141
   title: Use BYOK credential for outbound calls
   narrative:
     as_a: gateway
@@ -14826,8 +15268,8 @@ stories:
   - AlertEvent
   non_functional:
   - Secret fetched from the secret store at most once per minute per provider and cached in memory only
-- id: STORY-328
-  feature: FEAT-140
+- id: STORY-334
+  feature: FEAT-141
   title: Sign AWS Bedrock with SigV4 and handle Azure AD
   narrative:
     as_a: gateway
@@ -14835,7 +15277,7 @@ stories:
     so_that: those providers work alongside key-based providers
   priority: P1
   depends_on:
-  - STORY-327
+  - STORY-333
   acceptance_criteria:
   - id: AC-001
     scenario: Bedrock request is SigV4 signed
@@ -14860,8 +15302,8 @@ stories:
   - Provider
   non_functional:
   - SigV4 uses canonical request/signing-key rules per the AWS spec; no shortcuts
-- id: STORY-329
-  feature: FEAT-141
+- id: STORY-335
+  feature: FEAT-142
   title: Count input and output tokens per response
   narrative:
     as_a: gateway
@@ -14900,8 +15342,8 @@ stories:
   - Model
   non_functional:
   - Local tokenizers cached and loaded lazily per model family
-- id: STORY-330
-  feature: FEAT-141
+- id: STORY-336
+  feature: FEAT-142
   title: Attribute cost across org, team, project, user and key
   narrative:
     as_a: gateway
@@ -14909,7 +15351,7 @@ stories:
     so_that: budgets, analytics and invoices reconcile without recomputation
   priority: P0
   depends_on:
-  - STORY-329
+  - STORY-335
   acceptance_criteria:
   - id: AC-001
     scenario: Cost computed from model pricing
@@ -14942,8 +15384,8 @@ stories:
   - Model
   - Team
   - Project
-- id: STORY-331
-  feature: FEAT-141
+- id: STORY-337
+  feature: FEAT-142
   title: Honor Idempotency-Key for safe retries
   narrative:
     as_a: client that retries after network errors
@@ -14951,7 +15393,7 @@ stories:
     so_that: I do not double-bill or double-act on tool calls
   priority: P0
   depends_on:
-  - STORY-309
+  - STORY-315
   acceptance_criteria:
   - id: AC-001
     scenario: Duplicate within window returns cached response
@@ -14997,8 +15439,8 @@ stories:
   non_functional:
   - Idempotency entries stored in Redis with 5-minute TTL (configurable up to 24h)
   - Body hash uses SHA-256 of a canonical JSON form
-- id: STORY-332
-  feature: FEAT-142
+- id: STORY-338
+  feature: FEAT-143
   title: Probe provider health on a cadence
   narrative:
     as_a: gateway operator
@@ -15031,8 +15473,8 @@ stories:
   non_functional:
   - Probe cadence defaults to every 30 s per (provider, region) pair
   - Probes use the cheapest available model for the provider to keep cost negligible
-- id: STORY-333
-  feature: FEAT-142
+- id: STORY-339
+  feature: FEAT-143
   title: Open and close circuit breakers based on health and live error rate
   narrative:
     as_a: gateway
@@ -15040,7 +15482,7 @@ stories:
     so_that: I stop hammering unhealthy upstreams and waste less latency
   priority: P0
   depends_on:
-  - STORY-332
+  - STORY-338
   acceptance_criteria:
   - id: AC-001
     scenario: Breaker opens on error-rate threshold
@@ -15074,8 +15516,8 @@ stories:
   - Provider
   - RoutingRule
   - AlertEvent
-- id: STORY-334
-  feature: FEAT-142
+- id: STORY-340
+  feature: FEAT-143
   title: Circuit breaker dashboard with manual control
   narrative:
     as_a: gateway operator
@@ -15083,7 +15525,7 @@ stories:
     so_that: I can intervene during incidents
   priority: P1
   depends_on:
-  - STORY-333
+  - STORY-339
   acceptance_criteria:
   - id: AC-001
     scenario: Dashboard view
@@ -15106,8 +15548,8 @@ stories:
   - ProviderHealth
   - AlertEvent
   - AuditLog
-- id: STORY-335
-  feature: FEAT-143
+- id: STORY-341
+  feature: FEAT-144
   title: Emit OpenTelemetry span and propagate trace context
   narrative:
     as_a: platform engineer
@@ -15157,8 +15599,8 @@ stories:
   non_functional:
   - OTel exporter is pluggable (OTLP gRPC or HTTP)
   - Sampling configurable; default head-based 10% with parent-based propagation
-- id: STORY-336
-  feature: FEAT-143
+- id: STORY-342
+  feature: FEAT-144
   title: Export Prometheus metrics for ingress
   narrative:
     as_a: SRE
@@ -15187,8 +15629,8 @@ stories:
   non_functional:
   - Histogram buckets cover 5 ms to 60 s
   - Cardinality is bounded by limiting labels to the set above
-- id: STORY-337
-  feature: FEAT-143
+- id: STORY-343
+  feature: FEAT-144
   title: In-app trace viewer and sampling configuration
   narrative:
     as_a: platform engineer
@@ -15196,7 +15638,7 @@ stories:
     so_that: I do not need to leave the product to debug request latency
   priority: P1
   depends_on:
-  - STORY-335
+  - STORY-341
   acceptance_criteria:
   - id: AC-001
     scenario: Waterfall for a request id
@@ -15217,8 +15659,8 @@ stories:
   data_models:
   - Request
   - TelemetryConfig
-- id: STORY-338
-  feature: FEAT-144
+- id: STORY-344
+  feature: FEAT-145
   title: Stream tokens end-to-end across any dialect
   narrative:
     as_a: application developer
@@ -15263,8 +15705,8 @@ stories:
   non_functional:
   - No response body is buffered; chunks forwarded within one CPU tick
   - Back-pressure propagates to the upstream client if the downstream stalls
-- id: STORY-339
-  feature: FEAT-145
+- id: STORY-345
+  feature: FEAT-146
   title: Accept multimodal content parts
   narrative:
     as_a: application developer
@@ -15306,8 +15748,8 @@ stories:
   - Model
   non_functional:
   - Attachments are streamed to upstream; not persisted beyond retention policy
-- id: STORY-340
-  feature: FEAT-146
+- id: STORY-346
+  feature: FEAT-147
   title: Preserve tool calls when translating across dialects
   narrative:
     as_a: application developer
@@ -15349,8 +15791,8 @@ stories:
   - Request
   non_functional:
   - Unknown fields are dropped with a warning log; not silently forwarded
-- id: STORY-341
-  feature: FEAT-147
+- id: STORY-347
+  feature: FEAT-148
   title: Enforce request and response size limits
   narrative:
     as_a: platform engineer
@@ -15390,8 +15832,8 @@ stories:
   - SizeLimitPolicy
   non_functional:
   - Size checks run before body parsing to avoid memory pressure
-- id: STORY-342
-  feature: FEAT-148
+- id: STORY-348
+  feature: FEAT-149
   title: Serve a graceful response when every upstream is unhealthy
   narrative:
     as_a: platform engineer
@@ -15432,8 +15874,8 @@ stories:
   - Request
   - ProviderHealth
   - CacheEntry
-- id: STORY-343
-  feature: FEAT-148
+- id: STORY-349
+  feature: FEAT-149
   title: Dialect-specific error shape on graceful degradation
   narrative:
     as_a: client SDK
@@ -15441,7 +15883,7 @@ stories:
     so_that: my SDK's error handler works unchanged
   priority: P0
   depends_on:
-  - STORY-342
+  - STORY-348
   acceptance_criteria:
   - id: AC-001
     scenario: OpenAI-style error
@@ -15468,8 +15910,8 @@ stories:
     then:
     - The body matches the native Antirion error shape with code, retryable, reason and trace_id
   data_models: []
-- id: STORY-344
-  feature: FEAT-149
+- id: STORY-350
+  feature: FEAT-150
   title: Configure trace sampling with error override
   narrative:
     as_a: SRE
@@ -15513,8 +15955,8 @@ stories:
   - Request
   non_functional:
   - Tail-based sampling buffers spans up to 5 seconds before final decision
-- id: STORY-345
-  feature: FEAT-150
+- id: STORY-351
+  feature: FEAT-151
   title: Upload a file via Files ingress
   narrative:
     as_a: client
@@ -15532,8 +15974,8 @@ stories:
     - A FileObject is created and an id is returned
   data_models:
   - FileObject
-- id: STORY-346
-  feature: FEAT-150
+- id: STORY-352
+  feature: FEAT-151
   title: List files
   narrative:
     as_a: client
@@ -15551,8 +15993,8 @@ stories:
     - I see metadata with size, created_at and purpose
   data_models:
   - FileObject
-- id: STORY-347
-  feature: FEAT-150
+- id: STORY-353
+  feature: FEAT-151
   title: Delete a file
   narrative:
     as_a: client
@@ -15570,8 +16012,8 @@ stories:
     - The file is removed from the gateway and a delete is propagated to the upstream
   data_models:
   - FileObject
-- id: STORY-348
-  feature: FEAT-150
+- id: STORY-354
+  feature: FEAT-151
   title: Passthrough file to provider
   narrative:
     as_a: client
@@ -15589,8 +16031,8 @@ stories:
     - The gateway translates to the upstream file id
   data_models:
   - FileObject
-- id: STORY-349
-  feature: FEAT-151
+- id: STORY-355
+  feature: FEAT-152
   title: Create a batch job
   narrative:
     as_a: client
@@ -15608,8 +16050,8 @@ stories:
     - A BatchJob is created in state "validating"
   data_models:
   - BatchJob
-- id: STORY-350
-  feature: FEAT-151
+- id: STORY-356
+  feature: FEAT-152
   title: Poll batch status
   narrative:
     as_a: client
@@ -15627,8 +16069,8 @@ stories:
     - I see state, counts, failed_count and result file id when finished
   data_models:
   - BatchJob
-- id: STORY-351
-  feature: FEAT-151
+- id: STORY-357
+  feature: FEAT-152
   title: Cancel a batch job
   narrative:
     as_a: client
@@ -15646,8 +16088,8 @@ stories:
     - The batch state becomes "cancelling" and then "cancelled"
   data_models:
   - BatchJob
-- id: STORY-352
-  feature: FEAT-151
+- id: STORY-358
+  feature: FEAT-152
   title: Attribute cost at batch-item granularity
   narrative:
     as_a: finance operations lead
@@ -15667,8 +16109,8 @@ stories:
   data_models:
   - BatchJob
   - Request
-- id: STORY-353
-  feature: FEAT-152
+- id: STORY-359
+  feature: FEAT-153
   title: Define scope of Assistants and Responses ingress
   narrative:
     as_a: platform engineer
@@ -15685,8 +16127,8 @@ stories:
     then:
     - I see the supported endpoints and deliberate omissions with reasons
   data_models: []
-- id: STORY-354
-  feature: FEAT-152
+- id: STORY-360
+  feature: FEAT-153
   title: Basic CRUD for Assistants/Responses
   narrative:
     as_a: client
@@ -15704,8 +16146,8 @@ stories:
     - The gateway handles the request (translating to upstream where applicable)
   data_models:
   - Request
-- id: STORY-355
-  feature: FEAT-153
+- id: STORY-361
+  feature: FEAT-154
   title: Audio transcription ingress
   narrative:
     as_a: client
@@ -15723,8 +16165,8 @@ stories:
     - The gateway routes and returns the transcript with cost attribution
   data_models:
   - Request
-- id: STORY-356
-  feature: FEAT-153
+- id: STORY-362
+  feature: FEAT-154
   title: Audio translation ingress
   narrative:
     as_a: client
@@ -15742,8 +16184,8 @@ stories:
     - The gateway returns the translation with cost attribution
   data_models:
   - Request
-- id: STORY-357
-  feature: FEAT-154
+- id: STORY-363
+  feature: FEAT-155
   title: Image generation ingress
   narrative:
     as_a: client
@@ -15761,8 +16203,8 @@ stories:
     - The gateway returns image URLs or b64 with cost attribution
   data_models:
   - Request
-- id: STORY-358
-  feature: FEAT-154
+- id: STORY-364
+  feature: FEAT-155
   title: Image edit ingress
   narrative:
     as_a: client
@@ -15780,8 +16222,8 @@ stories:
     - The gateway returns edited image URLs with cost attribution
   data_models:
   - Request
-- id: STORY-359
-  feature: FEAT-155
+- id: STORY-365
+  feature: FEAT-156
   title: Moderation endpoint ingress
   narrative:
     as_a: client
@@ -15799,8 +16241,8 @@ stories:
     - The gateway returns category flags and scores
   data_models:
   - Request
-- id: STORY-360
-  feature: FEAT-156
+- id: STORY-366
+  feature: FEAT-157
   title: Validate embedding dimensions
   narrative:
     as_a: client
@@ -15826,8 +16268,8 @@ stories:
     - The response is 400 with "Unsupported dimensions for model"
   data_models:
   - Model
-- id: STORY-361
-  feature: FEAT-156
+- id: STORY-367
+  feature: FEAT-157
   title: Cross-provider dimension compatibility
   narrative:
     as_a: client
@@ -15846,8 +16288,8 @@ stories:
   data_models:
   - Model
   - Request
-- id: STORY-362
-  feature: FEAT-156
+- id: STORY-368
+  feature: FEAT-157
   title: Batch embedding cost attribution
   narrative:
     as_a: finance operations lead
@@ -15865,8 +16307,8 @@ stories:
     - Cost is attributed per input to the tagged project
   data_models:
   - Request
-- id: STORY-363
-  feature: FEAT-157
+- id: STORY-369
+  feature: FEAT-158
   title: List fine-tune jobs
   narrative:
     as_a: ml engineer
@@ -15884,8 +16326,8 @@ stories:
     - I see jobs with state, base model and created_at
   data_models:
   - FineTuneJob
-- id: STORY-364
-  feature: FEAT-157
+- id: STORY-370
+  feature: FEAT-158
   title: Create a fine-tune job
   narrative:
     as_a: ml engineer
@@ -15903,8 +16345,8 @@ stories:
     - A FineTuneJob is created and begins training
   data_models:
   - FineTuneJob
-- id: STORY-365
-  feature: FEAT-157
+- id: STORY-371
+  feature: FEAT-158
   title: Cancel a fine-tune job
   narrative:
     as_a: ml engineer
@@ -15922,8 +16364,8 @@ stories:
     - The job transitions to "cancelled"
   data_models:
   - FineTuneJob
-- id: STORY-366
-  feature: FEAT-157
+- id: STORY-372
+  feature: FEAT-158
   title: View fine-tune logs
   narrative:
     as_a: ml engineer
@@ -15941,8 +16383,8 @@ stories:
     - I see training events and eval metrics
   data_models:
   - FineTuneJob
-- id: STORY-367
-  feature: FEAT-157
+- id: STORY-373
+  feature: FEAT-158
   title: Attribute fine-tune cost
   narrative:
     as_a: finance operations lead
@@ -15961,8 +16403,8 @@ stories:
   data_models:
   - FineTuneJob
   - Request
-- id: STORY-368
-  feature: FEAT-157
+- id: STORY-374
+  feature: FEAT-158
   title: Download fine-tune artifacts and training curves
   narrative:
     as_a: ml engineer
@@ -15970,7 +16412,7 @@ stories:
     so_that: I have the full record of the run
   priority: P2
   depends_on:
-  - STORY-364
+  - STORY-370
   acceptance_criteria:
   - id: AC-001
     scenario: Download available on success
@@ -15990,8 +16432,8 @@ stories:
     - The download controls are disabled with reason
   data_models:
   - FineTuneJob
-- id: STORY-369
-  feature: FEAT-158
+- id: STORY-375
+  feature: FEAT-159
   title: Configure outbound HTTP proxy
   narrative:
     as_a: network engineer
@@ -16010,8 +16452,8 @@ stories:
     - A test call validates connectivity
   data_models:
   - EgressProxyConfig
-- id: STORY-370
-  feature: FEAT-158
+- id: STORY-376
+  feature: FEAT-159
   title: Rotate proxy credentials
   narrative:
     as_a: network engineer
@@ -16030,8 +16472,8 @@ stories:
   data_models:
   - EgressProxyConfig
   - AuditLog
-- id: STORY-371
-  feature: FEAT-158
+- id: STORY-377
+  feature: FEAT-159
   title: Per-provider proxy override
   narrative:
     as_a: network engineer
@@ -16049,8 +16491,8 @@ stories:
     - It uses the override proxy (or direct if set to direct)
   data_models:
   - EgressProxyConfig
-- id: STORY-372
-  feature: FEAT-159
+- id: STORY-378
+  feature: FEAT-160
   title: Configure PrivateLink or VPC peering
   narrative:
     as_a: network engineer
@@ -16068,8 +16510,8 @@ stories:
     - The gateway uses the private path for eligible traffic
   data_models:
   - PrivateConnectivity
-- id: STORY-373
-  feature: FEAT-159
+- id: STORY-379
+  feature: FEAT-160
   title: Verify private endpoint
   narrative:
     as_a: network engineer
@@ -16087,8 +16529,8 @@ stories:
     - A test call goes through the private path and reports latency and path info
   data_models:
   - PrivateConnectivity
-- id: STORY-374
-  feature: FEAT-160
+- id: STORY-380
+  feature: FEAT-161
   title: Create a break-glass API key
   narrative:
     as_a: incident commander
@@ -16107,8 +16549,8 @@ stories:
   data_models:
   - ApiKey
   - Approval
-- id: STORY-375
-  feature: FEAT-160
+- id: STORY-381
+  feature: FEAT-161
   title: Use break-glass key with full audit
   narrative:
     as_a: incident commander
@@ -16116,7 +16558,7 @@ stories:
     so_that: elevated actions during an incident remain fully traceable
   priority: P1
   depends_on:
-  - STORY-374
+  - STORY-380
   acceptance_criteria:
   - id: AC-001
     scenario: Use key
@@ -16131,8 +16573,8 @@ stories:
   - ApiKey
   - Request
   - AuditLog
-- id: STORY-376
-  feature: FEAT-160
+- id: STORY-382
+  feature: FEAT-161
   title: Auto-expire break-glass key
   narrative:
     as_a: security officer
@@ -16151,8 +16593,8 @@ stories:
   data_models:
   - ApiKey
   - AuditLog
-- id: STORY-377
-  feature: FEAT-160
+- id: STORY-383
+  feature: FEAT-161
   title: Revoke break-glass key manually
   narrative:
     as_a: incident commander
@@ -16171,8 +16613,8 @@ stories:
   data_models:
   - ApiKey
   - AuditLog
-- id: STORY-378
-  feature: FEAT-160
+- id: STORY-384
+  feature: FEAT-161
   title: Require approval for break-glass creation
   narrative:
     as_a: security officer
@@ -16191,8 +16633,8 @@ stories:
   data_models:
   - Approval
   - ApiKey
-- id: STORY-379
-  feature: FEAT-161
+- id: STORY-385
+  feature: FEAT-162
   title: Configure per-provider default upstream rate limits
   narrative:
     as_a: workspace admin
@@ -16249,8 +16691,8 @@ stories:
   - Provider
   - ProviderRateLimit
   - AuditLog
-- id: STORY-380
-  feature: FEAT-161
+- id: STORY-386
+  feature: FEAT-162
   title: Override rate limits per BYOK credential and per model
   narrative:
     as_a: platform engineer
@@ -16258,7 +16700,7 @@ stories:
     so_that: the limiter tracks the correct ceiling for each outbound path
   priority: P0
   depends_on:
-  - STORY-379
+  - STORY-385
   acceptance_criteria:
   - id: AC-001
     scenario: Override at BYOK credential level
@@ -16320,8 +16762,8 @@ stories:
   - Model
   - ProviderRateLimit
   - AuditLog
-- id: STORY-381
-  feature: FEAT-161
+- id: STORY-387
+  feature: FEAT-162
   title: Pre-emptively throttle outbound calls against the effective ceiling
   narrative:
     as_a: gateway operator
@@ -16329,8 +16771,8 @@ stories:
     so_that: we keep headroom, avoid noisy retries, and expose accurate pressure
   priority: P0
   depends_on:
-  - STORY-379
-  - STORY-380
+  - STORY-385
+  - STORY-386
   acceptance_criteria:
   - id: AC-001
     scenario: Request admitted when under limit
@@ -16389,8 +16831,8 @@ stories:
   non_functional:
   - Window counters use a 60s sliding window with 1s buckets and are stored in Redis with per-bucket TTL
   - Counter updates are atomic (INCR + EXPIRE) to avoid double-counting under concurrency
-- id: STORY-382
-  feature: FEAT-161
+- id: STORY-388
+  feature: FEAT-162
   title: Render provider rate-limit pressure on the overview
   narrative:
     as_a: platform engineer watching the gateway
@@ -16398,8 +16840,8 @@ stories:
     so_that: I can see at a glance whether we are about to be rate-limited upstream
   priority: P0
   depends_on:
-  - STORY-379
-  - STORY-381
+  - STORY-385
+  - STORY-387
   acceptance_criteria:
   - id: AC-001
     scenario: Gauge shows rpm and tpm utilization
@@ -16449,8 +16891,8 @@ stories:
   - BYOKCredential
   - ProviderRateLimit
   - ProviderRateLimitWindow
-- id: STORY-383
-  feature: FEAT-161
+- id: STORY-389
+  feature: FEAT-162
   title: Alert rule on provider rate-limit pressure
   narrative:
     as_a: oncall engineer
@@ -16458,7 +16900,7 @@ stories:
     so_that: I can act before users see 429s
   priority: P1
   depends_on:
-  - STORY-382
+  - STORY-388
   acceptance_criteria:
   - id: AC-001
     scenario: Threshold alert on provider pressure
@@ -16481,8 +16923,8 @@ stories:
   - AlertRule
   - AlertEvent
   - ProviderRateLimitWindow
-- id: STORY-384
-  feature: FEAT-162
+- id: STORY-390
+  feature: FEAT-163
   title: Complete the first-run setup checklist
   narrative:
     as_a: workspace owner on first sign-in
@@ -16529,8 +16971,8 @@ stories:
   - Org
   - Invite
   - ApiKey
-- id: STORY-385
-  feature: FEAT-162
+- id: STORY-391
+  feature: FEAT-163
   title: Issue the first test request
   narrative:
     as_a: workspace owner
@@ -16538,7 +16980,7 @@ stories:
     so_that: I confirm end-to-end plumbing before wiring my app
   priority: P1
   depends_on:
-  - STORY-384
+  - STORY-390
   acceptance_criteria:
   - id: AC-001
     scenario: Test request succeeds
@@ -16573,8 +17015,8 @@ stories:
   data_models:
   - Request
   - ApiKey
-- id: STORY-386
-  feature: FEAT-162
+- id: STORY-392
+  feature: FEAT-163
   title: Dismiss or re-open a setup checklist item
   narrative:
     as_a: workspace owner
@@ -16601,8 +17043,8 @@ stories:
     - The item status returns to "open"
   data_models:
   - SetupChecklist
-- id: STORY-387
-  feature: FEAT-163
+- id: STORY-393
+  feature: FEAT-164
   title: Publish a public status page with incidents
   narrative:
     as_a: customer
@@ -16650,8 +17092,8 @@ stories:
   - StatusPageIncident
   non_functional:
   - Status page is served from a different region than the primary gateway
-- id: STORY-388
-  feature: FEAT-163
+- id: STORY-394
+  feature: FEAT-164
   title: Subscribe to status updates and view component history
   narrative:
     as_a: customer
@@ -16677,8 +17119,8 @@ stories:
     - I see uptime percentage and a list of resolved incidents
   data_models:
   - StatusPageIncident
-- id: STORY-389
-  feature: FEAT-164
+- id: STORY-395
+  feature: FEAT-165
   title: Open a support ticket from the shell
   narrative:
     as_a: signed-in user
@@ -16728,8 +17170,8 @@ stories:
     inferred: true
   data_models:
   - SupportTicket
-- id: STORY-390
-  feature: FEAT-164
+- id: STORY-396
+  feature: FEAT-165
   title: Attachments, follow-ups, close-as-resolved and rating on support tickets
   narrative:
     as_a: support customer
@@ -16763,8 +17205,8 @@ stories:
     - The ticket status becomes "closed" and the rating is stored
   data_models:
   - SupportTicket
-- id: STORY-391
-  feature: FEAT-165
+- id: STORY-397
+  feature: FEAT-166
   title: Accept Terms of Service and DPA
   narrative:
     as_a: new workspace owner
@@ -16818,8 +17260,8 @@ stories:
   - User
   non_functional:
   - ToS acceptance records are immutable and retained beyond account deletion
-- id: STORY-392
-  feature: FEAT-165
+- id: STORY-398
+  feature: FEAT-166
   title: Publish a new ToS version and re-prompt users
   narrative:
     as_a: workspace admin
@@ -16840,8 +17282,8 @@ stories:
   data_models:
   - TosAcceptance
   - AuditLog
-- id: STORY-393
-  feature: FEAT-166
+- id: STORY-399
+  feature: FEAT-167
   title: Open contextual help from any screen
   narrative:
     as_a: any user
@@ -16888,8 +17330,8 @@ stories:
     inferred: true
   data_models:
   - HelpArticle
-- id: STORY-394
-  feature: FEAT-166
+- id: STORY-400
+  feature: FEAT-167
   title: Admin curates pinned help articles and sees usage analytics
   narrative:
     as_a: workspace admin
@@ -16915,8 +17357,8 @@ stories:
     - I see views per article over the selected time range
   data_models:
   - HelpArticle
-- id: STORY-395
-  feature: FEAT-167
+- id: STORY-401
+  feature: FEAT-168
   title: Monitor internal background workers
   navigation: admin
   narrative:
@@ -16970,8 +17412,8 @@ stories:
   data_models:
   - WorkerQueue
   - WorkerJob
-- id: STORY-396
-  feature: FEAT-167
+- id: STORY-402
+  feature: FEAT-168
   title: Cancel running job and requeue dead-lettered job
   narrative:
     as_a: workspace admin
@@ -16999,8 +17441,8 @@ stories:
   data_models:
   - WorkerJob
   - AuditLog
-- id: STORY-397
-  feature: FEAT-168
+- id: STORY-403
+  feature: FEAT-169
   title: Forecast monthly spend with a pricing calculator
   narrative:
     as_a: finance operations lead
@@ -17062,8 +17504,8 @@ stories:
   - Model
   non_functional:
   - Forecast inputs never leave the org; no third-party pricing API calls
-- id: STORY-398
-  feature: FEAT-169
+- id: STORY-404
+  feature: FEAT-170
   title: Unified notification inbox with bell icon
   narrative:
     as_a: signed-in user
@@ -17740,6 +18182,43 @@ models:
     description: Set when the provider returns 429 with Retry-After; limits are suppressed to zero until this passes.
   - name: updated_at
     type: timestamp
+- name: CatalogPolicy
+  description: Org-wide model catalog defaults rendered in the "Catalog policy" panel on /models and applied by the router, edge auth and outbound pipeline.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+    unique: true
+  - name: default_chat_alias
+    type: string
+    nullable: true
+  - name: default_embed_alias
+    type: string
+    nullable: true
+  - name: fallback_on_5xx
+    type: json
+    description: '{enabled: bool, max_hops: int}'
+  - name: retry_on_429
+    type: json
+    description: '{enabled: bool, backoff_min_ms: int, backoff_max_ms: int}'
+  - name: prompt_caching_policy
+    type: json
+    description: '{providers: [string], default_ttl_s: int}'
+  - name: preview_access
+    type: string
+    description: admin|allowlisted|all
+  - name: allowed_regions
+    type: json
+  - name: pii_to_provider
+    type: string
+    description: redacted|hash_in_route|passthrough
+  - name: last_edited_by
+    type: FK:User
+    nullable: true
+  - name: updated_at
+    type: timestamp
 - name: ModelAlias
   description: Named route that resolves to a model with a fallback.
   fields:
@@ -18304,6 +18783,38 @@ models:
     type: timestamp
   - name: updated_at
     type: timestamp
+- name: SafetyPosture
+  description: Rolling safety-posture snapshot powering the /safety hero and flow diagram (redactor coverage, allowlist compliance, residency enforcement) and the readiness score.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+  - name: window_start
+    type: timestamp
+  - name: window_end
+    type: timestamp
+  - name: inbound_per_min
+    type: int
+  - name: outbound_per_min
+    type: int
+  - name: redacted_per_min
+    type: int
+  - name: blocked_per_min
+    type: int
+  - name: redactors_active
+    type: int
+  - name: redactor_coverage
+    type: number
+    description: 0..1 share of outbound traffic passing an active redactor
+  - name: allowlist_compliance
+    type: number
+  - name: residency_enforcement
+    type: number
+  - name: readiness
+    type: number
+    description: Composite 0..100 score rendered on the flow diagram
 - name: PiiCategory
   description: A named PII detector category with strictness.
   fields:
