@@ -225,6 +225,7 @@ epics:
   - FEAT-121
   - FEAT-122
   - FEAT-123
+  - FEAT-124
   - FEAT-125
   - FEAT-126
   - FEAT-127
@@ -235,12 +236,12 @@ epics:
   - FEAT-132
   - FEAT-133
   - FEAT-134
-  - FEAT-135
 - id: EPIC-011
   title: Gateway request pipeline
   description: The runtime that serves traffic — ingress dialects, translation, edge auth, rate limits, retries and timeouts, runtime failover, outbound provider auth, cost attribution, idempotency, health and circuit breaker, telemetry.
   priority: P0
   features:
+  - FEAT-135
   - FEAT-136
   - FEAT-137
   - FEAT-138
@@ -267,12 +268,12 @@ epics:
   - FEAT-159
   - FEAT-160
   - FEAT-161
-  - FEAT-162
 - id: EPIC-012
   title: Platform foundations and customer experience
   description: Cross-cutting capabilities that span the product — first-run onboarding, public status, in-product support, legal acceptance, in-app help, internal job/worker observability, and pricing/cost forecast tooling.
   priority: P1
   features:
+  - FEAT-162
   - FEAT-163
   - FEAT-164
   - FEAT-165
@@ -280,19 +281,18 @@ epics:
   - FEAT-167
   - FEAT-168
   - FEAT-169
-  - FEAT-170
 - id: EPIC-013
   title: Platform operator administration
   description: Capabilities reserved for the platform operator — Antirion staff in the saas managed offering, or the holder of the platform_admin role in a self_hosted deployment. In saas mode these surfaces are invisible to tenant workspaces. In self_hosted mode they are visible only to platform_admin. Every feature below states which deployment modes it applies in and which role can see it, and every screen here is gated by both mode and role at the edge before any business logic runs.
   priority: P0
   features:
+  - FEAT-170
   - FEAT-171
   - FEAT-172
   - FEAT-173
   - FEAT-174
   - FEAT-175
   - FEAT-176
-  - FEAT-177
 features:
 - id: FEAT-001
   epic: EPIC-001
@@ -1562,163 +1562,172 @@ features:
   - STORY-280
   ui_references:
   - proto/settings-sections.jsx
-- id: FEAT-125
+- id: FEAT-124
   epic: EPIC-010
   title: Compliance document exports
   description: DPIA, DPA, record-of-processing export; quarterly access review.
   priority: P1
   stories:
+  - STORY-281
+  - STORY-282
+  - STORY-283
   - STORY-284
-  - STORY-285
-  - STORY-286
-  - STORY-287
-- id: FEAT-126
+- id: FEAT-125
   epic: EPIC-010
   title: Data Subject Access Request (DSAR) admin
   description: Receive a DSAR, fulfill the data export for a named data subject, audit every access.
   priority: P1
   stories:
-  - STORY-288
-  - STORY-289
-  - STORY-290
-- id: FEAT-127
+  - STORY-285
+  - STORY-286
+  - STORY-287
+- id: FEAT-126
   epic: EPIC-010
   title: GDPR right-to-erasure
   description: Request erasure, approve, execute purge and audit — distinct from user offboarding, which keeps an audit trail.
   priority: P1
   stories:
+  - STORY-288
+  - STORY-289
+  - STORY-290
   - STORY-291
-  - STORY-292
-  - STORY-293
-  - STORY-294
-- id: FEAT-128
+- id: FEAT-127
   epic: EPIC-010
   title: Disaster recovery
   description: View backups, test restore, trigger restore, backup rotation policy, DR drill.
   priority: P1
   stories:
+  - STORY-292
+  - STORY-293
+  - STORY-294
   - STORY-295
   - STORY-296
-  - STORY-297
-  - STORY-298
-  - STORY-299
-- id: FEAT-129
+- id: FEAT-128
   epic: EPIC-010
   title: Webhook dead-letter queue and replay
   description: View DLQ, inspect failed deliveries, requeue, auto-disable a webhook after N consecutive failures, and arbitrarily replay any past delivery by id.
   priority: P1
   stories:
+  - STORY-297
+  - STORY-298
+  - STORY-299
   - STORY-300
   - STORY-301
-  - STORY-302
-  - STORY-303
-  - STORY-304
-- id: FEAT-130
+- id: FEAT-129
   epic: EPIC-010
   title: Management API versioning
   description: Version schema for the management API, deprecation policy and deprecation notifications.
   priority: P1
   stories:
-  - STORY-305
-  - STORY-306
-  - STORY-307
-- id: FEAT-131
+  - STORY-302
+  - STORY-303
+  - STORY-304
+- id: FEAT-130
   epic: EPIC-010
   title: Data-residency runtime enforcement
   description: Reject outbound calls that would violate the configured residency region, distinct from residency config.
   priority: P0
   stories:
-  - STORY-308
-- id: FEAT-132
+  - STORY-305
+- id: FEAT-131
   epic: EPIC-010
   title: IP geolocation policy
   description: Country-level allowlist/blocklist for ingress, distinct from CIDR allowlists.
   priority: P1
   stories:
-  - STORY-309
-- id: FEAT-133
+  - STORY-306
+- id: FEAT-132
   epic: EPIC-010
   title: DLP export to customer S3
   description: Stream a PII-safe copy of redacted gateway data into a customer-owned S3 bucket for DLP tooling.
   priority: P2
   stories:
-  - STORY-310
-- id: FEAT-134
+  - STORY-307
+- id: FEAT-133
   epic: EPIC-010
   title: Customer-managed keys (CMK)
   description: Bring-your-own CMK setup, revocation, and multi-CMK per data class.
   priority: P1
   stories:
-  - STORY-311
-  - STORY-312
-  - STORY-313
-- id: FEAT-135
+  - STORY-308
+  - STORY-309
+  - STORY-310
+- id: FEAT-134
   epic: EPIC-010
   title: Tenant-isolation verification
   description: Routine, auditable tests that prove no data leaks across orgs.
   priority: P1
   stories:
-  - STORY-314
-- id: FEAT-136
+  - STORY-311
+- id: FEAT-135
   epic: EPIC-011
   title: OpenAI-compatible ingress
   description: Accept standard OpenAI API traffic so existing client SDKs work unchanged.
   priority: P0
   stories:
+  - STORY-312
+  - STORY-313
+  - STORY-314
   - STORY-315
   - STORY-316
   - STORY-317
-  - STORY-318
-  - STORY-319
-  - STORY-320
-- id: FEAT-137
+- id: FEAT-136
   epic: EPIC-011
   title: Anthropic Messages ingress
   description: Accept native Anthropic Messages API traffic with streaming.
   priority: P0
   stories:
-  - STORY-321
-  - STORY-322
-- id: FEAT-138
+  - STORY-318
+  - STORY-319
+- id: FEAT-137
   epic: EPIC-011
   title: Cross-dialect translation
   description: Accept any supported dialect and speak any supported dialect to the upstream — tools, multimodal, structured output preserved.
   priority: P0
   stories:
-  - STORY-323
-  - STORY-324
-  - STORY-325
-- id: FEAT-139
+  - STORY-320
+  - STORY-321
+  - STORY-322
+- id: FEAT-138
   epic: EPIC-011
   title: Edge authentication, authorization and rate limits
   description: Authenticate API keys, enforce scopes, model and IP allowlists, and per-key/team/org rate limits at the edge with standard rate-limit response headers.
   priority: P0
   stories:
+  - STORY-323
+  - STORY-324
+  - STORY-325
   - STORY-326
-  - STORY-327
-  - STORY-328
-  - STORY-329
-- id: FEAT-140
+- id: FEAT-139
   epic: EPIC-011
   title: Retry, timeout and runtime failover
   description: Retry, backoff, per-phase timeouts and cascade through the fallback chain on terminal errors.
   priority: P0
   stories:
-  - STORY-330
-  - STORY-331
-  - STORY-332
-- id: FEAT-141
+  - STORY-327
+  - STORY-328
+  - STORY-329
+- id: FEAT-140
   epic: EPIC-011
   title: Provider outbound authentication
   description: Attach the right credential to each outbound call — API key, AWS SigV4, Azure AD.
   priority: P0
   stories:
+  - STORY-330
+  - STORY-331
+- id: FEAT-141
+  epic: EPIC-011
+  title: Cost attribution, metering and idempotency
+  description: Count tokens, compute cost, attribute it across scopes, expose cost and token headers, and support Idempotency-Key for safe retries.
+  priority: P0
+  stories:
+  - STORY-332
   - STORY-333
   - STORY-334
 - id: FEAT-142
   epic: EPIC-011
-  title: Cost attribution, metering and idempotency
-  description: Count tokens, compute cost, attribute it across scopes, expose cost and token headers, and support Idempotency-Key for safe retries.
+  title: Provider health and circuit breaker runtime
+  description: Probe provider health on a cadence, open or close circuits based on health and live error rate, and provide an admin dashboard with manual open/close and flip history.
   priority: P0
   stories:
   - STORY-335
@@ -1726,8 +1735,8 @@ features:
   - STORY-337
 - id: FEAT-143
   epic: EPIC-011
-  title: Provider health and circuit breaker runtime
-  description: Probe provider health on a cadence, open or close circuits based on health and live error rate, and provide an admin dashboard with manual open/close and flip history.
+  title: Request telemetry
+  description: Emit OpenTelemetry spans, propagate trace context, export Prometheus metrics for every request, and render an in-product trace waterfall with a sampling-config UI.
   priority: P0
   stories:
   - STORY-338
@@ -1735,189 +1744,190 @@ features:
   - STORY-340
 - id: FEAT-144
   epic: EPIC-011
-  title: Request telemetry
-  description: Emit OpenTelemetry spans, propagate trace context, export Prometheus metrics for every request, and render an in-product trace waterfall with a sampling-config UI.
-  priority: P0
-  stories:
-  - STORY-341
-  - STORY-342
-  - STORY-343
-- id: FEAT-145
-  epic: EPIC-011
   title: Streaming response passthrough
   description: Stream tokens and events end-to-end for SSE and chunked transfer across any dialect.
   priority: P0
   stories:
-  - STORY-344
-- id: FEAT-146
+  - STORY-341
+- id: FEAT-145
   epic: EPIC-011
   title: Multimodal request handling
   description: Accept image, audio and file content parts on ingress and translate to the upstream provider's representation.
   priority: P0
   stories:
-  - STORY-345
-- id: FEAT-147
+  - STORY-342
+- id: FEAT-146
   epic: EPIC-011
   title: Tool-calling and function-calling passthrough
   description: Preserve tool definitions, tool_use/tool_result turns and structured output when translating across dialects.
   priority: P0
   stories:
-  - STORY-346
-- id: FEAT-148
+  - STORY-343
+- id: FEAT-147
   epic: EPIC-011
   title: Request and response size limits
   description: Enforce configurable max prompt size, max response tokens and max file attachment size at the edge.
   priority: P0
   stories:
-  - STORY-347
-- id: FEAT-149
+  - STORY-344
+- id: FEAT-148
   epic: EPIC-011
   title: Graceful degradation on provider outage
   description: When all primary and fallback providers are unhealthy, optionally serve a cached response, a stub, or a structured outage error.
   priority: P0
   stories:
-  - STORY-348
-  - STORY-349
-- id: FEAT-150
+  - STORY-345
+  - STORY-346
+- id: FEAT-149
   epic: EPIC-011
   title: Trace sampling strategy
   description: Configurable head-based and tail-based sampling for request telemetry with always-sample on error.
   priority: P1
   stories:
-  - STORY-350
-- id: FEAT-151
+  - STORY-347
+- id: FEAT-150
   epic: EPIC-011
   title: Files API ingress
   description: Accept, list, delete files on ingress and pass through to upstream providers.
   priority: P1
   stories:
+  - STORY-348
+  - STORY-349
+  - STORY-350
   - STORY-351
-  - STORY-352
-  - STORY-353
-  - STORY-354
-- id: FEAT-152
+- id: FEAT-151
   epic: EPIC-011
   title: Batches API ingress
   description: Accept batch create/status/cancel and attribute cost at batch-item granularity.
   priority: P1
   stories:
+  - STORY-352
+  - STORY-353
+  - STORY-354
   - STORY-355
-  - STORY-356
-  - STORY-357
-  - STORY-358
-- id: FEAT-153
+- id: FEAT-152
   epic: EPIC-011
   title: Assistants and Responses API ingress
   description: Defines scope and basic ops for Assistants/Responses dialects if in scope for the workspace plan.
   priority: P2
   stories:
-  - STORY-359
-  - STORY-360
-- id: FEAT-154
+  - STORY-356
+  - STORY-357
+- id: FEAT-153
   epic: EPIC-011
   title: Audio endpoints ingress
   description: Accept audio transcriptions and translations on ingress.
   priority: P1
   stories:
-  - STORY-361
-  - STORY-362
-- id: FEAT-155
+  - STORY-358
+  - STORY-359
+- id: FEAT-154
   epic: EPIC-011
   title: Image endpoints ingress
   description: Accept image generations and edits on ingress.
   priority: P1
   stories:
-  - STORY-363
-  - STORY-364
-- id: FEAT-156
+  - STORY-360
+  - STORY-361
+- id: FEAT-155
   epic: EPIC-011
   title: Moderation endpoint ingress
   description: Accept moderation calls on ingress and route to the provider's moderation endpoint.
   priority: P2
   stories:
-  - STORY-365
-- id: FEAT-157
+  - STORY-362
+- id: FEAT-156
   epic: EPIC-011
   title: Embeddings-specific capabilities
   description: Dimension validation, cross-provider dimension compatibility, batch embedding cost attribution.
   priority: P1
   stories:
-  - STORY-366
-  - STORY-367
-  - STORY-368
-- id: FEAT-158
+  - STORY-363
+  - STORY-364
+  - STORY-365
+- id: FEAT-157
   epic: EPIC-011
   title: Fine-tune job management
   description: List, create, cancel fine-tune jobs; view logs and training curves with cost attribution; download produced artifacts (weights, config, metrics).
   priority: P2
   stories:
+  - STORY-366
+  - STORY-367
+  - STORY-368
   - STORY-369
   - STORY-370
   - STORY-371
-  - STORY-372
-  - STORY-373
-  - STORY-374
-- id: FEAT-159
+- id: FEAT-158
   epic: EPIC-011
   title: Egress proxy configuration
   description: Configure an outbound HTTP proxy (with credentials and per-provider override) for upstream provider calls.
   priority: P1
   stories:
-  - STORY-375
-  - STORY-376
-  - STORY-377
-- id: FEAT-160
+  - STORY-372
+  - STORY-373
+  - STORY-374
+- id: FEAT-159
   epic: EPIC-011
   title: Private connectivity
   description: Configure PrivateLink or VPC peering for ingress/egress and verify the private endpoint.
   priority: P2
   stories:
-  - STORY-378
-  - STORY-379
-- id: FEAT-161
+  - STORY-375
+  - STORY-376
+- id: FEAT-160
   epic: EPIC-011
   title: Emergency break-glass scope
   description: Create an audited, approval-gated, auto-expiring API key with elevated scope for incident response.
   priority: P1
   stories:
+  - STORY-377
+  - STORY-378
+  - STORY-379
   - STORY-380
   - STORY-381
-  - STORY-382
-  - STORY-383
-  - STORY-384
-- id: FEAT-162
+- id: FEAT-161
   epic: EPIC-011
   title: Provider rate-limit configuration and outbound limiter
   description: Configure per-provider, per-credential and per-model upstream rate limits (rpm/tpm), pre-emptively throttle outbound calls against a sliding-window limiter, learn from provider 429 Retry-After headers, and expose utilization so the overview dashboard and alerts can render "provider rate-limit pressure".
   priority: P0
   stories:
+  - STORY-382
+  - STORY-383
+  - STORY-384
   - STORY-385
   - STORY-386
-  - STORY-387
-  - STORY-388
-  - STORY-389
   ui_references:
   - proto/models.jsx
   - proto/routing.jsx
   - proto/overview.jsx
-- id: FEAT-163
+- id: FEAT-162
   epic: EPIC-012
   title: First-run onboarding checklist
   description: Guide a new workspace owner through pinning data residency, inviting teammates, connecting a provider, creating a key and issuing a test request. Residency must be pinned before any tenant data can be written.
   priority: P1
   stories:
-  - STORY-409
+  - STORY-387
+  - STORY-388
+  - STORY-389
   - STORY-390
-  - STORY-391
-  - STORY-392
   ui_references:
   - proto/Gateway.html
   - proto/overview.jsx
-- id: FEAT-164
+- id: FEAT-163
   epic: EPIC-012
   title: Public status page
   description: Publish gateway availability, component status and incident history on a public URL and embed a widget in-app.
   priority: P1
+  stories:
+  - STORY-391
+  - STORY-392
+  ui_references:
+  - proto/shell.jsx
+- id: FEAT-164
+  epic: EPIC-012
+  title: In-product support contact
+  description: Let a signed-in user open a support ticket or chat from the shell with session, org and request context attached.
+  priority: P2
   stories:
   - STORY-393
   - STORY-394
@@ -1925,83 +1935,82 @@ features:
   - proto/shell.jsx
 - id: FEAT-165
   epic: EPIC-012
-  title: In-product support contact
-  description: Let a signed-in user open a support ticket or chat from the shell with session, org and request context attached.
-  priority: P2
-  stories:
-  - STORY-395
-  - STORY-396
-  ui_references:
-  - proto/shell.jsx
-- id: FEAT-166
-  epic: EPIC-012
   title: Terms of Service and legal acceptance
   description: Capture ToS, DPA and privacy policy acceptance on sign-up and re-prompt on material changes.
   priority: P1
   stories:
-  - STORY-397
-  - STORY-398
+  - STORY-395
+  - STORY-396
   ui_references:
   - proto/Login.html
   - proto/login.jsx
-- id: FEAT-167
+- id: FEAT-166
   epic: EPIC-012
   title: In-app help and documentation
   description: Contextual doc links, tooltips and a global "/" quick-help palette across screens.
   priority: P2
   stories:
-  - STORY-399
-  - STORY-400
+  - STORY-397
+  - STORY-398
   ui_references:
   - proto/shell.jsx
-- id: FEAT-168
+- id: FEAT-167
   epic: EPIC-012
   title: Background worker observability
   description: Surface internal job queues (metric aggregation, webhook delivery, cache eviction, retention) and their health.
   priority: P1
   stories:
-  - STORY-401
-  - STORY-402
+  - STORY-399
+  - STORY-400
   ui_references:
   - proto/settings-sections.jsx
-- id: FEAT-169
+- id: FEAT-168
   epic: EPIC-012
   title: Pricing calculator and cost forecast
   description: Let finance model monthly spend by mix of models, volume and caching before committing to a budget.
   priority: P2
   stories:
-  - STORY-403
+  - STORY-401
   ui_references:
   - proto/budgets-data.js
-- id: FEAT-170
+- id: FEAT-169
   epic: EPIC-012
   title: In-product notification inbox
   description: Unified bell-icon inbox of user-visible notifications (alert fires, approvals, job completions, deprecations).
   priority: P1
   stories:
-  - STORY-404
-- id: FEAT-171
+  - STORY-402
+- id: FEAT-170
   epic: EPIC-013
   title: Cluster and fleet health
   description: Platform-operator surfaces for the running cluster — per-replica health and version across the gateway, control-plane API and worker fleets; drain and cordon controls for graceful shutdown and deploys; queue depth, lag and DLQ depth for every worker queue; and live tracking of config hot-reload propagation across nodes. Available in both saas and self_hosted modes. Visible only to Antirion staff in saas mode and to platform_admin in self_hosted mode.
   priority: P0
   stories:
+  - STORY-403
+  - STORY-404
   - STORY-405
   - STORY-406
-  - STORY-407
-  - STORY-408
-- id: FEAT-172
+- id: FEAT-171
   epic: EPIC-013
   title: Deployment mode and operator gating
   description: Establish the deployment mode (saas or self_hosted) at install time, surface it to every service via config, and gate every EPIC-013 surface on mode plus role at the edge so tenant workspaces cannot reach operator-only screens or endpoints. Available in both modes.
   priority: P0
   stories:
+  - STORY-407
+  - STORY-408
+- id: FEAT-172
+  epic: EPIC-013
+  title: Tenant roster
+  description: Operator-wide roster of every Org on the platform with plan, seat count, rolling spend, incident flags, residency region and primary contact, plus the ability to drill into a tenant and to suspend one with audit. Available in saas mode only; in self_hosted the view degenerates to a single-row read-only summary of the local install.
+  priority: P0
+  stories:
+  - STORY-409
   - STORY-410
   - STORY-411
 - id: FEAT-173
   epic: EPIC-013
-  title: Tenant roster
-  description: Operator-wide roster of every Org on the platform with plan, seat count, rolling spend, incident flags, residency region and primary contact, plus the ability to drill into a tenant and to suspend one with audit. Available in saas mode only; in self_hosted the view degenerates to a single-row read-only summary of the local install.
+  title: Platform-wide incident and maintenance
+  description: Let the operator declare a platform incident, pick affected regions and components and a severity, compute the affected tenants from the routing table, and broadcast in real time to every affected tenant's in-app status widget (FEAT-164). Also lets the operator schedule maintenance windows with advance notice. Available in both saas and self_hosted modes — in saas Antirion staff declare incidents for the fleet, in self_hosted the platform_admin declares them for the local install.
   priority: P0
   stories:
   - STORY-412
@@ -2009,8 +2018,8 @@ features:
   - STORY-414
 - id: FEAT-174
   epic: EPIC-013
-  title: Platform-wide incident and maintenance
-  description: Let the operator declare a platform incident, pick affected regions and components and a severity, compute the affected tenants from the routing table, and broadcast in real time to every affected tenant's in-app status widget (FEAT-164). Also lets the operator schedule maintenance windows with advance notice. Available in both modes.
+  title: Release and fleet version management
+  description: Promote a build across the fleet × region matrix, stage canaries, watch SLO impact in near-real time, and roll back on breach. Available in both modes — in saas Antirion staff drive it, in self_hosted the platform_admin does.
   priority: P0
   stories:
   - STORY-415
@@ -2018,8 +2027,8 @@ features:
   - STORY-417
 - id: FEAT-175
   epic: EPIC-013
-  title: Release and fleet version management
-  description: Promote a build across the fleet × region matrix, stage canaries, watch SLO impact in near-real time, and roll back on breach. Available in both modes — in saas Antirion staff drive it, in self_hosted the platform_admin does.
+  title: Self-hosted license and entitlement
+  description: Install, inspect and renew the Antirion license in a self_hosted deployment; show entitlement limits (seats, sustained rps, retention days, enabled feature set) and their consumption; fail closed on expiry or over-consumption with a clear path to renew. Available in self_hosted mode only; in saas mode the feature is inapplicable and its surfaces return 404.
   priority: P0
   stories:
   - STORY-418
@@ -2027,21 +2036,12 @@ features:
   - STORY-420
 - id: FEAT-176
   epic: EPIC-013
-  title: Self-hosted license and entitlement
-  description: Install, inspect and renew the Antirion license in a self_hosted deployment; show entitlement limits (seats, sustained rps, retention days, enabled feature set) and their consumption; fail closed on expiry or over-consumption with a clear path to renew. Available in self_hosted mode only; in saas mode the feature is inapplicable and its surfaces return 404.
-  priority: P0
-  stories:
-  - STORY-421
-  - STORY-422
-  - STORY-423
-- id: FEAT-177
-  epic: EPIC-013
   title: Platform-wide abuse and isolation signals
   description: Operator-facing dashboards for noisy-neighbor risk, abuse heuristics and the running results of FEAT-135 tenant-isolation verification. In saas mode this aggregates across tenants; in self_hosted it degenerates to a single-tenant view.
   priority: P1
   stories:
-  - STORY-424
-  - STORY-425
+  - STORY-421
+  - STORY-422
 stories:
 - id: STORY-001
   feature: FEAT-001
@@ -6858,7 +6858,7 @@ stories:
     so_that: I can see at a glance how close each upstream account is to its ceiling while I pick models
   priority: P1
   depends_on:
-  - STORY-388
+  - STORY-385
   acceptance_criteria:
   - id: AC-001
     scenario: Headroom row per provider
@@ -14484,8 +14484,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-284
-  feature: FEAT-125
+- id: STORY-281
+  feature: FEAT-124
   title: Export DPIA
   narrative:
     as_a: privacy officer
@@ -14506,8 +14506,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-285
-  feature: FEAT-125
+- id: STORY-282
+  feature: FEAT-124
   title: Export DPA
   narrative:
     as_a: privacy officer
@@ -14528,8 +14528,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-286
-  feature: FEAT-125
+- id: STORY-283
+  feature: FEAT-124
   title: Export record of processing activities
   narrative:
     as_a: privacy officer
@@ -14550,8 +14550,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-287
-  feature: FEAT-125
+- id: STORY-284
+  feature: FEAT-124
   title: Quarterly access review export
   narrative:
     as_a: security officer
@@ -14574,8 +14574,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-288
-  feature: FEAT-126
+- id: STORY-285
+  feature: FEAT-125
   title: Receive a DSAR
   narrative:
     as_a: privacy officer
@@ -14596,8 +14596,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-289
-  feature: FEAT-126
+- id: STORY-286
+  feature: FEAT-125
   title: Fulfill DSAR with data export
   narrative:
     as_a: privacy officer
@@ -14605,7 +14605,7 @@ stories:
     so_that: we satisfy the DSAR
   priority: P1
   depends_on:
-  - STORY-288
+  - STORY-285
   acceptance_criteria:
   - id: AC-001
     scenario: Export subject data
@@ -14622,8 +14622,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-290
-  feature: FEAT-126
+- id: STORY-287
+  feature: FEAT-125
   title: Audit DSAR activity
   narrative:
     as_a: privacy officer
@@ -14645,8 +14645,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-291
-  feature: FEAT-127
+- id: STORY-288
+  feature: FEAT-126
   title: Request erasure
   narrative:
     as_a: data subject or delegate
@@ -14667,8 +14667,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-292
-  feature: FEAT-127
+- id: STORY-289
+  feature: FEAT-126
   title: Approve erasure
   narrative:
     as_a: privacy officer
@@ -14676,7 +14676,7 @@ stories:
     so_that: lawful-basis and retention exceptions are validated
   priority: P1
   depends_on:
-  - STORY-291
+  - STORY-288
   acceptance_criteria:
   - id: AC-001
     scenario: Approve
@@ -14692,8 +14692,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-293
-  feature: FEAT-127
+- id: STORY-290
+  feature: FEAT-126
   title: Execute erasure purge
   narrative:
     as_a: privacy officer
@@ -14701,7 +14701,7 @@ stories:
     so_that: data is actually removed
   priority: P1
   depends_on:
-  - STORY-292
+  - STORY-289
   acceptance_criteria:
   - id: AC-001
     scenario: Purge
@@ -14718,8 +14718,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-294
-  feature: FEAT-127
+- id: STORY-291
+  feature: FEAT-126
   title: Audit erasure — distinct from offboarding
   narrative:
     as_a: privacy officer
@@ -14742,8 +14742,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-295
-  feature: FEAT-128
+- id: STORY-292
+  feature: FEAT-127
   title: View backups
   narrative:
     as_a: workspace admin
@@ -14764,8 +14764,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-296
-  feature: FEAT-128
+- id: STORY-293
+  feature: FEAT-127
   title: Test restore into sandbox
   narrative:
     as_a: workspace admin
@@ -14788,8 +14788,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-297
-  feature: FEAT-128
+- id: STORY-294
+  feature: FEAT-127
   title: Trigger production restore
   narrative:
     as_a: workspace owner
@@ -14811,8 +14811,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-298
-  feature: FEAT-128
+- id: STORY-295
+  feature: FEAT-127
   title: Backup rotation policy
   narrative:
     as_a: workspace admin
@@ -14833,8 +14833,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-299
-  feature: FEAT-128
+- id: STORY-296
+  feature: FEAT-127
   title: Run a DR drill
   narrative:
     as_a: workspace admin
@@ -14856,8 +14856,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-300
-  feature: FEAT-129
+- id: STORY-297
+  feature: FEAT-128
   title: View webhook DLQ
   narrative:
     as_a: workspace admin
@@ -14879,8 +14879,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-301
-  feature: FEAT-129
+- id: STORY-298
+  feature: FEAT-128
   title: Inspect failed delivery
   narrative:
     as_a: workspace admin
@@ -14901,8 +14901,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-302
-  feature: FEAT-129
+- id: STORY-299
+  feature: FEAT-128
   title: Requeue a dead-lettered webhook delivery
   narrative:
     as_a: workspace admin
@@ -14924,8 +14924,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-303
-  feature: FEAT-129
+- id: STORY-300
+  feature: FEAT-128
   title: Auto-disable a webhook after N consecutive failures
   narrative:
     as_a: workspace admin
@@ -14948,8 +14948,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-304
-  feature: FEAT-129
+- id: STORY-301
+  feature: FEAT-128
   title: Replay an arbitrary past webhook delivery
   narrative:
     as_a: workspace admin
@@ -14983,8 +14983,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-305
-  feature: FEAT-130
+- id: STORY-302
+  feature: FEAT-129
   title: Version the management API schema
   narrative:
     as_a: API consumer
@@ -15004,8 +15004,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-306
-  feature: FEAT-130
+- id: STORY-303
+  feature: FEAT-129
   title: Define a deprecation policy
   narrative:
     as_a: API consumer
@@ -15025,8 +15025,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-307
-  feature: FEAT-130
+- id: STORY-304
+  feature: FEAT-129
   title: Deprecation notifications
   narrative:
     as_a: API consumer
@@ -15046,8 +15046,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-308
-  feature: FEAT-131
+- id: STORY-305
+  feature: FEAT-130
   title: Runtime enforce data residency region
   narrative:
     as_a: compliance officer
@@ -15070,8 +15070,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-309
-  feature: FEAT-132
+- id: STORY-306
+  feature: FEAT-131
   title: Country-level allowlist and blocklist
   narrative:
     as_a: security officer
@@ -15100,8 +15100,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-310
-  feature: FEAT-133
+- id: STORY-307
+  feature: FEAT-132
   title: Stream a PII-safe copy to customer S3
   narrative:
     as_a: security officer
@@ -15122,8 +15122,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-311
-  feature: FEAT-134
+- id: STORY-308
+  feature: FEAT-133
   title: Set up a customer-managed key (CMK)
   narrative:
     as_a: security officer
@@ -15147,8 +15147,8 @@ stories:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
   - CMK revocation fails closed — traffic requiring the revoked key stops rather than falling back to a platform key
-- id: STORY-312
-  feature: FEAT-134
+- id: STORY-309
+  feature: FEAT-133
   title: Revoke a CMK
   narrative:
     as_a: security officer
@@ -15171,8 +15171,8 @@ stories:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
   - CMK revocation fails closed — traffic requiring the revoked key stops rather than falling back to a platform key
-- id: STORY-313
-  feature: FEAT-134
+- id: STORY-310
+  feature: FEAT-133
   title: Multiple CMKs per data class
   narrative:
     as_a: security officer
@@ -15194,8 +15194,8 @@ stories:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
   - CMK revocation fails closed — traffic requiring the revoked key stops rather than falling back to a platform key
-- id: STORY-314
-  feature: FEAT-135
+- id: STORY-311
+  feature: FEAT-134
   title: Routine tenant-isolation tests
   narrative:
     as_a: security officer
@@ -15216,8 +15216,8 @@ stories:
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-- id: STORY-315
-  feature: FEAT-136
+- id: STORY-312
+  feature: FEAT-135
   title: Serve /v1/chat/completions (non-streaming)
   narrative:
     as_a: application client built for OpenAI
@@ -15297,8 +15297,8 @@ stories:
   non_functional:
   - Wire-compatible with OpenAI v1 chat.completion schema
   - p95 overhead (gateway decision + ingress/egress) <= 15 ms excluding upstream
-- id: STORY-316
-  feature: FEAT-136
+- id: STORY-313
+  feature: FEAT-135
   title: Serve /v1/chat/completions with SSE streaming
   narrative:
     as_a: OpenAI SDK user
@@ -15306,7 +15306,7 @@ stories:
     so_that: I get token-by-token output as I do with OpenAI
   priority: P0
   depends_on:
-  - STORY-315
+  - STORY-312
   acceptance_criteria:
   - id: AC-001
     scenario: Streaming chunks
@@ -15349,8 +15349,8 @@ stories:
   non_functional:
   - TTFT p95 <= 250 ms excluding upstream
   - Client disconnect cancels the outbound stream within 100 ms
-- id: STORY-317
-  feature: FEAT-136
+- id: STORY-314
+  feature: FEAT-135
   title: Serve /v1/embeddings
   narrative:
     as_a: OpenAI-compatible client
@@ -15358,7 +15358,7 @@ stories:
     so_that: RAG and classification pipelines work unchanged
   priority: P0
   depends_on:
-  - STORY-315
+  - STORY-312
   acceptance_criteria:
   - id: AC-001
     scenario: Batch of inputs
@@ -15404,8 +15404,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-318
-  feature: FEAT-136
+- id: STORY-315
+  feature: FEAT-135
   title: Serve /v1/models (list and retrieve)
   narrative:
     as_a: OpenAI-compatible client
@@ -15413,7 +15413,7 @@ stories:
     so_that: SDK discovery features work
   priority: P1
   depends_on:
-  - STORY-315
+  - STORY-312
   acceptance_criteria:
   - id: AC-001
     scenario: List returns allowed models only
@@ -15456,8 +15456,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-319
-  feature: FEAT-136
+- id: STORY-316
+  feature: FEAT-135
   title: Propagate client cancellation to upstream
   narrative:
     as_a: gateway operator
@@ -15489,8 +15489,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-320
-  feature: FEAT-136
+- id: STORY-317
+  feature: FEAT-135
   title: Disable or enable an ingress endpoint
   narrative:
     as_a: gateway operator
@@ -15520,8 +15520,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-321
-  feature: FEAT-137
+- id: STORY-318
+  feature: FEAT-136
   title: Serve /v1/messages (Anthropic Messages API)
   narrative:
     as_a: Anthropic-SDK client
@@ -15582,8 +15582,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-322
-  feature: FEAT-137
+- id: STORY-319
+  feature: FEAT-136
   title: Stream /v1/messages events
   narrative:
     as_a: Anthropic-SDK client
@@ -15591,7 +15591,7 @@ stories:
     so_that: my SDK sees the expected message_start, content_block_delta and message_stop events
   priority: P0
   depends_on:
-  - STORY-321
+  - STORY-318
   acceptance_criteria:
   - id: AC-001
     scenario: Native Anthropic event sequence
@@ -15623,8 +15623,8 @@ stories:
   - Request
   non_functional:
   - Event ordering strictly preserved — no coalescing across deltas
-- id: STORY-323
-  feature: FEAT-138
+- id: STORY-320
+  feature: FEAT-137
   title: Translate OpenAI chat requests to Anthropic Messages and back
   narrative:
     as_a: application that speaks OpenAI chat natively
@@ -15632,8 +15632,8 @@ stories:
     so_that: I can use Anthropic models without rewriting my client
   priority: P0
   depends_on:
-  - STORY-315
-  - STORY-321
+  - STORY-312
+  - STORY-318
   acceptance_criteria:
   - id: AC-001
     scenario: OpenAI in, Anthropic out
@@ -15679,8 +15679,8 @@ stories:
   non_functional:
   - Translation is deterministic and reversible for supported features
   - Unsupported features return a 400 with a clear "unsupported_in_target_dialect" error
-- id: STORY-324
-  feature: FEAT-138
+- id: STORY-321
+  feature: FEAT-137
   title: Preserve tool / function calling across dialects
   narrative:
     as_a: application using tool calling
@@ -15688,7 +15688,7 @@ stories:
     so_that: agent loops keep working when I switch providers
   priority: P0
   depends_on:
-  - STORY-323
+  - STORY-320
   acceptance_criteria:
   - id: AC-001
     scenario: OpenAI tools, Anthropic upstream
@@ -15716,8 +15716,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-325
-  feature: FEAT-138
+- id: STORY-322
+  feature: FEAT-137
   title: Pass multimodal content through translation
   narrative:
     as_a: application sending images or audio
@@ -15725,7 +15725,7 @@ stories:
     so_that: vision and audio models keep working through the gateway
   priority: P1
   depends_on:
-  - STORY-323
+  - STORY-320
   acceptance_criteria:
   - id: AC-001
     scenario: OpenAI image_url into Anthropic image block
@@ -15751,8 +15751,8 @@ stories:
   - Model
   non_functional:
   - Large images may be streamed from object storage to upstream without buffering in memory
-- id: STORY-326
-  feature: FEAT-139
+- id: STORY-323
+  feature: FEAT-138
   title: Authenticate API key and resolve scopes
   narrative:
     as_a: gateway
@@ -15812,8 +15812,8 @@ stories:
   non_functional:
   - Key lookup uses a salted hash; constant-time compare
   - Hot path caches key resolution in memory with a short TTL and is invalidated on revoke/rotate
-- id: STORY-327
-  feature: FEAT-139
+- id: STORY-324
+  feature: FEAT-138
   title: Enforce model and IP allowlists at the edge
   narrative:
     as_a: gateway
@@ -15821,7 +15821,7 @@ stories:
     so_that: credentials leaked out of their allowed environment are useless
   priority: P0
   depends_on:
-  - STORY-326
+  - STORY-323
   acceptance_criteria:
   - id: AC-001
     scenario: Model not allowed
@@ -15856,8 +15856,8 @@ stories:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
   - Edge auth and rate-limit decisions complete in under 2 ms p95
-- id: STORY-328
-  feature: FEAT-139
+- id: STORY-325
+  feature: FEAT-138
   title: Enforce rate limits with Retry-After
   narrative:
     as_a: gateway
@@ -15865,7 +15865,7 @@ stories:
     so_that: runaway clients do not starve the rest of the workspace
   priority: P0
   depends_on:
-  - STORY-326
+  - STORY-323
   acceptance_criteria:
   - id: AC-001
     scenario: Per-key rpm exceeded
@@ -15900,8 +15900,8 @@ stories:
   non_functional:
   - Distributed token-bucket backed by Redis; lock-free hot path (CRC-sharded)
   - Edge synchronization within 60 seconds of config changes
-- id: STORY-329
-  feature: FEAT-139
+- id: STORY-326
+  feature: FEAT-138
   title: Return standard rate-limit response headers
   narrative:
     as_a: application developer
@@ -15932,8 +15932,8 @@ stories:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
   - Edge auth and rate-limit decisions complete in under 2 ms p95
-- id: STORY-330
-  feature: FEAT-140
+- id: STORY-327
+  feature: FEAT-139
   title: Retry upstream with exponential backoff and jitter
   narrative:
     as_a: gateway
@@ -15975,8 +15975,8 @@ stories:
   - Request
   non_functional:
   - Retries respect Retry-After header when present
-- id: STORY-331
-  feature: FEAT-140
+- id: STORY-328
+  feature: FEAT-139
   title: Enforce per-phase timeouts
   narrative:
     as_a: gateway operator
@@ -16017,8 +16017,8 @@ stories:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
   - Retry and failover cascades respect the caller's deadline — no retry extends the original timeout
-- id: STORY-332
-  feature: FEAT-140
+- id: STORY-329
+  feature: FEAT-139
   title: Fall back through the target chain on terminal errors
   narrative:
     as_a: gateway
@@ -16026,7 +16026,7 @@ stories:
     so_that: user-facing success rates stay above SLO
   priority: P0
   depends_on:
-  - STORY-330
+  - STORY-327
   acceptance_criteria:
   - id: AC-001
     scenario: Fallback on 5xx
@@ -16055,8 +16055,8 @@ stories:
   - Request
   non_functional:
   - Fallback translation must re-run dialect translation if target uses a different upstream dialect
-- id: STORY-333
-  feature: FEAT-141
+- id: STORY-330
+  feature: FEAT-140
   title: Use BYOK credential for outbound calls
   narrative:
     as_a: gateway
@@ -16088,8 +16088,8 @@ stories:
   - AlertEvent
   non_functional:
   - Secret fetched from the secret store at most once per minute per provider and cached in memory only
-- id: STORY-334
-  feature: FEAT-141
+- id: STORY-331
+  feature: FEAT-140
   title: Sign AWS Bedrock with SigV4 and handle Azure AD
   narrative:
     as_a: gateway
@@ -16097,7 +16097,7 @@ stories:
     so_that: those providers work alongside key-based providers
   priority: P1
   depends_on:
-  - STORY-333
+  - STORY-330
   acceptance_criteria:
   - id: AC-001
     scenario: Bedrock request is SigV4 signed
@@ -16122,8 +16122,8 @@ stories:
   - Provider
   non_functional:
   - SigV4 uses canonical request/signing-key rules per the AWS spec; no shortcuts
-- id: STORY-335
-  feature: FEAT-142
+- id: STORY-332
+  feature: FEAT-141
   title: Count input and output tokens per response
   narrative:
     as_a: gateway
@@ -16162,8 +16162,8 @@ stories:
   - Model
   non_functional:
   - Local tokenizers cached and loaded lazily per model family
-- id: STORY-336
-  feature: FEAT-142
+- id: STORY-333
+  feature: FEAT-141
   title: Attribute cost across org, team, project, user and key
   narrative:
     as_a: gateway
@@ -16171,7 +16171,7 @@ stories:
     so_that: budgets, analytics and invoices reconcile without recomputation
   priority: P0
   depends_on:
-  - STORY-335
+  - STORY-332
   acceptance_criteria:
   - id: AC-001
     scenario: Cost computed from model pricing
@@ -16208,8 +16208,8 @@ stories:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
   - Idempotency-Key cache survives node loss and is cluster-wide; duplicate suppression holds under concurrent retries
-- id: STORY-337
-  feature: FEAT-142
+- id: STORY-334
+  feature: FEAT-141
   title: Honor Idempotency-Key for safe retries
   narrative:
     as_a: client that retries after network errors
@@ -16217,7 +16217,7 @@ stories:
     so_that: I do not double-bill or double-act on tool calls
   priority: P0
   depends_on:
-  - STORY-315
+  - STORY-312
   acceptance_criteria:
   - id: AC-001
     scenario: Duplicate within window returns cached response
@@ -16263,8 +16263,8 @@ stories:
   non_functional:
   - Idempotency entries stored in Redis with 5-minute TTL (configurable up to 24h)
   - Body hash uses SHA-256 of a canonical JSON form
-- id: STORY-338
-  feature: FEAT-143
+- id: STORY-335
+  feature: FEAT-142
   title: Probe provider health on a cadence
   narrative:
     as_a: gateway operator
@@ -16297,8 +16297,8 @@ stories:
   non_functional:
   - Probe cadence defaults to every 30 s per (provider, region) pair
   - Probes use the cheapest available model for the provider to keep cost negligible
-- id: STORY-339
-  feature: FEAT-143
+- id: STORY-336
+  feature: FEAT-142
   title: Open and close circuit breakers based on health and live error rate
   narrative:
     as_a: gateway
@@ -16306,7 +16306,7 @@ stories:
     so_that: I stop hammering unhealthy upstreams and waste less latency
   priority: P0
   depends_on:
-  - STORY-338
+  - STORY-335
   acceptance_criteria:
   - id: AC-001
     scenario: Breaker opens on error-rate threshold
@@ -16344,8 +16344,8 @@ stories:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
   - Circuit-breaker state transitions propagate cluster-wide within 5 seconds
-- id: STORY-340
-  feature: FEAT-143
+- id: STORY-337
+  feature: FEAT-142
   title: Circuit breaker dashboard with manual control
   narrative:
     as_a: gateway operator
@@ -16353,7 +16353,7 @@ stories:
     so_that: I can intervene during incidents
   priority: P1
   depends_on:
-  - STORY-339
+  - STORY-336
   acceptance_criteria:
   - id: AC-001
     scenario: Dashboard view
@@ -16380,8 +16380,8 @@ stories:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
   - Circuit-breaker state transitions propagate cluster-wide within 5 seconds
-- id: STORY-341
-  feature: FEAT-144
+- id: STORY-338
+  feature: FEAT-143
   title: Emit OpenTelemetry span and propagate trace context
   narrative:
     as_a: platform engineer
@@ -16431,8 +16431,8 @@ stories:
   non_functional:
   - OTel exporter is pluggable (OTLP gRPC or HTTP)
   - Sampling configurable; default head-based 10% with parent-based propagation
-- id: STORY-342
-  feature: FEAT-144
+- id: STORY-339
+  feature: FEAT-143
   title: Export Prometheus metrics for ingress
   narrative:
     as_a: SRE
@@ -16461,8 +16461,8 @@ stories:
   non_functional:
   - Histogram buckets cover 5 ms to 60 s
   - Cardinality is bounded by limiting labels to the set above
-- id: STORY-343
-  feature: FEAT-144
+- id: STORY-340
+  feature: FEAT-143
   title: In-app trace viewer and sampling configuration
   narrative:
     as_a: platform engineer
@@ -16470,7 +16470,7 @@ stories:
     so_that: I do not need to leave the product to debug request latency
   priority: P1
   depends_on:
-  - STORY-341
+  - STORY-338
   acceptance_criteria:
   - id: AC-001
     scenario: Waterfall for a request id
@@ -16495,8 +16495,8 @@ stories:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
   - Telemetry emission is non-blocking — buffer loss is measured but never pushes back on the request path
-- id: STORY-344
-  feature: FEAT-145
+- id: STORY-341
+  feature: FEAT-144
   title: Stream tokens end-to-end across any dialect
   narrative:
     as_a: application developer
@@ -16541,8 +16541,8 @@ stories:
   non_functional:
   - No response body is buffered; chunks forwarded within one CPU tick
   - Back-pressure propagates to the upstream client if the downstream stalls
-- id: STORY-345
-  feature: FEAT-146
+- id: STORY-342
+  feature: FEAT-145
   title: Accept multimodal content parts
   narrative:
     as_a: application developer
@@ -16584,8 +16584,8 @@ stories:
   - Model
   non_functional:
   - Attachments are streamed to upstream; not persisted beyond retention policy
-- id: STORY-346
-  feature: FEAT-147
+- id: STORY-343
+  feature: FEAT-146
   title: Preserve tool calls when translating across dialects
   narrative:
     as_a: application developer
@@ -16627,8 +16627,8 @@ stories:
   - Request
   non_functional:
   - Unknown fields are dropped with a warning log; not silently forwarded
-- id: STORY-347
-  feature: FEAT-148
+- id: STORY-344
+  feature: FEAT-147
   title: Enforce request and response size limits
   narrative:
     as_a: platform engineer
@@ -16668,8 +16668,8 @@ stories:
   - SizeLimitPolicy
   non_functional:
   - Size checks run before body parsing to avoid memory pressure
-- id: STORY-348
-  feature: FEAT-149
+- id: STORY-345
+  feature: FEAT-148
   title: Serve a graceful response when every upstream is unhealthy
   narrative:
     as_a: platform engineer
@@ -16714,8 +16714,8 @@ stories:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
   - Outage-mode responses are served from cache or stub without any upstream call
-- id: STORY-349
-  feature: FEAT-149
+- id: STORY-346
+  feature: FEAT-148
   title: Dialect-specific error shape on graceful degradation
   narrative:
     as_a: client SDK
@@ -16723,7 +16723,7 @@ stories:
     so_that: my SDK's error handler works unchanged
   priority: P0
   depends_on:
-  - STORY-348
+  - STORY-345
   acceptance_criteria:
   - id: AC-001
     scenario: OpenAI-style error
@@ -16754,8 +16754,8 @@ stories:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
   - Outage-mode responses are served from cache or stub without any upstream call
-- id: STORY-350
-  feature: FEAT-150
+- id: STORY-347
+  feature: FEAT-149
   title: Configure trace sampling with error override
   narrative:
     as_a: SRE
@@ -16799,8 +16799,8 @@ stories:
   - Request
   non_functional:
   - Tail-based sampling buffers spans up to 5 seconds before final decision
-- id: STORY-351
-  feature: FEAT-151
+- id: STORY-348
+  feature: FEAT-150
   title: Upload a file via Files ingress
   narrative:
     as_a: client
@@ -16821,8 +16821,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-352
-  feature: FEAT-151
+- id: STORY-349
+  feature: FEAT-150
   title: List files
   narrative:
     as_a: client
@@ -16843,8 +16843,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-353
-  feature: FEAT-151
+- id: STORY-350
+  feature: FEAT-150
   title: Delete a file
   narrative:
     as_a: client
@@ -16865,8 +16865,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-354
-  feature: FEAT-151
+- id: STORY-351
+  feature: FEAT-150
   title: Passthrough file to provider
   narrative:
     as_a: client
@@ -16887,8 +16887,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-355
-  feature: FEAT-152
+- id: STORY-352
+  feature: FEAT-151
   title: Create a batch job
   narrative:
     as_a: client
@@ -16909,8 +16909,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-356
-  feature: FEAT-152
+- id: STORY-353
+  feature: FEAT-151
   title: Poll batch status
   narrative:
     as_a: client
@@ -16931,8 +16931,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-357
-  feature: FEAT-152
+- id: STORY-354
+  feature: FEAT-151
   title: Cancel a batch job
   narrative:
     as_a: client
@@ -16953,8 +16953,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-358
-  feature: FEAT-152
+- id: STORY-355
+  feature: FEAT-151
   title: Attribute cost at batch-item granularity
   narrative:
     as_a: finance operations lead
@@ -16977,8 +16977,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-359
-  feature: FEAT-153
+- id: STORY-356
+  feature: FEAT-152
   title: Define scope of Assistants and Responses ingress
   narrative:
     as_a: platform engineer
@@ -16998,8 +16998,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-360
-  feature: FEAT-153
+- id: STORY-357
+  feature: FEAT-152
   title: Basic CRUD for Assistants/Responses
   narrative:
     as_a: client
@@ -17020,8 +17020,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-361
-  feature: FEAT-154
+- id: STORY-358
+  feature: FEAT-153
   title: Audio transcription ingress
   narrative:
     as_a: client
@@ -17042,8 +17042,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-362
-  feature: FEAT-154
+- id: STORY-359
+  feature: FEAT-153
   title: Audio translation ingress
   narrative:
     as_a: client
@@ -17064,8 +17064,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-363
-  feature: FEAT-155
+- id: STORY-360
+  feature: FEAT-154
   title: Image generation ingress
   narrative:
     as_a: client
@@ -17086,8 +17086,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-364
-  feature: FEAT-155
+- id: STORY-361
+  feature: FEAT-154
   title: Image edit ingress
   narrative:
     as_a: client
@@ -17108,8 +17108,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-365
-  feature: FEAT-156
+- id: STORY-362
+  feature: FEAT-155
   title: Moderation endpoint ingress
   narrative:
     as_a: client
@@ -17130,8 +17130,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-366
-  feature: FEAT-157
+- id: STORY-363
+  feature: FEAT-156
   title: Validate embedding dimensions
   narrative:
     as_a: client
@@ -17160,8 +17160,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-367
-  feature: FEAT-157
+- id: STORY-364
+  feature: FEAT-156
   title: Cross-provider dimension compatibility
   narrative:
     as_a: client
@@ -17183,8 +17183,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-368
-  feature: FEAT-157
+- id: STORY-365
+  feature: FEAT-156
   title: Batch embedding cost attribution
   narrative:
     as_a: finance operations lead
@@ -17205,8 +17205,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-369
-  feature: FEAT-158
+- id: STORY-366
+  feature: FEAT-157
   title: List fine-tune jobs
   narrative:
     as_a: ml engineer
@@ -17227,8 +17227,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-370
-  feature: FEAT-158
+- id: STORY-367
+  feature: FEAT-157
   title: Create a fine-tune job
   narrative:
     as_a: ml engineer
@@ -17249,8 +17249,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-371
-  feature: FEAT-158
+- id: STORY-368
+  feature: FEAT-157
   title: Cancel a fine-tune job
   narrative:
     as_a: ml engineer
@@ -17271,8 +17271,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-372
-  feature: FEAT-158
+- id: STORY-369
+  feature: FEAT-157
   title: View fine-tune logs
   narrative:
     as_a: ml engineer
@@ -17293,8 +17293,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-373
-  feature: FEAT-158
+- id: STORY-370
+  feature: FEAT-157
   title: Attribute fine-tune cost
   narrative:
     as_a: finance operations lead
@@ -17316,8 +17316,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-374
-  feature: FEAT-158
+- id: STORY-371
+  feature: FEAT-157
   title: Download fine-tune artifacts and training curves
   narrative:
     as_a: ml engineer
@@ -17325,7 +17325,7 @@ stories:
     so_that: I have the full record of the run
   priority: P2
   depends_on:
-  - STORY-370
+  - STORY-367
   acceptance_criteria:
   - id: AC-001
     scenario: Download available on success
@@ -17348,8 +17348,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-375
-  feature: FEAT-159
+- id: STORY-372
+  feature: FEAT-158
   title: Configure outbound HTTP proxy
   narrative:
     as_a: network engineer
@@ -17371,8 +17371,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-376
-  feature: FEAT-159
+- id: STORY-373
+  feature: FEAT-158
   title: Rotate proxy credentials
   narrative:
     as_a: network engineer
@@ -17394,8 +17394,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-377
-  feature: FEAT-159
+- id: STORY-374
+  feature: FEAT-158
   title: Per-provider proxy override
   narrative:
     as_a: network engineer
@@ -17416,8 +17416,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-378
-  feature: FEAT-160
+- id: STORY-375
+  feature: FEAT-159
   title: Configure PrivateLink or VPC peering
   narrative:
     as_a: network engineer
@@ -17438,8 +17438,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-379
-  feature: FEAT-160
+- id: STORY-376
+  feature: FEAT-159
   title: Verify private endpoint
   narrative:
     as_a: network engineer
@@ -17460,8 +17460,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-380
-  feature: FEAT-161
+- id: STORY-377
+  feature: FEAT-160
   title: Create a break-glass API key
   narrative:
     as_a: incident commander
@@ -17483,8 +17483,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-381
-  feature: FEAT-161
+- id: STORY-378
+  feature: FEAT-160
   title: Use break-glass key with full audit
   narrative:
     as_a: incident commander
@@ -17492,7 +17492,7 @@ stories:
     so_that: elevated actions during an incident remain fully traceable
   priority: P1
   depends_on:
-  - STORY-380
+  - STORY-377
   acceptance_criteria:
   - id: AC-001
     scenario: Use key
@@ -17510,8 +17510,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-382
-  feature: FEAT-161
+- id: STORY-379
+  feature: FEAT-160
   title: Auto-expire break-glass key
   narrative:
     as_a: security officer
@@ -17533,8 +17533,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-383
-  feature: FEAT-161
+- id: STORY-380
+  feature: FEAT-160
   title: Revoke break-glass key manually
   narrative:
     as_a: incident commander
@@ -17556,8 +17556,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-384
-  feature: FEAT-161
+- id: STORY-381
+  feature: FEAT-160
   title: Require approval for break-glass creation
   narrative:
     as_a: security officer
@@ -17579,8 +17579,8 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-- id: STORY-385
-  feature: FEAT-162
+- id: STORY-382
+  feature: FEAT-161
   title: Configure per-provider default upstream rate limits
   narrative:
     as_a: workspace admin
@@ -17641,8 +17641,8 @@ stories:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
   - Outbound limiter learns Retry-After within one request of receiving it and applies cluster-wide
-- id: STORY-386
-  feature: FEAT-162
+- id: STORY-383
+  feature: FEAT-161
   title: Override rate limits per BYOK credential and per model
   narrative:
     as_a: platform engineer
@@ -17650,7 +17650,7 @@ stories:
     so_that: the limiter tracks the correct ceiling for each outbound path
   priority: P0
   depends_on:
-  - STORY-385
+  - STORY-382
   acceptance_criteria:
   - id: AC-001
     scenario: Override at BYOK credential level
@@ -17716,8 +17716,8 @@ stories:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
   - Outbound limiter learns Retry-After within one request of receiving it and applies cluster-wide
-- id: STORY-387
-  feature: FEAT-162
+- id: STORY-384
+  feature: FEAT-161
   title: Pre-emptively throttle outbound calls against the effective ceiling
   narrative:
     as_a: gateway operator
@@ -17725,8 +17725,8 @@ stories:
     so_that: we keep headroom, avoid noisy retries, and expose accurate pressure
   priority: P0
   depends_on:
-  - STORY-385
-  - STORY-386
+  - STORY-382
+  - STORY-383
   acceptance_criteria:
   - id: AC-001
     scenario: Request admitted when under limit
@@ -17785,8 +17785,8 @@ stories:
   non_functional:
   - Window counters use a 60s sliding window with 1s buckets and are stored in Redis with per-bucket TTL
   - Counter updates are atomic (INCR + EXPIRE) to avoid double-counting under concurrency
-- id: STORY-388
-  feature: FEAT-162
+- id: STORY-385
+  feature: FEAT-161
   title: Render provider rate-limit pressure on the overview
   narrative:
     as_a: platform engineer watching the gateway
@@ -17794,8 +17794,8 @@ stories:
     so_that: I can see at a glance whether we are about to be rate-limited upstream
   priority: P0
   depends_on:
-  - STORY-385
-  - STORY-387
+  - STORY-382
+  - STORY-384
   acceptance_criteria:
   - id: AC-001
     scenario: Gauge shows rpm and tpm utilization
@@ -17849,8 +17849,8 @@ stories:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
   - Outbound limiter learns Retry-After within one request of receiving it and applies cluster-wide
-- id: STORY-389
-  feature: FEAT-162
+- id: STORY-386
+  feature: FEAT-161
   title: Alert rule on provider rate-limit pressure
   narrative:
     as_a: oncall engineer
@@ -17858,7 +17858,7 @@ stories:
     so_that: I can act before users see 429s
   priority: P1
   depends_on:
-  - STORY-388
+  - STORY-385
   acceptance_criteria:
   - id: AC-001
     scenario: Threshold alert on provider pressure
@@ -17885,8 +17885,8 @@ stories:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
   - Outbound limiter learns Retry-After within one request of receiving it and applies cluster-wide
-- id: STORY-409
-  feature: FEAT-163
+- id: STORY-387
+  feature: FEAT-162
   title: Pin data residency region before any tenant data is written
   narrative:
     as_a: workspace owner on first sign-in (saas) or platform admin on first install (self_hosted)
@@ -17963,8 +17963,8 @@ stories:
   - Residency selection is permanent for the life of the workspace — no API surface, worker job or admin override exists that can change it. A different region requires provisioning a new workspace.
   - In saas mode no region is pre-selected to prevent an accidental wrong-region pin; the picker fails closed if the owner dismisses it
   - The picker's set of available regions in saas mode is served from the platform-operator configuration and honors the org's billing plan
-- id: STORY-390
-  feature: FEAT-163
+- id: STORY-388
+  feature: FEAT-162
   title: Complete the first-run setup checklist
   narrative:
     as_a: workspace owner on first sign-in
@@ -18014,8 +18014,8 @@ stories:
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
-- id: STORY-391
-  feature: FEAT-163
+- id: STORY-389
+  feature: FEAT-162
   title: Issue the first test request
   narrative:
     as_a: workspace owner
@@ -18023,7 +18023,7 @@ stories:
     so_that: I confirm end-to-end plumbing before wiring my app
   priority: P1
   depends_on:
-  - STORY-390
+  - STORY-388
   acceptance_criteria:
   - id: AC-001
     scenario: Test request succeeds
@@ -18061,8 +18061,8 @@ stories:
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
-- id: STORY-392
-  feature: FEAT-163
+- id: STORY-390
+  feature: FEAT-162
   title: Dismiss or re-open a setup checklist item
   narrative:
     as_a: workspace owner
@@ -18092,8 +18092,8 @@ stories:
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
-- id: STORY-393
-  feature: FEAT-164
+- id: STORY-391
+  feature: FEAT-163
   title: Publish a public status page with incidents
   narrative:
     as_a: customer
@@ -18141,8 +18141,8 @@ stories:
   - StatusPageIncident
   non_functional:
   - Status page is served from a different region than the primary gateway
-- id: STORY-394
-  feature: FEAT-164
+- id: STORY-392
+  feature: FEAT-163
   title: Subscribe to status updates and view component history
   narrative:
     as_a: customer
@@ -18172,8 +18172,8 @@ stories:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
   - Status-page updates propagate within 5 minutes of a component state change
-- id: STORY-395
-  feature: FEAT-165
+- id: STORY-393
+  feature: FEAT-164
   title: Open a support ticket from the shell
   narrative:
     as_a: signed-in user
@@ -18226,8 +18226,8 @@ stories:
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
-- id: STORY-396
-  feature: FEAT-165
+- id: STORY-394
+  feature: FEAT-164
   title: Attachments, follow-ups, close-as-resolved and rating on support tickets
   narrative:
     as_a: support customer
@@ -18264,8 +18264,8 @@ stories:
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
-- id: STORY-397
-  feature: FEAT-166
+- id: STORY-395
+  feature: FEAT-165
   title: Accept Terms of Service and DPA
   narrative:
     as_a: new workspace owner
@@ -18319,8 +18319,8 @@ stories:
   - User
   non_functional:
   - ToS acceptance records are immutable and retained beyond account deletion
-- id: STORY-398
-  feature: FEAT-166
+- id: STORY-396
+  feature: FEAT-165
   title: Publish a new ToS version and re-prompt users
   narrative:
     as_a: workspace admin
@@ -18344,8 +18344,8 @@ stories:
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
-- id: STORY-399
-  feature: FEAT-167
+- id: STORY-397
+  feature: FEAT-166
   title: Open contextual help from any screen
   narrative:
     as_a: any user
@@ -18395,8 +18395,8 @@ stories:
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
-- id: STORY-400
-  feature: FEAT-167
+- id: STORY-398
+  feature: FEAT-166
   title: Admin curates pinned help articles and sees usage analytics
   narrative:
     as_a: workspace admin
@@ -18425,8 +18425,8 @@ stories:
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
-- id: STORY-401
-  feature: FEAT-168
+- id: STORY-399
+  feature: FEAT-167
   title: Monitor internal background workers
   navigation: admin
   narrative:
@@ -18483,8 +18483,8 @@ stories:
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
-- id: STORY-402
-  feature: FEAT-168
+- id: STORY-400
+  feature: FEAT-167
   title: Cancel running job and requeue dead-lettered job
   narrative:
     as_a: workspace admin
@@ -18515,8 +18515,8 @@ stories:
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
-- id: STORY-403
-  feature: FEAT-169
+- id: STORY-401
+  feature: FEAT-168
   title: Forecast monthly spend with a pricing calculator
   narrative:
     as_a: finance operations lead
@@ -18578,8 +18578,8 @@ stories:
   - Model
   non_functional:
   - Forecast inputs never leave the org; no third-party pricing API calls
-- id: STORY-404
-  feature: FEAT-170
+- id: STORY-402
+  feature: FEAT-169
   title: Unified notification inbox with bell icon
   narrative:
     as_a: signed-in user
@@ -18608,10 +18608,10 @@ stories:
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
-- id: STORY-405
-  feature: FEAT-171
+- id: STORY-403
+  feature: FEAT-170
   title: View fleet roster across gateway, control-plane and workers
-  navigation: admin
+  navigation: operator
   narrative:
     as_a: SRE or workspace owner
     i_want: a live roster of every replica across the gateway, control-plane API and worker fleets with version, region, AZ, state, CPU, in-flight count and stream count
@@ -18674,10 +18674,10 @@ stories:
   non_functional:
   - The fleet view is read-only and must not contribute to request-path load — it consumes the same heartbeat stream the load balancer uses
   - The roster is consistent within 10 seconds of a replica state change
-- id: STORY-406
-  feature: FEAT-171
+- id: STORY-404
+  feature: FEAT-170
   title: Drain and cordon a replica
-  navigation: admin
+  navigation: operator
   narrative:
     as_a: SRE
     i_want: to drain and cordon a specific replica
@@ -18754,10 +18754,10 @@ stories:
   - Drain honors the project graceful_shutdown contract — in-flight requests complete and streams receive a terminal event before the process exits
   - Drain and terminate are idempotent — repeat invocation is safe and does not double-count in the audit log
   - Destructive force-terminate is gated by the destructive_action_confirmation_policy
-- id: STORY-407
-  feature: FEAT-171
+- id: STORY-405
+  feature: FEAT-170
   title: Monitor worker queue depth, lag and DLQ
-  navigation: admin
+  navigation: operator
   narrative:
     as_a: SRE
     i_want: live depth, oldest-message age, consumer count and DLQ depth per worker queue
@@ -18841,10 +18841,10 @@ stories:
   - Queue-health reads are served from the same metrics store that powers FEAT-168 — no direct broker polling from the UI path
   - Bulk requeue and purge are idempotent and capped per call to protect the broker
   - Purge is gated by the destructive_action_confirmation_policy
-- id: STORY-408
-  feature: FEAT-171
+- id: STORY-406
+  feature: FEAT-170
   title: Track config hot-reload propagation
-  navigation: admin
+  navigation: operator
   narrative:
     as_a: SRE
     i_want: to see the current live config version per replica and how long the last change took to propagate
@@ -18918,8 +18918,8 @@ stories:
   - Propagation status is eventually consistent — readers tolerate up to the config-reload SLA of skew
   - A propagation that breaches the 30-second SLA raises its own operational alert per EPIC-009
   - Retry is idempotent and safe to invoke multiple times on the same replica
-- id: STORY-410
-  feature: FEAT-172
+- id: STORY-407
+  feature: FEAT-171
   title: Surface the deployment mode and operator role to the UI
   navigation: operator
   narrative:
@@ -18972,8 +18972,8 @@ stories:
   - Mode and role checks run at the edge before any business logic — unauthorized operator-API calls never reach the handler
   - Role claims are verified from server-side state; client-sent role hints are ignored
   - The deployment mode is immutable for the life of an install; changing it requires a full re-provision
-- id: STORY-411
-  feature: FEAT-172
+- id: STORY-408
+  feature: FEAT-171
   title: Operator surfaces are invisible and unreachable from tenant roles
   navigation: operator
   narrative:
@@ -19029,8 +19029,8 @@ stories:
   - Operator-surface 404s must be indistinguishable from genuine not-found responses — no timing side channel, no body text hint
   - Access-denial audit records are written asynchronously so they cannot rate-limit the 404 response
   - Tenant-isolation of the operator plane is continuously verified by FEAT-135
-- id: STORY-412
-  feature: FEAT-173
+- id: STORY-409
+  feature: FEAT-172
   title: Cross-tenant roster in saas mode
   navigation: operator
   narrative:
@@ -19091,8 +19091,8 @@ stories:
   - Roster queries read from pre-aggregated operator rollups computed by the worker fleet — the operator UI never scans tenant request logs
   - Tenant-level PII is minimized in the roster; drill-in (STORY-413) is the only path to richer detail and is audited
   - Access is gated by platform_admin plus deployment_mode per STORY-411
-- id: STORY-413
-  feature: FEAT-173
+- id: STORY-410
+  feature: FEAT-172
   title: Drill into a tenant from the roster
   navigation: operator
   narrative:
@@ -19146,8 +19146,8 @@ stories:
   non_functional:
   - Operator drill-in never sees tenant prompt bodies; redaction is enforced before the data leaves the tenant's region
   - Tenant-originated audit visibility is mandatory — the tenant's owner can see which operator viewed them and when
-- id: STORY-414
-  feature: FEAT-173
+- id: STORY-411
+  feature: FEAT-172
   title: Suspend or resume a tenant with audit and notice
   navigation: operator
   narrative:
@@ -19225,8 +19225,8 @@ stories:
   - Suspend and resume are gated by the destructive_action_confirmation_policy — typed confirmation of the Org id is mandatory
   - Suspension takes effect at the edge within the config-reload SLA
   - No tenant data is modified or deleted by suspension — suspension is commercially reversible
-- id: STORY-415
-  feature: FEAT-174
+- id: STORY-412
+  feature: FEAT-173
   title: Declare a platform-wide incident
   navigation: operator
   narrative:
@@ -19300,8 +19300,8 @@ stories:
   non_functional:
   - Incident broadcasts reach every affected tenant's in-app widget within 30 seconds via the same propagation path as config hot-reload
   - An incident in one region must not block writes or reads of incidents in another region — the store is regionally partitioned and globally read-replicated
-- id: STORY-416
-  feature: FEAT-174
+- id: STORY-413
+  feature: FEAT-173
   title: Compute affected tenants from routing and budgets
   navigation: operator
   narrative:
@@ -19358,8 +19358,8 @@ stories:
   non_functional:
   - Preview reads from routing rollups — no live scan of request logs on the operator path
   - Preview is a pure function of input; repeat calls with the same inputs are stable within the rollup freshness window
-- id: STORY-417
-  feature: FEAT-174
+- id: STORY-414
+  feature: FEAT-173
   title: Schedule a maintenance window with advance notice
   navigation: operator
   narrative:
@@ -19418,8 +19418,8 @@ stories:
   non_functional:
   - Notification coalescing — a tenant never receives more than one notification per maintenance window per channel regardless of edit count
   - Scheduling below the advance-notice minimum requires an explicit override that is audited
-- id: STORY-418
-  feature: FEAT-175
+- id: STORY-415
+  feature: FEAT-174
   title: See the fleet-by-region deploy matrix
   navigation: operator
   narrative:
@@ -19472,8 +19472,8 @@ stories:
   non_functional:
   - The matrix reads the same heartbeat stream FEAT-171 uses — no separate source of truth on what is running
   - Cells are consistent within 10 seconds of a replica state change
-- id: STORY-419
-  feature: FEAT-175
+- id: STORY-416
+  feature: FEAT-174
   title: Stage a canary and watch SLO impact
   navigation: operator
   narrative:
@@ -19541,8 +19541,8 @@ stories:
   non_functional:
   - Canary traffic selection is deterministic per Request-Id so the same trace always hits the same side — comparison is apples-to-apples
   - SLO deltas are computed on the same 1-minute rollups the workspace dashboards use, so operator and tenant see the same numbers
-- id: STORY-420
-  feature: FEAT-175
+- id: STORY-417
+  feature: FEAT-174
   title: Auto-rollback on SLO breach
   navigation: operator
   narrative:
@@ -19597,8 +19597,8 @@ stories:
   non_functional:
   - Auto-rollback decisions run in the worker fleet on the SLO rollup stream — not in the request path
   - Rollback drains honor the project graceful_shutdown contract so in-flight requests are not dropped
-- id: STORY-421
-  feature: FEAT-176
+- id: STORY-418
+  feature: FEAT-175
   title: Install and verify a self-hosted license
   navigation: operator
   narrative:
@@ -19665,8 +19665,8 @@ stories:
   non_functional:
   - License verification is fully offline — no outbound call is required to boot a self_hosted install from a valid license file
   - License blobs and private keys are not logged; only the fingerprint appears in audit records
-- id: STORY-422
-  feature: FEAT-176
+- id: STORY-419
+  feature: FEAT-175
   title: See entitlement limits and consumption
   navigation: operator
   narrative:
@@ -19715,8 +19715,8 @@ stories:
   non_functional:
   - Entitlement usage is computed from the same rollups as the tenant dashboards — no duplicate meter
   - Entitlement checks run at the edge with a cached decision; the cache respects the config-reload SLA
-- id: STORY-423
-  feature: FEAT-176
+- id: STORY-420
+  feature: FEAT-175
   title: License renewal reminders and expiry behavior
   navigation: operator
   narrative:
@@ -19769,8 +19769,8 @@ stories:
   non_functional:
   - Expiry behavior is deterministic and documented — no silent degradation
   - The license-check worker is redundant across replicas; a single failed check does not trigger spurious reminders
-- id: STORY-424
-  feature: FEAT-177
+- id: STORY-421
+  feature: FEAT-176
   title: Noisy-neighbor and quota-pressure board
   navigation: operator
   narrative:
@@ -19817,8 +19817,8 @@ stories:
   non_functional:
   - The board reads from operator-rollup stores; request-path latency is never affected by this view loading
   - Per-tenant scores are computed by the worker fleet on a bounded schedule so the board is freshness-bounded rather than real-time
-- id: STORY-425
-  feature: FEAT-177
+- id: STORY-422
+  feature: FEAT-176
   title: Triage an abuse flag with evidence
   navigation: operator
   narrative:

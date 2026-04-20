@@ -2010,7 +2010,7 @@ features:
 - id: FEAT-173
   epic: EPIC-013
   title: Platform-wide incident and maintenance
-  description: Let the operator declare a platform incident, pick affected regions and components and a severity, compute the affected tenants from the routing table, and broadcast in real time to every affected tenant's in-app status widget (FEAT-164). Also lets the operator schedule maintenance windows with advance notice. Available in both modes.
+  description: Let the operator declare a platform incident, pick affected regions and components and a severity, compute the affected tenants from the routing table, and broadcast in real time to every affected tenant's in-app status widget (FEAT-164). Also lets the operator schedule maintenance windows with advance notice. Available in both saas and self_hosted modes — in saas Antirion staff declare incidents for the fleet, in self_hosted the platform_admin declares them for the local install.
   priority: P0
   stories:
   - STORY-412
@@ -18611,7 +18611,7 @@ stories:
 - id: STORY-403
   feature: FEAT-170
   title: View fleet roster across gateway, control-plane and workers
-  navigation: admin
+  navigation: operator
   narrative:
     as_a: SRE or workspace owner
     i_want: a live roster of every replica across the gateway, control-plane API and worker fleets with version, region, AZ, state, CPU, in-flight count and stream count
@@ -18677,7 +18677,7 @@ stories:
 - id: STORY-404
   feature: FEAT-170
   title: Drain and cordon a replica
-  navigation: admin
+  navigation: operator
   narrative:
     as_a: SRE
     i_want: to drain and cordon a specific replica
@@ -18757,7 +18757,7 @@ stories:
 - id: STORY-405
   feature: FEAT-170
   title: Monitor worker queue depth, lag and DLQ
-  navigation: admin
+  navigation: operator
   narrative:
     as_a: SRE
     i_want: live depth, oldest-message age, consumer count and DLQ depth per worker queue
@@ -18844,7 +18844,7 @@ stories:
 - id: STORY-406
   feature: FEAT-170
   title: Track config hot-reload propagation
-  navigation: admin
+  navigation: operator
   narrative:
     as_a: SRE
     i_want: to see the current live config version per replica and how long the last change took to propagate
