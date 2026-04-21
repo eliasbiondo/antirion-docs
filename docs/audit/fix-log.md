@@ -176,3 +176,25 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-006 | R-3 warmup ETA | skipped-as-non-actionable | Removed "stated ETA" wording via STORY-154 rewrite |
 | EPIC-006 | R-4 eviction rule_id FK | applied | CacheEvictionEvent.rule_id nullable FK:InvalidationRule |
 | EPIC-006 | R-6 invalidation event catalog | deferred | Needs product input |
+| EPIC-007 | C-1 prompt_original persistence | applied | Removed SafetyEvent.prompt_original; added RedactionVaultEntry model; FEAT-080 is sole reversal path |
+| EPIC-007 | C-2 notifications audience | applied | STORY-159/177/178/180 ACs now cite canonical roles per notifications_model |
+| EPIC-007 | C-3 Approval.kind data-reveal | applied | Added data-reveal to Approval.kind enum; STORY-179 uses it |
+| EPIC-007 | C-4 DetectionRule.method taxonomy | applied | FEAT-073 description expanded to 8 methods |
+| EPIC-007 | C-5 PiiCategory.action | applied | Added action field |
+| EPIC-007 | C-6 fp_rate fields | applied | Added fire_count and fp_count; STORY-167 AC clarified |
+| EPIC-007 | M-1 sev vs severity | applied | Renamed SafetyEvent.sev to severity |
+| EPIC-007 | M-2 action precedence | deferred | Needs product input on precedence order |
+| EPIC-007 | M-3 override matrix | deferred | Needs product input |
+| EPIC-007 | M-4 status_label | applied | STORY-159 sets Request.status_label = safety_blocked |
+| EPIC-007 | M-5 path drift | applied | All /api/safety/rules renamed to /api/detection-rules |
+| EPIC-007 | M-6 mode declarations | deferred | Many features; out of scope editorial |
+| EPIC-007 | M-7 STORY-168/170 versioning | applied | STORY-170 depends_on STORY-168; AC clarifies published-edit scope |
+| EPIC-007 | M-8 cross-tenant abuse signal | deferred | New story/feature needed |
+| EPIC-007 | M-9 STORY-178 OOO/delegate | deferred | Needs new model (ApproverDelegation) |
+| EPIC-007 | M-10 STORY-183 live flow | deferred | Needs product input on RBAC |
+| EPIC-007 | M-11 rule soft-delete | applied | Added DetectionRule.deleted_at |
+| EPIC-007 | MR-4 redaction vault | applied | Added RedactionVaultEntry model |
+| EPIC-007 | MR-5 installed_template_id | applied | Added DetectionRule.installed_template_id |
+| EPIC-007 | m1..m9 minors | deferred | Batch editorial pass |
+| EPIC-007 | X-1..X-6 cross-epic | deferred | Cross-epic interactions need product input |
+| EPIC-007 | MR-1/MR-2/MR-3 missing features | deferred | Need new features/models |

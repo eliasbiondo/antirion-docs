@@ -60,3 +60,13 @@ Each entry: brief description, source audit citation, reason deferred.
 - **R-1/R-2/R-5/R-7 missing cache stories** — template-update/nightly-refresh/break-glass/prompt-segment-CRUD/STORY-145 savings report/per-team purge. Needs product input. (docs/audit/epic-006-review.md §R-1..R-7)
 - **R-6 invalidation event catalog** — InvalidationRule.match has no authoritative event list. Needs product input. (docs/audit/epic-006-review.md §R-6)
 
+### EPIC-007
+
+- **M-2/M-3 action precedence and override matrix** — need product decision on block/redact/flag/allow ordering and override transitions. (docs/audit/epic-007-review.md §M-2, §M-3)
+- **M-6 mode declarations** — add mode:both to all EPIC-007 features (editorial sweep). (docs/audit/epic-007-review.md §M-6)
+- **M-8 cross-tenant abuse signal** — new feature/story needed for trust_and_safety aggregation. (docs/audit/epic-007-review.md §M-8)
+- **M-9 ApproverDelegation model** — STORY-178 OOO/delegate has no backing model. (docs/audit/epic-007-review.md §M-9)
+- **M-10 STORY-183 live flow RBAC/residency** — needs product input on operator visibility. (docs/audit/epic-007-review.md §M-10)
+- **X-1..X-6 cross-epic interactions** — safety-rule-driven cache invalidation, semantic-cache coherence, pipeline ordering, residency × unredact — all need product input. (docs/audit/epic-007-review.md §X-1..X-6)
+- **MR-1..MR-3 missing features/models** — pipeline ordering feature, cross-tenant abuse correlation, approver delegation. (docs/audit/epic-007-review.md §MR-1..MR-3)
+

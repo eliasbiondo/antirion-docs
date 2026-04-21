@@ -1071,7 +1071,7 @@ features:
 - id: FEAT-073
   epic: EPIC-007
   title: Detection rule management
-  description: Create, edit, toggle, save-as-draft and publish rules of regex, NER, classifier, allowlist and fingerprint types.
+  description: Create, edit, toggle, save-as-draft and publish rules of regex, regex+checksum (e.g. Luhn for credit cards), NER, classifier, prefix+entropy (secret-token detection), allowlist, n-gram (fuzzy fingerprinting) and fingerprint types.
   priority: P0
   stories:
   - STORY-165
@@ -9497,20 +9497,24 @@ stories:
     scenario: Credit card blocked
     given:
     - A prompt contains a Luhn-valid credit-card number
-    - PII category "cc" has action "block"
+    - PiiCategory "cc" has action "block"
     when:
     - The request is processed
     then:
-    - The gateway returns 451 to the client
-    - A SafetyEvent of action "block" is recorded and visible to the owner team
+    - The gateway returns 451 with Request.status_label = "safety_blocked"
+    - A SafetyEvent of action "block" is recorded
+    - A Notification of kind "security" is emitted to Org.security_contact and Org.privacy_officer (with saas fanout to Antirion trust_and_safety for sustained patterns; in self_hosted the cross-tenant fanout is dropped) per project.notifications_model
+    - Original prompts are never persisted; reversible spans are tokenized into RedactionVaultEntry and only FEAT-080 can reveal them
   data_models:
   - SafetyEvent
   - DetectionRule
   - PiiCategory
+  - RedactionVaultEntry
   - Request
+  - Notification
   non_functional:
   - Inline redaction p95 latency <= 50 ms per request
-  - Reversible redaction keys stored in a vault with workspace-scoped access
+  - Reversible redaction tokens stored in RedactionVaultEntry (workspace-scoped, residency-pinned, CMK-bound); original spans are never written to SafetyEvent or Request
 - id: STORY-160
   feature: FEAT-070
   title: Set per-workspace PII strictness
@@ -9686,7 +9690,7 @@ stories:
     - The rule stops evaluating
   api:
   - method: POST
-    path: /api/safety/rules
+    path: /api/detection-rules
     request:
       body:
         name: string
@@ -9703,7 +9707,7 @@ stories:
     - 403
     inferred: true
   - method: PATCH
-    path: /api/safety/rules/:id
+    path: /api/detection-rules/:id
     request:
       body:
         enabled: bool
@@ -9753,7 +9757,7 @@ stories:
     - Open SafetyEvents linked to the rule retain their rule_id for history
   api:
   - method: PATCH
-    path: /api/safety/rules/:id
+    path: /api/detection-rules/:id
     request:
       body:
         name: string
@@ -9772,7 +9776,7 @@ stories:
     - 404
     inferred: true
   - method: DELETE
-    path: /api/safety/rules/:id
+    path: /api/detection-rules/:id
     response:
       ok: bool
     errors:
@@ -9804,7 +9808,7 @@ stories:
     - I click "False positive"
     then:
     - The event is tagged false_positive
-    - The DetectionRule.fp_rate is recomputed as fp_count / fire_count
+    - DetectionRule.fp_count is incremented; DetectionRule.fp_rate = fp_count / fire_count is recomputed (both fields on the DetectionRule model)
   data_models:
   - SafetyEvent
   - DetectionRule
@@ -9975,18 +9979,21 @@ stories:
   title: Version every change to a detection rule
   narrative:
     as_a: security officer
-    i_want: every edit to a DetectionRule captured as a version
+    i_want: every edit to a published DetectionRule captured as a version
     so_that: I can diff and roll back
   priority: P1
+  depends_on:
+  - STORY-168
   acceptance_criteria:
   - id: AC-001
-    scenario: Version recorded on save
+    scenario: Version recorded on save of a published rule
     given:
-    - I edit a DetectionRule and save
+    - I edit a DetectionRule whose status = "published"
     when:
     - The save completes
     then:
     - A SafetyRuleVersion row is created with actor, timestamp, before/after JSON and a change summary
+    - Edits to status = "draft" rules do not write a SafetyRuleVersion row (publish writes the initial version per STORY-168)
   - id: AC-002
     scenario: Roll back to prior version
     given:
@@ -10319,7 +10326,7 @@ stories:
     - I reject with reason
     then:
     - The proposed change is discarded
-    - The requester is notified
+    - A Notification is delivered to the requester (acting principal) per project.notifications_model and the AuditLog records the resolved audience list
   data_models:
   - Approval
   - AuditLog
@@ -10344,7 +10351,7 @@ stories:
     when:
     - The SLA is at 80%
     then:
-    - The approver is reminded; on breach, the Approval is marked "sla_breached" and an AlertEvent fires
+    - The approver is reminded; on breach, the Approval is marked "sla_breached" and an AlertEvent fires, with audience routed to Org.security_contact (and Antirion trust_and_safety sub-queue in saas; collapsed to platform admin in self_hosted) per project.notifications_model
   - id: AC-002
     scenario: Delegate while OOO
     given:
@@ -10385,7 +10392,7 @@ stories:
     - I click "Request unredact" and type a reason
     then:
     - A PiiUnredactRequest is created in state "pending"
-    - An Approval of kind "policy-change" is created linked to it
+    - An Approval of kind "data-reveal" is created linked to it, with approver routed to Org.privacy_officer per project.notifications_model (in saas, also fanout to Antirion DPO sub-queue; in self_hosted, collapse to platform admin)
   data_models:
   - PiiUnredactRequest
   - Approval
@@ -22274,7 +22281,7 @@ models:
   - name: request_id
     type: FK:Request
     nullable: true
-  - name: sev
+  - name: severity
     type: string
     description: crit|high|med|low
   - name: action
@@ -22307,12 +22314,10 @@ models:
     type: int
   - name: fingerprint
     type: string
-  - name: prompt_original
-    type: string
-    nullable: true
   - name: prompt_redacted
     type: string
     nullable: true
+    description: Redacted prompt span copy for event drawer rendering; original prompts are never persisted — FEAT-080 unredact reads from the reversible RedactionVault by token
   - name: spans
     type: json
     nullable: true
@@ -22357,9 +22362,24 @@ models:
     type: bool
   - name: hits_24h
     type: int
+  - name: fire_count
+    type: int
+    description: Lifetime monotonic count of rule firings; denominator for fp_rate
+  - name: fp_count
+    type: int
+    description: Lifetime monotonic count of firings marked false positive by reviewers
   - name: fp_rate
     type: number
     nullable: true
+    description: Derived fp_count / fire_count; recomputed when reviewers mark events
+  - name: installed_template_id
+    type: FK:SafetyRuleTemplate
+    nullable: true
+    description: Set when this rule was installed from a template pack (STORY-173)
+  - name: deleted_at
+    type: timestamp
+    nullable: true
+    description: Soft-delete; SafetyEvent.rule_id remains valid for history after delete
   - name: note
     type: string
     nullable: true
@@ -22399,8 +22419,29 @@ models:
   - name: readiness
     type: number
     description: Composite 0..100 score rendered on the flow diagram
+- name: RedactionVaultEntry
+  description: A workspace-scoped, residency-pinned, CMK-bound reversible-redaction token mapping to the original span. Read only via FEAT-080 unredact flow.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+  - name: token
+    type: string
+    unique: true
+  - name: ciphertext
+    type: text
+    description: FPE or CMK-wrapped ciphertext of the original span
+  - name: category
+    type: string
+  - name: region
+    type: string
+    description: ResidencyConfig-pinned region; the vault entry never leaves this region
+  - name: created_at
+    type: timestamp
 - name: PiiCategory
-  description: A named PII detector category with strictness.
+  description: A named PII detector category with strictness and per-category action.
   fields:
   - name: id
     type: string
@@ -22412,6 +22453,9 @@ models:
   - name: strictness
     type: string
     description: loose|balanced|strict
+  - name: action
+    type: string
+    description: block|redact|flag|allow
   - name: risk
     type: string
 - name: Budget
@@ -23046,7 +23090,7 @@ models:
     type: FK:Org
   - name: kind
     type: string
-    description: budget-overage|policy-change|key-elevated-scope|routing-rule-change
+    description: budget-overage|policy-change|key-elevated-scope|routing-rule-change|data-reveal
   - name: status
     type: string
     description: pending|approved|rejected|expired
