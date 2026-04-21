@@ -105,7 +105,7 @@ epics:
   - FEAT-021
 - id: EPIC-003
   title: API keys and provider credentials
-  description: Gateway key lifecycle with scopes, limits, rotation, audit; BYOK for upstream providers.
+  description: Gateway key lifecycle with scopes, limits, rotation, audit; BYOK for upstream providers; emergency break-glass elevated-scope keys.
   priority: P0
   features:
   - FEAT-022
@@ -115,6 +115,7 @@ epics:
   - FEAT-026
   - FEAT-027
   - FEAT-028
+  - FEAT-160
 - id: EPIC-004
   title: Observability
   description: Overview dashboard, request log, request detail, analytics, anomaly signals and detector configuration, search and export, replay and comparison, share links, cost breakdown, saved views, tool-use and streaming views. All surfaces in this epic are tenant-scoped; the platform-wide analogues (cluster/fleet health, cross-tenant abuse signals, platform release rollups) live in EPIC-013 and are visible only to the platform operator. Telemetry is produced by FEAT-143 and the request-log ingestion worker.
@@ -138,7 +139,7 @@ epics:
   - FEAT-044
 - id: EPIC-005
   title: Model catalog and routing
-  description: Manage upstream models and route traffic with single, weighted, failover, least-loaded, canary and shadow strategies. The epic also houses the prompt/template registry (FEAT-058) and the model evaluation suite (FEAT-059).
+  description: Manage upstream models and route traffic with single, weighted, failover, least-loaded, canary and shadow strategies. Prompt/template registry and model evaluation live in EPIC-014.
   priority: P0
   features:
   - FEAT-045
@@ -154,8 +155,7 @@ epics:
   - FEAT-055
   - FEAT-056
   - FEAT-057
-  - FEAT-058
-  - FEAT-059
+  - FEAT-190
 - id: EPIC-006
   title: Caching
   description: Exact, prompt-prefix and semantic caching; configuration, invalidation, overrides.
@@ -258,7 +258,7 @@ epics:
   - FEAT-134
 - id: EPIC-011
   title: Gateway request pipeline
-  description: The runtime that serves traffic — ingress dialects, translation, edge auth, rate limits, retries and timeouts, runtime failover, outbound provider auth, cost attribution, idempotency, health and circuit breaker, telemetry.
+  description: The runtime that serves traffic — ingress dialects, translation, edge auth, rate limits, retries and timeouts, runtime failover, outbound provider auth, cost attribution, idempotency, health and circuit breaker, telemetry. The pipeline-stage ordering FEAT (see FEAT-191) declares the canonical total order of stages on the request path. Provider dialect-specific API surface (Files, Batches, Assistants/Responses, Audio, Image, Moderation, Embeddings, Fine-tune) lives under EPIC-015. Break-glass elevated-scope API-key issuance lives under EPIC-003 alongside the rest of the ApiKey lifecycle.
   priority: P0
   features:
   - FEAT-135
@@ -276,18 +276,10 @@ epics:
   - FEAT-147
   - FEAT-148
   - FEAT-149
-  - FEAT-150
-  - FEAT-151
-  - FEAT-152
-  - FEAT-153
-  - FEAT-154
-  - FEAT-155
-  - FEAT-156
-  - FEAT-157
   - FEAT-158
   - FEAT-159
-  - FEAT-160
   - FEAT-161
+  - FEAT-191
 - id: EPIC-012
   title: Platform foundations and customer experience
   description: Cross-cutting capabilities that span the product — first-run onboarding, public status, in-product support, legal acceptance, in-app help, internal job/worker observability, and pricing/cost forecast tooling.
@@ -319,6 +311,31 @@ epics:
   - FEAT-180
   - FEAT-181
   - FEAT-182
+  - FEAT-192
+  - FEAT-193
+  - FEAT-194
+  - FEAT-195
+  - FEAT-196
+- id: EPIC-014
+  title: Prompts and model evaluation
+  description: Versioned prompt and template registry, golden-dataset model evaluation and translation regression suite. Split out of EPIC-005 so the routing epic focuses on catalog and routing.
+  priority: P1
+  features:
+  - FEAT-058
+  - FEAT-059
+- id: EPIC-015
+  title: Provider API surface
+  description: Dialect-specific endpoints (Files, Batches, Assistants/Responses, Audio, Image, Moderation, Embeddings, Fine-tune) that pass through to upstream providers. Split out of EPIC-011 so the runtime-pipeline epic focuses on request-path mechanics.
+  priority: P1
+  features:
+  - FEAT-150
+  - FEAT-151
+  - FEAT-152
+  - FEAT-153
+  - FEAT-154
+  - FEAT-155
+  - FEAT-156
+  - FEAT-157
 features:
 - id: FEAT-001
   epic: EPIC-001
@@ -933,9 +950,10 @@ features:
   - STORY-132
   - STORY-133
 - id: FEAT-058
-  epic: EPIC-005
+  epic: EPIC-014
   title: Prompt and template registry
   description: Versioned registry of prompts/templates with owners, approvals, A/B and lineage.
+  mode: both
   priority: P1
   stories:
   - STORY-134
@@ -944,9 +962,10 @@ features:
   - STORY-137
   - STORY-138
 - id: FEAT-059
-  epic: EPIC-005
+  epic: EPIC-014
   title: Model evaluation and benchmarking
   description: Golden datasets, compare models side-by-side, and a translation regression suite that exercises FEAT-146 (tool/function-calling passthrough) and the other EPIC-011 dialect translation features.
+  mode: both
   priority: P1
   stories:
   - STORY-139
@@ -1850,7 +1869,7 @@ features:
   stories:
   - STORY-347
 - id: FEAT-150
-  epic: EPIC-011
+  epic: EPIC-015
   title: Files API ingress
   description: Accept, list, delete files on ingress and pass through to upstream providers.
   priority: P1
@@ -1860,7 +1879,7 @@ features:
   - STORY-350
   - STORY-351
 - id: FEAT-151
-  epic: EPIC-011
+  epic: EPIC-015
   title: Batches API ingress
   description: Accept batch create/status/cancel and attribute cost at batch-item granularity.
   priority: P1
@@ -1870,7 +1889,7 @@ features:
   - STORY-354
   - STORY-355
 - id: FEAT-152
-  epic: EPIC-011
+  epic: EPIC-015
   title: Assistants and Responses API ingress
   description: Defines scope and basic ops for Assistants/Responses dialects if in scope for the workspace plan.
   priority: P2
@@ -1878,7 +1897,7 @@ features:
   - STORY-356
   - STORY-357
 - id: FEAT-153
-  epic: EPIC-011
+  epic: EPIC-015
   title: Audio endpoints ingress
   description: Accept audio transcriptions and translations on ingress.
   priority: P1
@@ -1886,7 +1905,7 @@ features:
   - STORY-358
   - STORY-359
 - id: FEAT-154
-  epic: EPIC-011
+  epic: EPIC-015
   title: Image endpoints ingress
   description: Accept image generations and edits on ingress.
   priority: P1
@@ -1894,14 +1913,14 @@ features:
   - STORY-360
   - STORY-361
 - id: FEAT-155
-  epic: EPIC-011
+  epic: EPIC-015
   title: Moderation endpoint ingress
   description: Accept moderation calls on ingress and route to the provider's moderation endpoint.
   priority: P2
   stories:
   - STORY-362
 - id: FEAT-156
-  epic: EPIC-011
+  epic: EPIC-015
   title: Embeddings-specific capabilities
   description: Dimension validation, cross-provider dimension compatibility, batch embedding cost attribution.
   priority: P1
@@ -1910,7 +1929,7 @@ features:
   - STORY-364
   - STORY-365
 - id: FEAT-157
-  epic: EPIC-011
+  epic: EPIC-015
   title: Fine-tune job management
   description: List, create, cancel fine-tune jobs; view logs and training curves with cost attribution; download produced artifacts (weights, config, metrics).
   priority: P2
@@ -1941,9 +1960,9 @@ features:
   - STORY-375
   - STORY-376
 - id: FEAT-160
-  epic: EPIC-011
+  epic: EPIC-003
   title: Emergency break-glass scope
-  description: Create an audited, approval-gated, auto-expiring API key with elevated scope for incident response. In saas the approval audience includes Antirion trust_and_safety; in self_hosted it collapses to platform admin per project.notifications_model.
+  description: Create an audited, approval-gated, auto-expiring API key with elevated scope for incident response. ApiKey.type="break_glass" identifies these keys; Request.break_glass=true tags every request that used one for audit and post-mortem filtering. In saas the approval audience includes Antirion trust_and_safety; in self_hosted it collapses to platform admin per project.notifications_model.
   mode: both
   priority: P1
   stories:
