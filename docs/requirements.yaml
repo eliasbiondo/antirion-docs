@@ -8860,7 +8860,9 @@ stories:
     - I save
     then:
     - A CacheConfig row is created for the model
-    - The cache key is computed over (org_id, resolved_model_id, resolved_provider_id, redacted_prompt) - not over aliases or raw prompts
+    - For backend="exact" the cache key is computed over (org_id, resolved_model_id, resolved_provider_id, prompt_redacted) - not over aliases or raw prompts
+    - For backend="prompt_prefix" the key is computed over a canonicalized prompt-prefix fragment plus (org_id, resolved_model_id, resolved_provider_id)
+    - For backend="semantic" there is no prompt-substring key - an embedding lookup against SemanticCacheConfig.threshold determines the hit
     - 'Subsequent identical requests return cached responses with "cached: true"'
   - id: AC-002
     scenario: Lower TTL
@@ -8870,6 +8872,15 @@ stories:
     - I set TTL to 300s and save
     then:
     - Entries older than 300s are no longer returned
+  - id: AC-003
+    scenario: Blocked responses do not populate the cache
+    given:
+    - A request completes with a SafetyEvent whose action is "block" (Request.status_label = "safety_blocked")
+    when:
+    - The gateway decides whether to write the cache
+    then:
+    - No CacheEntry row is written and no existing entry is updated
+    - Invariant - writes to CacheEntry are conditional on Request.status < 400 AND SafetyEvent.action NOT IN ("block")
   ui:
     screens:
     - Cache
@@ -8883,7 +8894,7 @@ stories:
     - saved
   api:
   - method: GET
-    path: /api/cache/models
+    path: /api/cache/configs
     response:
       configs:
       - CacheConfig
@@ -8891,7 +8902,7 @@ stories:
     - 401
     inferred: true
   - method: PATCH
-    path: /api/cache/models/:id
+    path: /api/cache/configs/:id
     request:
       body:
         backend: string
@@ -8969,7 +8980,7 @@ stories:
   - Team
   - Model
   non_functional:
-  - Cache lookups complete within 5 ms p95 on a hit and never block a miss
+  - Cache lookups complete within the 500 µs p95 sub-budget established by STORY-142 (as a sub-budget of the gateway-added latency baseline) on a hit and never block a miss
   - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage
 - id: STORY-144
   feature: FEAT-061
@@ -9031,7 +9042,7 @@ stories:
   - SemanticCacheConfig
   - CacheEntry
   non_functional:
-  - Cache lookups complete within 5 ms p95 on a hit and never block a miss
+  - Cache lookups complete within the 500 µs p95 sub-budget established by STORY-142 (as a sub-budget of the gateway-added latency baseline) on a hit and never block a miss
   - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage
 - id: STORY-145
   feature: FEAT-061
@@ -9072,7 +9083,7 @@ stories:
   - CacheConfig
   - Model
   non_functional:
-  - Cache lookups complete within 5 ms p95 on a hit and never block a miss
+  - Cache lookups complete within the 500 µs p95 sub-budget established by STORY-142 (as a sub-budget of the gateway-added latency baseline) on a hit and never block a miss
   - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage
 - id: STORY-146
   feature: FEAT-062
@@ -9112,7 +9123,7 @@ stories:
   - PromptSegment
   - Model
   non_functional:
-  - Cache lookups complete within 5 ms p95 on a hit and never block a miss
+  - Cache lookups complete within the 500 µs p95 sub-budget established by STORY-142 (as a sub-budget of the gateway-added latency baseline) on a hit and never block a miss
   - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage
   - Semantic-cache embedding lookups execute in under 20 ms p95 on a hit
 - id: STORY-147
@@ -9137,7 +9148,6 @@ stories:
     scenario: Bulk invalidate by model
     given:
     - I have searched for entries of model "claude-sonnet-4-5"
-    - The matching set exceeds 100 entries
     when:
     - I click "Invalidate all in view" and type the target model (or team) slug to confirm per project.destructive_action_confirmation_policy
     then:
@@ -9198,23 +9208,28 @@ stories:
     i_want: cache entries tied to a rotated BYOK credential to be invalidated automatically
     so_that: responses produced with an old credential are not served
   priority: P1
+  depends_on:
+  - STORY-056
   acceptance_criteria:
   - id: AC-001
-    scenario: BYOK rotation triggers invalidation
+    scenario: BYOK rotation triggers invalidation at grace-end
     given:
-    - A BYOKCredential is rotated
+    - A BYOKCredential transitions BYOKCredential.status to "revoked" after rotation_grace_ends elapses (see STORY-056)
     when:
-    - The rotation completes
+    - The status transition is observed
     then:
-    - An async purge deletes CacheEntry rows where byok_credential_id = the rotated credential (or, for rows without byok_credential_id, rows matched via Request.api_key_id -> ApiKey.owner -> BYOKCredential); eventual-consistency window documented per config-reload SLA
-    - An AuditLog entry records "cache.invalidate" with reason "byok.rotate"
+    - An async purge deletes CacheEntry rows where byok_credential_id = the rotated credential; a coarser fallback matches (org_id, provider_id) for rows where byok_credential_id is null
+    - An AuditLog entry records "cache.invalidate" with reason "byok.rotate" and records the resolved audience list
+    - A Notification of kind "security" ("cache.byok_rotated_invalidated") is delivered via FEAT-102 to Org.security_contact with the canonical fallback chain per project.notifications_model
   data_models:
   - CacheEntry
   - BYOKCredential
   - AuditLog
+  - Notification
   non_functional:
-  - Cache lookups complete within 5 ms p95 on a hit and never block a miss
+  - Cache lookups complete within the 500 µs p95 sub-budget established by STORY-142 (as a sub-budget of the gateway-added latency baseline)
   - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage
+  - Channel delivery is via FEAT-102 notification-channels routing
 - id: STORY-149
   feature: FEAT-063
   title: Invalidate cache entries on retention policy change
@@ -9232,14 +9247,17 @@ stories:
     - The change is saved
     then:
     - CacheEntry rows older than 7d are invalidated asynchronously
-    - An AuditLog entry records "cache.invalidate" with reason "retention.change"
+    - An AuditLog entry records "cache.invalidate" with reason "retention.change" and records the resolved audience list
+    - A Notification of kind "compliance" ("cache.retention_invalidated") is delivered via FEAT-102 to Org.privacy_officer (Antirion dpo sub-queue in saas; suppressed in self_hosted) per project.notifications_model
   data_models:
   - CacheEntry
   - RetentionConfig
   - AuditLog
+  - Notification
   non_functional:
-  - Cache lookups complete within 5 ms p95 on a hit and never block a miss
+  - Cache lookups complete within the 500 µs p95 sub-budget established by STORY-142 (as a sub-budget of the gateway-added latency baseline)
   - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage
+  - Channel delivery is via FEAT-102 notification-channels routing
 - id: STORY-150
   feature: FEAT-064
   title: Automate cache invalidation with event rules
@@ -9297,8 +9315,9 @@ stories:
   data_models:
   - InvalidationRule
   non_functional:
-  - Cache lookups complete within 5 ms p95 on a hit and never block a miss
+  - Cache lookups complete within the 500 µs p95 sub-budget established by STORY-142 (as a sub-budget of the gateway-added latency baseline) on a hit and never block a miss
   - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage
+  - InvalidationRule.org_id is derived server-side from the caller's auth token; scope must be one of (org|team|project|user|key)
 - id: STORY-151
   feature: FEAT-064
   title: Edit or delete an invalidation rule
@@ -9328,6 +9347,15 @@ stories:
     then:
     - The rule is removed
     - No more firings are generated by it
+  - id: AC-003
+    scenario: Policy-change audit and notification
+    given:
+    - A rule edit or delete completes
+    when:
+    - The transaction commits
+    then:
+    - An AuditLog entry records action "cache.invalidation_rule.edit" or "cache.invalidation_rule.delete" with target_type="InvalidationRule" and records the resolved audience list
+    - When action is in ("drop-user", "drop-team"), a Notification of kind "security" is delivered via FEAT-102 to Org.security_contact per project.notifications_model
   api:
   - method: PATCH
     path: /api/cache/invalidation-rules/:id
@@ -9356,9 +9384,12 @@ stories:
     inferred: true
   data_models:
   - InvalidationRule
+  - AuditLog
+  - Notification
   non_functional:
-  - Cache lookups complete within 5 ms p95 on a hit and never block a miss
+  - Cache lookups complete within the 500 µs p95 sub-budget established by STORY-142 (as a sub-budget of the gateway-added latency baseline) on a hit and never block a miss
   - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage
+  - Channel delivery is via FEAT-102 notification-channels routing
 - id: STORY-152
   feature: FEAT-065
   title: Override cache settings per team or key
@@ -9379,6 +9410,24 @@ stories:
     then:
     - Requests from legal-rev bypass the cache
     - 'The override row shows "override: off" vs "inherited: on"'
+  - id: AC-002
+    scenario: List and edit existing overrides
+    given:
+    - Several CacheOverride rows exist
+    when:
+    - I GET /api/cache/overrides (optionally scoped), PATCH an existing override, or DELETE one
+    then:
+    - Existing rows are returned, updated or removed; edited_by_user_id and edited_at are stamped on mutation
+  ui:
+    screens:
+    - Cache
+    components:
+    - CacheApp
+    - OverrideTable
+    - OverrideForm
+    states:
+    - default
+    - editing
   api:
   - method: POST
     path: /api/cache/overrides
@@ -9387,7 +9436,7 @@ stories:
         scope: string
         target_id: uuid
         setting: string
-        override_value: string
+        override_value: json
         reason: string
     response:
       override: CacheOverride
@@ -9396,12 +9445,47 @@ stories:
     - 401
     - 403
     inferred: true
+  - method: GET
+    path: /api/cache/overrides
+    request:
+      query:
+        scope: string
+        target_id: uuid
+    response:
+      overrides:
+      - CacheOverride
+    errors:
+    - 401
+    inferred: true
+  - method: PATCH
+    path: /api/cache/overrides/:id
+    request:
+      body:
+        override_value: json
+        reason: string
+    response:
+      override: CacheOverride
+    errors:
+    - 400
+    - 401
+    - 403
+    - 404
+    inferred: true
+  - method: DELETE
+    path: /api/cache/overrides/:id
+    response:
+      ok: bool
+    errors:
+    - 401
+    - 403
+    - 404
+    inferred: true
   data_models:
   - CacheOverride
   - Team
   - ApiKey
   non_functional:
-  - Cache lookups complete within 5 ms p95 on a hit and never block a miss
+  - Cache lookups complete within the 500 µs p95 sub-budget established by STORY-142 (as a sub-budget of the gateway-added latency baseline) on a hit and never block a miss
   - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage
 - id: STORY-153
   feature: FEAT-066
@@ -9447,6 +9531,7 @@ stories:
         team_id: string
     response:
       hit_rate: number
+      hit_rate_scale: string
       tokens_saved: int
       cost_saved: number
     errors: []
@@ -9456,7 +9541,7 @@ stories:
   - CacheEntry
   - MetricSeries
   non_functional:
-  - Cache lookups complete within 5 ms p95 on a hit and never block a miss
+  - Cache lookups complete within the 500 µs p95 sub-budget established by STORY-142 (as a sub-budget of the gateway-added latency baseline) on a hit and never block a miss
   - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage
 - id: STORY-154
   feature: FEAT-067
@@ -9496,7 +9581,7 @@ stories:
     request:
       body:
         model_id: string
-        segment_ids: string[]
+        segment_ids: uuid[]
     response:
       job_id: string
     errors:
@@ -9553,6 +9638,7 @@ stories:
     response:
       config: CacheConfig
     errors:
+    - 400
     - 403
     - 404
     inferred: true
@@ -9588,13 +9674,27 @@ stories:
     - I open the Evictions tab on a CacheConfig
     then:
     - I see the last 24h of events with reason breakdown
+  api:
+  - method: GET
+    path: /api/cache/configs/:id/evictions
+    request:
+      query:
+        from: timestamp
+        to: timestamp
+    response:
+      events:
+      - CacheEvictionEvent
+      reason_breakdown: json
+    errors:
+    - 401
+    - 404
+    inferred: true
   data_models:
   - CacheEvictionEvent
   - CacheEntry
   - CacheConfig
   non_functional:
-  - Cache lookups complete within 5 ms p95 on a hit and never block a miss
-  - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage
+  - Eviction browsing is a read-only surface; cache-lookup latency SLOs do not apply here
 - id: STORY-157
   feature: FEAT-069
   title: Browse safety events
@@ -14670,6 +14770,7 @@ stories:
     then:
     - Every CacheEntry in the workspace is deleted
     - The next matching request misses and regenerates
+    - A batched CacheEvictionEvent roll-up is written with reason "manual_purge" recording the total count (per-entry fan-out permitted if the purge set is small)
     - An AuditLog entry records action "cache.purge"
   - id: AC-003
     scenario: Rotate org signing secret
@@ -22323,9 +22424,17 @@ models:
   - name: id
     type: uuid
     pk: true
+  - name: org_id
+    type: FK:Org
   - name: model_id
     type: FK:Model
     description: Not globally unique — one config per (model_id, scope, scope_id); scope-level overrides live in CacheOverride
+  - name: scope
+    type: string
+    description: model|team|project|env|byok (partial-unique over (model_id, scope, scope_id))
+  - name: scope_id
+    type: uuid
+    nullable: true
   - name: backend
     type: string
     description: exact|prompt_prefix|semantic
@@ -22360,6 +22469,8 @@ models:
   - name: id
     type: uuid
     pk: true
+  - name: org_id
+    type: FK:Org
   - name: name
     type: string
   - name: team_id
@@ -22387,6 +22498,8 @@ models:
   - name: id
     type: uuid
     pk: true
+  - name: org_id
+    type: FK:Org
   - name: owner_user_id
     type: FK:User
     nullable: true
@@ -22507,6 +22620,11 @@ models:
   - name: id
     type: uuid
     pk: true
+  - name: org_id
+    type: FK:Org
+  - name: team_id
+    type: FK:Team
+    nullable: true
   - name: name
     type: string
   - name: match
@@ -22516,6 +22634,7 @@ models:
     description: drop-matching|drop-user|refresh-oldest|drop-team|drop-all
   - name: scope
     type: string
+    description: org|team|project|user|key
   - name: enabled
     type: bool
   - name: note
@@ -22532,6 +22651,8 @@ models:
   - name: id
     type: uuid
     pk: true
+  - name: org_id
+    type: FK:Org
   - name: scope
     type: string
     description: team|key|project|env|byok

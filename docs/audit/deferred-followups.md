@@ -115,6 +115,15 @@ Each entry: brief description, source audit citation, reason deferred.
 - **M10 cross-epic cache/safety interactions for canary/shadow** — unaddressed. (docs/audit/epic-005-review.md §M10)
 - **M11 catalog-sync feature** — no automated sync from upstream provider catalogs today. New feature. (docs/audit/epic-005-review.md §M11)
 
+### EPIC-006 (2026-04-20 re-audit)
+
+- **C-4 safety_policy_change firing path** — still dead; needs EPIC-007 story emitting CacheEvictionEvent on DetectionRule/PiiCategory change. (docs/audit/epic-006-review-2026-04-20.md §C-4)
+- **C-6 streaming × cache** — replay framing, cache-write for streamed requests, ttft on hit. (docs/audit/epic-006-review-2026-04-20.md §C-6)
+- **N-1, N-2, N-5, N-6, N-10, N-11 minors** — prompt_redacted naming, scope enum, fp_rate feedback loop, hot threshold config, AuditLog action catalog. (docs/audit/epic-006-review-2026-04-20.md §N-*)
+- **X-1, X-3..X-7 cross-epic** — cache backend for graceful degradation, safety-policy → cache, budget on hits, shadow/canary × cache, AlertRule cache category, graceful shutdown. (docs/audit/epic-006-review-2026-04-20.md §X-*)
+- **R-1, R-2, R-5, R-6, R-7, R-10 missing refs** — FEAT-064 over-promise, PromptSegment CRUD, safety_policy_change source, event catalog, scoped purge story, CacheWarmupJob eta. (docs/audit/epic-006-review-2026-04-20.md §R-*)
+- **U-1..U-9 uncited-but-required** — streaming replay, safety-policy invalidation, write-suppression-on-block (now applied partial), event catalog, scope-keyed config, cache-event notifications, worker ownership, per-region topology, AlertRule integration. (docs/audit/epic-006-review-2026-04-20.md §U-*)
+
 ### EPIC-006
 
 - **C-6 streaming × cache** — write/hit semantics for SSE/chunked responses unspecified; new story required. (docs/audit/epic-006-review.md §C-6)

@@ -455,3 +455,35 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-005 (2026-04-20) | m9 STORY-121 runtime AC | applied | AC-002 rewritten to config-side only; runtime delegated to FEAT-142 |
 | EPIC-005 (2026-04-20) | X1..X5 cross-epic | deferred | Tied to other deferred items |
 | EPIC-005 (2026-04-20) | U1..U8 missing features | deferred | Each requires net-new feature; product input |
+| EPIC-006 (2026-04-20) | C-1 STORY-148 FK chain | applied | Removed broken ApiKey.owner fallback; kept byok_credential_id with (org_id, provider_id) coarser fallback; added depends_on STORY-056 |
+| EPIC-006 (2026-04-20) | C-2 CacheConfig keying | applied | Added org_id, scope, scope_id to CacheConfig schema |
+| EPIC-006 (2026-04-20) | C-3 latency NFR drift | applied | All 11 stale NFR lines swept to 500µs p95 sub-budget |
+| EPIC-006 (2026-04-20) | C-4 dead eviction reasons | applied (partial) | manual_purge now fires from STORY-275; safety_policy_change deferred (needs EPIC-007 story) |
+| EPIC-006 (2026-04-20) | C-5 cache write on block | applied | STORY-142 AC-003 forbids cache write when SafetyEvent.action=block |
+| EPIC-006 (2026-04-20) | C-6 streaming × cache | deferred | Needs new story under FEAT-060; streamed replay framing undefined |
+| EPIC-006 (2026-04-20) | C-7 per-backend key formula | applied | STORY-142 AC-001 now splits formula by backend |
+| EPIC-006 (2026-04-20) | C-8 STORY-148 timing | applied | Purge fires on BYOKCredential.status=revoked after grace |
+| EPIC-006 (2026-04-20) | M-1 STORY-152 override_value | applied | API body now uses json type matching model |
+| EPIC-006 (2026-04-20) | M-2 STORY-156 GET endpoint | applied | Added GET /api/cache/configs/:id/evictions |
+| EPIC-006 (2026-04-20) | M-3 CacheConfig PATCH path | applied | Unified STORY-142 to /api/cache/configs/:id |
+| EPIC-006 (2026-04-20) | M-4 CacheOverride CRUD | applied | STORY-152 now lists GET/PATCH/DELETE endpoints |
+| EPIC-006 (2026-04-20) | M-5 STORY-148 depends_on | applied | Added STORY-056 dependency |
+| EPIC-006 (2026-04-20) | M-6 STORY-148 Notification | applied | AC-001 now emits Notification kind=security to Org.security_contact |
+| EPIC-006 (2026-04-20) | M-7 STORY-149 Notification | applied | AC-001 now emits Notification kind=compliance to Org.privacy_officer |
+| EPIC-006 (2026-04-20) | M-8 STORY-151 audit+notify | applied | AC-003 writes AuditLog and Notification for drop-user/drop-team actions |
+| EPIC-006 (2026-04-20) | M-9 InvalidationRule org_id | applied | Added org_id + team_id + scope enum description |
+| EPIC-006 (2026-04-20) | M-10 CacheConfig org_id | applied | Added directly (transitive via Model.org_id was fragile) |
+| EPIC-006 (2026-04-20) | M-11 SemanticCacheConfig org_id | applied | Added |
+| EPIC-006 (2026-04-20) | M-12 PromptSegment org_id | applied | Added |
+| EPIC-006 (2026-04-20) | M-13 CacheOverride org_id | applied | Added |
+| EPIC-006 (2026-04-20) | M-14 STORY-150 scope enum | applied | non_functional notes scope enum and server-derived org_id |
+| EPIC-006 (2026-04-20) | M-15 STORY-147 typed-slug unconditional | applied | Dropped >100 threshold from AC-002 |
+| EPIC-006 (2026-04-20) | N-3 hit_rate scale | applied | Added hit_rate_scale field to STORY-153 response |
+| EPIC-006 (2026-04-20) | N-4 segment_ids uuid | applied | STORY-154 body uses uuid[] |
+| EPIC-006 (2026-04-20) | N-7 STORY-152 ui block | applied | Added OverrideTable/OverrideForm components |
+| EPIC-006 (2026-04-20) | N-8 STORY-155 400 error | applied | Added 400 to errors list |
+| EPIC-006 (2026-04-20) | X-2 STORY-275 CacheEvictionEvent | applied | AC-002 now writes batched roll-up with reason=manual_purge |
+| EPIC-006 (2026-04-20) | N-1/N-2/N-5/N-6/N-10/N-11 minors | deferred | Editorial / product input |
+| EPIC-006 (2026-04-20) | X-1/X-3/X-4/X-5/X-6/X-7 cross-epic | deferred | Need new stories / cross-epic coordination |
+| EPIC-006 (2026-04-20) | R-1/R-2/R-5/R-6/R-7/R-10 missing refs | deferred | New stories / event catalog work |
+| EPIC-006 (2026-04-20) | U-1..U-9 missing features | deferred | Each requires net-new feature; product input |
