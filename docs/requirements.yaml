@@ -17,7 +17,7 @@ project:
     horizontal_scaling: Each fleet auto-scales on CPU, request rate and queue depth. Capacity plans hold the performance SLO under load with headroom for a 3x traffic burst without shedding. A node-loss event never loses more than that node's in-flight requests.
     workers: Background work — metric aggregation, request-log ingestion, webhook delivery, cache eviction, retention sweeps, export generation, anomaly scoring, fine-tune job polling, SCIM sync, audit sink fan-out, notification delivery — runs in a dedicated worker fleet that consumes durable queues with visibility timeouts, exponential-backoff retry, poison-message dead-letter queues and at-least-once semantics. Handlers must be idempotent. Worker fleet health is surfaced by FEAT-167.
     concurrency_and_backpressure: Each node enforces a max concurrent request cap and returns 429 or 503 with Retry-After when saturated; streaming connections count against the cap. Upstream provider pools, database connection pools and queue consumer pools are bounded with explicit acquire timeouts. Saturation on any tier surfaces as its own alert signal rather than bleeding into latency.
-    shared_limiters: Edge rate limits (FEAT-139), budget counters (EPIC-008) and provider outbound limiters (FEAT-161) use a shared-store sliding-window implementation so horizontal scaling does not multiply a tenant's effective limit. Idempotency-Key lookup (FEAT-142) is cluster-wide and survives node loss.
+    shared_limiters: Edge rate limits (FEAT-138), budget counters (EPIC-008) and provider outbound limiters (FEAT-161) use a shared-store sliding-window implementation so horizontal scaling does not multiply a tenant's effective limit. Idempotency-Key lookup (FEAT-141) is cluster-wide and survives node loss.
     config_hot_reload: Routing rules, model catalog, safety and budget policies, rate limits, alert rules and feature flags propagate to every node within 30 seconds without restart and without dropping in-flight requests.
     graceful_shutdown: On SIGTERM a node deregisters from the load balancer, stops accepting new work, drains in-flight requests up to a configurable timeout (default 60 seconds for API, 10 minutes for workers), flushes buffered telemetry and exits zero. Streaming connections receive a terminal event and close cleanly.
     health_checks: Every service exposes a liveness probe (process up) and a readiness probe (dependencies reachable, config loaded, migrations applied, circuit-breaker state hydrated). Not-ready nodes are excluded from load-balancer routing and from queue consumption.
@@ -28,13 +28,13 @@ project:
     availability_slo: Control-plane API targets 99.9% monthly availability; gateway data plane targets 99.95%. Error budgets are tracked per FEAT-106 and gate release promotion when burned.
     multi_region_and_dr: Every stateful dependency (Postgres, Redis, ClickHouse, object store, queue broker — NATS JetStream) is deployed across at least three availability zones with automatic failover. Control plane targets RPO <= 5 minutes and RTO <= 30 minutes; gateway data plane targets RPO <= 1 minute and RTO <= 10 minutes. Disaster recovery is exercised at least quarterly. Cross-region failover honors residency per FEAT-130 and fails closed rather than crossing a residency boundary.
     data_durability: Postgres uses synchronous replication to at least one standby. ClickHouse ingestion targets >= 99.99% row durability for the request log; ingestion gaps trigger the ingestion-health alert. Redis shards holding budget, rate-limit or idempotency state use AOF with appendfsync everysec; pure cache shards are best-effort.
-    streaming: SSE and chunked responses are proxied end-to-end without buffering. Mid-stream upstream failure retries only the remaining prefix. Long streams do not depend on sticky sessions — the L7 load balancer drains connections on deploy.
+    streaming: SSE and chunked responses are proxied end-to-end without buffering. Mid-stream upstream failure retries per RoutingRule.retries only when no bytes have reached the client; once any bytes have been streamed, the same target is not retried - an optional fallback target may reissue the full request, otherwise the stream closes with an error event. Long streams do not depend on sticky sessions — the L7 load balancer drains connections on deploy.
     observability: Every request, job and background task emits an OpenTelemetry span with Request-Id, org_id, team_id, user_id, model and provider. Structured JSON logs correlate by Request-Id. Prometheus metrics cover RED (rate, errors, duration) for request paths, USE (utilization, saturation, errors) for resources and queue depth / age / retry-count for workers.
     security: TLS 1.2+ is required on every externally exposed endpoint; internal service-to-service traffic uses mTLS. Secrets live in the configured KMS (with FEAT-133 CMK where enabled) and never appear in logs, telemetry or persisted payloads. Audit log writes are append-only with tamper-evident hashing.
     tenant_isolation: Every query is partitioned by org_id. Per-tenant quotas bound concurrency, CPU-seconds, queue slots and storage so a noisy tenant cannot degrade others. Tenant-isolation is continuously verified by FEAT-134.
     portability: Services are stateless Linux containers that run identically on the reference Kubernetes deployment, the self_hosted Docker-Compose deployment and the managed saas. No component depends on a feature specific to a single cloud provider.
     deployment_modes: Antirion ships in exactly two deployment modes. "saas" is the multi-tenant managed offering operated by Antirion staff; platform-operator surfaces (EPIC-013) are visible only to Antirion staff accounts and never to tenant workspaces. "self_hosted" is deployed inside a customer's own infrastructure; the same platform-operator surfaces are visible only to principals holding the platform admin role on that install. The running mode is pinned at install time, surfaced to every service via config, and included on every audit record. Every feature that differs in scope, availability or data shape between the two modes declares its mode availability explicitly in its description.
-    notifications_model: Canonical audience roles for every event-notification story. Stories cite these roles instead of inventing local language, and acceptance criteria name the audience per deployment mode. Audience roles are (a) the acting principal (user_id), (b) the owning principal on the resource (Resource.owner_user_id or Team.owner), (c) the org-scoped contact fields on Org (security_contact, billing_contact, finance_contact, privacy_officer, primary_contact), (d) the platform operator — which resolves to Antirion staff in saas and to principals holding the platform admin role in self_hosted, (e) Antirion-staff-only sub-queues in saas (trust_and_safety, support, sre, dpo, renewals, legal) that have no counterpart in self_hosted. The collapse rules across modes are fixed and every story follows them unchanged. Tenant-scoped roles (a)(b)(c) behave identically in both modes. Platform-operator role (d) is Antirion staff in saas and platform admin in self_hosted. Antirion-staff sub-queues
+    notifications_model: Canonical audience roles for every event-notification story. Stories cite these roles instead of inventing local language, and acceptance criteria name the audience per deployment mode. Audience roles are (a) the acting principal (user_id), (b) the owning principal on the resource (Resource.owner_user_id or Team.lead_user_id), (c) the org-scoped contact fields on Org (security_contact, billing_contact, finance_contact, privacy_officer, primary_contact), (d) the platform operator — which resolves to Antirion staff in saas and to principals holding the platform admin role in self_hosted, (e) Antirion-staff-only sub-queues in saas (trust_and_safety, support, sre, dpo, renewals, legal) that have no counterpart in self_hosted. The collapse rules across modes are fixed and every story follows them unchanged. Tenant-scoped roles (a)(b)(c) behave identically in both modes. Platform-operator role (d) is Antirion staff in saas and platform admin in self_hosted. Antirion-staff sub-queues
       (e) exist only in saas; in self_hosted the same event routes to platform admin unless the customer has opted in to Antirion phone-home support for the event class (see FEAT-179). When a tenant-contact field is unset in self_hosted the event falls back to platform admin; when unset in saas the event falls back to Org.owner. Cross-tenant signals (isolation breaches, abuse heuristics, sustained anomalies) always reach Antirion trust_and_safety in saas and are silently dropped in self_hosted because the set of tenants is 1. Delivery channels per role are resolved by FEAT-102 notification-channels routing for user-addressable roles and by the platform operator's configured paging integration for (d) and (e). Every audit record on a notification-bearing event records the resolved audience list and the channel attempt, so routing correctness is diffable against this policy.
   tech_stack_hints:
   - next.js
@@ -117,7 +117,7 @@ epics:
   - FEAT-028
 - id: EPIC-004
   title: Observability
-  description: Overview dashboard, request log, analytics, anomaly signals, search and export.
+  description: Overview dashboard, request log, request detail, analytics, anomaly signals and detector configuration, search and export, replay and comparison, share links, cost breakdown, saved views, tool-use and streaming views. All surfaces in this epic are tenant-scoped; the platform-wide analogues (cluster/fleet health, cross-tenant abuse signals, platform release rollups) live in EPIC-013 and are visible only to the platform operator. Telemetry is produced by FEAT-143 and the request-log ingestion worker.
   priority: P0
   features:
   - FEAT-029
@@ -138,7 +138,7 @@ epics:
   - FEAT-044
 - id: EPIC-005
   title: Model catalog and routing
-  description: Manage upstream models and route traffic with weighted, failover, canary and shadow strategies.
+  description: Manage upstream models and route traffic with single, weighted, failover, least-loaded, canary and shadow strategies. The epic also houses the prompt/template registry (FEAT-058) and the model evaluation suite (FEAT-059).
   priority: P0
   features:
   - FEAT-045
@@ -444,7 +444,7 @@ features:
 - id: FEAT-012
   epic: EPIC-001
   title: Role management and custom roles
-  description: List built-in roles, create/edit/delete custom roles scoped to permissions. Built-in tenant roles are owner, admin, member and viewer in both deployment modes. The platform admin role is a reserved built-in that exists only in self_hosted mode, cannot be granted to an ordinary workspace member, cannot be created as a custom role in either mode, and is rejected by the role API if requested in saas mode. Role assignment attempts that violate these constraints produce an AuditLog "role.assignment_rejected" entry.
+  description: List built-in roles, create/edit/delete custom roles scoped to permissions. Built-in tenant roles are owner, admin, developer, analyst, viewer and service in both deployment modes. The platform admin role is a reserved built-in that exists only in self_hosted mode, cannot be granted to an ordinary workspace member, cannot be created as a custom role in either mode, and is rejected by the role API if requested in saas mode. Role assignment attempts that violate these constraints produce an AuditLog "role.assignment_rejected" entry.
   priority: P1
   stories:
   - STORY-031
@@ -464,7 +464,7 @@ features:
 - id: FEAT-014
   epic: EPIC-002
   title: Personal preferences
-  description: Theme, density, reduced motion, compact numbers, week start. Accessibility (WCAG 2.1 AA) and loading/empty/error-state rendering are workspace-wide defaults defined in project.ui_baseline rather than per-feature stories.
+  description: Theme, density, reduced motion, compact numbers, week start.
   priority: P2
   stories:
   - STORY-037
@@ -484,7 +484,7 @@ features:
   - proto/account.jsx
 - id: FEAT-016
   epic: EPIC-002
-  title: Personal access tokens
+  title: Personal tokens
   description: Create, list and revoke personal CLI tokens bound to the user's role.
   priority: P1
   stories:
@@ -512,7 +512,7 @@ features:
 - id: FEAT-019
   epic: EPIC-002
   title: Personal login history
-  description: Show the authenticated user their own recent successful and failed sign-in attempts with IP, device and location.
+  description: Show the authenticated user their own recent successful and failed sign-in attempts with IP, user_agent, device and location.
   priority: P1
   stories:
   - STORY-045
@@ -521,7 +521,7 @@ features:
 - id: FEAT-020
   epic: EPIC-002
   title: Personal account deletion
-  description: Let a user request deletion of their personal account with a grace window, owner hand-off, and cancellation path.
+  description: Let a user request deletion of their personal account with a grace window and cancellation path. Sole-owner deletion is blocked; owner hand-off is owned by FEAT-005 (role change) and FEAT-012 (role management).
   priority: P1
   stories:
   - STORY-046
@@ -538,7 +538,7 @@ features:
 - id: FEAT-022
   epic: EPIC-003
   title: API key lifecycle
-  description: Create, rotate with grace window, and revoke gateway API keys.
+  description: Create, rotate with grace window, revoke and list/browse gateway API keys.
   priority: P0
   stories:
   - STORY-049
@@ -571,7 +571,7 @@ features:
 - id: FEAT-025
   epic: EPIC-003
   title: BYOK provider credentials
-  description: Register and rotate upstream provider credentials used for outbound calls.
+  description: Register, rotate, test, list, label, delete and enforce rotation policy on upstream provider credentials used for outbound calls.
   priority: P0
   stories:
   - STORY-056
@@ -614,7 +614,7 @@ features:
 - id: FEAT-029
   epic: EPIC-004
   title: Gateway overview dashboard
-  description: KPI strip, charts band, team/model/provider breakdowns, embedded request log.
+  description: KPI strip, charts band, team/model/provider breakdowns. Drill-in links jump to /requests for row-level inspection.
   priority: P0
   stories:
   - STORY-070
@@ -746,7 +746,7 @@ features:
 - id: FEAT-041
   epic: EPIC-004
   title: Anomaly detector configuration
-  description: Configure the anomaly detectors that drive FEAT-022 signals — list, set thresholds, enable/disable by category.
+  description: Configure the anomaly detectors that drive FEAT-033 anomaly signals — list, set thresholds, enable/disable by category.
   priority: P1
   stories:
   - STORY-095
@@ -848,7 +848,7 @@ features:
 - id: FEAT-051
   epic: EPIC-005
   title: Circuit breaker and fallback
-  description: Provider-level circuit breaker and per-rule fallback chain on errors, timeouts, rate-limits.
+  description: Per-rule trigger taxonomy and fallback-chain configuration on errors, timeouts and rate-limits; runtime (retry execution, circuit open/close transitions, cluster-wide state) is owned by FEAT-139 and FEAT-142.
   priority: P0
   stories:
   - STORY-121
@@ -929,7 +929,7 @@ features:
 - id: FEAT-059
   epic: EPIC-005
   title: Model evaluation and benchmarking
-  description: Golden datasets, compare models side-by-side, and a translation regression suite that exercises FEAT-072.
+  description: Golden datasets, compare models side-by-side, and a translation regression suite that exercises FEAT-146 (tool/function-calling passthrough) and the other EPIC-011 dialect translation features.
   priority: P1
   stories:
   - STORY-139
@@ -1010,7 +1010,7 @@ features:
   epic: EPIC-006
   title: Cache warmup and preload
   description: Precompute and populate cache entries for a set of prompts or prompt segments ahead of traffic.
-  priority: P0
+  priority: P2
   stories:
   - STORY-154
   ui_references:
@@ -1071,7 +1071,7 @@ features:
 - id: FEAT-073
   epic: EPIC-007
   title: Detection rule management
-  description: Create, edit, toggle, save-as-draft and publish rules of regex, NER, classifier, allowlist and fingerprint types.
+  description: Create, edit, toggle, save-as-draft and publish rules of regex, regex+checksum (e.g. Luhn for credit cards), NER, classifier, prefix+entropy (secret-token detection), allowlist, n-gram (fuzzy fingerprinting) and fingerprint types.
   priority: P0
   stories:
   - STORY-165
@@ -1470,7 +1470,7 @@ features:
 - id: FEAT-112
   epic: EPIC-010
   title: Data residency (view-only)
-  description: Display the workspace's pinned data residency region and the date it was pinned. The region is set once at first-run (FEAT-163/STORY-409) and is immutable for the life of the workspace — there is no migration, rotation or change path. Enforcement at the edge is FEAT-130; customer-managed key rotation is FEAT-133. In saas mode the region is selected from Antirion's published region catalog and bound to the tenant Org. In self_hosted mode the region is a free-form label set in install config by the platform admin and stamped onto every Org created on that install; runtime enforcement under FEAT-130 still applies unchanged.
+  description: Display the workspace's pinned data residency region and the date it was pinned. The region is set once at first-run (FEAT-162/STORY-387 in saas; FEAT-177/STORY-423 in self_hosted) and is immutable for the life of the workspace — there is no migration, rotation or change path. Enforcement at the edge is FEAT-130; customer-managed key rotation is FEAT-133. In saas mode the region is selected from Antirion's published region catalog and bound to the tenant Org. In self_hosted mode the region is a free-form label set in install config by the platform admin and stamped onto every Org created on that install; runtime enforcement under FEAT-130 still applies unchanged.
   priority: P1
   stories:
   - STORY-256
@@ -1886,7 +1886,8 @@ features:
 - id: FEAT-158
   epic: EPIC-011
   title: Egress proxy configuration
-  description: Configure an outbound HTTP proxy (with credentials and per-provider override) for upstream provider calls.
+  description: Configure an outbound HTTP proxy (with credentials and per-provider override) for upstream provider calls. Available in both modes; typically required in self_hosted where air-gapped networks mandate an explicit proxy and optional in saas where Antirion's egress NAT is the default.
+  mode: both
   priority: P1
   stories:
   - STORY-372
@@ -1895,7 +1896,8 @@ features:
 - id: FEAT-159
   epic: EPIC-011
   title: Private connectivity
-  description: Configure PrivateLink or VPC peering for ingress/egress and verify the private endpoint.
+  description: Configure PrivateLink or VPC peering for ingress/egress and verify the private endpoint. PrivateLink ingress is a saas concept; self_hosted installs use equivalent VPC peering or direct in-cluster connectivity.
+  mode: both
   priority: P2
   stories:
   - STORY-375
@@ -1903,7 +1905,8 @@ features:
 - id: FEAT-160
   epic: EPIC-011
   title: Emergency break-glass scope
-  description: Create an audited, approval-gated, auto-expiring API key with elevated scope for incident response.
+  description: Create an audited, approval-gated, auto-expiring API key with elevated scope for incident response. In saas the approval audience includes Antirion trust_and_safety; in self_hosted it collapses to platform admin per project.notifications_model.
+  mode: both
   priority: P1
   stories:
   - STORY-377
@@ -1930,6 +1933,7 @@ features:
   epic: EPIC-012
   title: First-run onboarding checklist
   description: Guide a new workspace owner through pinning data residency, inviting teammates, connecting a provider, creating a key and issuing a test request. Residency must be pinned before any tenant data can be written. In saas mode the signed-up workspace owner walks the full checklist. In self_hosted mode the install wizard (FEAT-177) has already completed — residency is read-only from install config, the license is assumed valid (FEAT-175), and the checklist collapses to "invite, connect provider, create key, issue test request" for the first Org created on the install.
+  mode: both
   priority: P0
   stories:
   - STORY-387
@@ -1943,6 +1947,7 @@ features:
   epic: EPIC-012
   title: Public status page
   description: Publish gateway availability, component status and incident history on a public URL and embed a widget in-app. In saas mode the page is operated by Antirion at status.antirion.example and covers the saas fleet across regions. In self_hosted mode the page is operated by the local install at a platform admin-configured host (for example status.gateway.acme.example), covers only the local install, and does not surface or link to Antirion's saas status; the in-app widget always points at the mode-correct page, never the other mode's page.
+  mode: both
   priority: P1
   stories:
   - STORY-391
@@ -1953,6 +1958,7 @@ features:
   epic: EPIC-012
   title: In-product support contact
   description: Let a signed-in user open a support ticket or chat from the shell with session, org and request context attached. In saas mode tickets land in Antirion's inbound support queue (FEAT-181) and the submitter receives acknowledgement from Antirion support. In self_hosted mode tickets land in the platform admin-configured local support queue (default — email to a configurable support_contact address, webhook to a configurable integration); a secondary escalation to Antirion is available only when the install has enabled the phone-home "support" channel under FEAT-179 and is blocked entirely on air-gapped installs. Every submitted ticket records the resolved destination (local queue, Antirion queue or both) on the SupportTicket and in AuditLog.
+  mode: both
   priority: P2
   stories:
   - STORY-393
@@ -1963,6 +1969,7 @@ features:
   epic: EPIC-012
   title: Terms of Service and legal acceptance
   description: Capture ToS, DPA and privacy policy acceptance on sign-up and re-prompt on material changes. In saas mode the surfaced documents are Antirion's published ToS, DPA and privacy policy; versioning is driven by Antirion legal. In self_hosted mode the ToS and DPA governing the Antirion software are folded into the license agreement (FEAT-175) and are not re-prompted per user; the ToS/DPA surface in this feature is instead populated with the customer's own end-user legal texts uploaded by the platform admin (typical contents — acceptable-use policy, internal privacy notice). The data model and re-prompt flow are identical; only the source and legal counterparty differ.
+  mode: both
   priority: P1
   stories:
   - STORY-395
@@ -1974,6 +1981,7 @@ features:
   epic: EPIC-012
   title: In-app help and documentation
   description: Contextual doc links, tooltips and a global "/" quick-help palette across screens. In saas mode articles are served from Antirion's docs CDN and stay current with each release. In self_hosted mode the article catalog is bundled with the install image so help works fully offline and on air-gapped networks; the platform admin can opt in to periodic catalog refresh only when the "docs" phone-home channel (FEAT-179) is enabled. Deep-link URLs to external docs degrade to bundled anchors when air-gapped.
+  mode: both
   priority: P2
   stories:
   - STORY-397
@@ -1994,6 +2002,7 @@ features:
   epic: EPIC-012
   title: Pricing calculator and cost forecast
   description: Let finance model monthly spend by mix of models, volume and caching before committing to a budget. In saas mode projected monthly cost sums provider passthrough plus Antirion plan fees and commitments (FEAT-096/FEAT-098). In self_hosted mode there is no per-request Antirion fee — the license is a flat commercial — so the calculator hides the Antirion subscription component and reports provider passthrough only; the license renewal figure comes from FEAT-175 and is shown as a separate annualized line.
+  mode: both
   priority: P2
   stories:
   - STORY-401
@@ -2003,6 +2012,7 @@ features:
   epic: EPIC-012
   title: In-product notification inbox
   description: Unified bell-icon inbox of user-visible notifications (alert fires, approvals, job completions, deprecations). In saas mode the inbox additionally surfaces Antirion-originated platform notices — maintenance windows, plan-change confirmations, invoice-ready, security advisories — broadcast by Antirion staff through FEAT-173. In self_hosted mode there are no Antirion platform notices; the same slots are filled by local platform admin broadcasts and by FEAT-175 license events (renewal-approaching, entitlement-breach, fail-closed-warning) and by FEAT-180 license-violation incident events.
+  mode: both
   priority: P1
   stories:
   - STORY-402
@@ -2029,7 +2039,7 @@ features:
 - id: FEAT-172
   epic: EPIC-013
   title: Tenant roster
-  description: Operator-wide roster of every Org on the platform with plan, seat count, rolling spend, incident flags, residency region and primary contact, plus the ability to drill into a tenant and to suspend one with audit. Available in saas mode only; in self_hosted the view degenerates to a single-row read-only summary of the local install.
+  description: Operator-wide roster of every Org on the platform with plan, seat count, rolling spend, incident flags, residency region and primary contact, plus the ability to drill into a tenant and to suspend one with audit. Available in both modes; in self_hosted the view degenerates to a single-row read-only summary of the local install.
   mode: both
   priority: P0
   stories:
@@ -2039,7 +2049,7 @@ features:
 - id: FEAT-173
   epic: EPIC-013
   title: Platform-wide incident and maintenance
-  description: Let the operator declare a platform incident, pick affected regions and components and a severity, compute the affected tenants from the routing table, and broadcast in real time to every affected tenant's in-app status widget (FEAT-164). Also lets the operator schedule maintenance windows with advance notice. Available in both saas and self_hosted modes — in saas Antirion staff declare incidents for the fleet, in self_hosted the platform admin declares them for the local install.
+  description: Let the operator declare a platform incident, pick affected regions and components and a severity, compute the affected tenants from the routing table, and broadcast in real time to every affected tenant's in-app status widget (FEAT-163). Also lets the operator schedule maintenance windows with advance notice. Available in both saas and self_hosted modes — in saas Antirion staff declare incidents for the fleet, in self_hosted the platform admin declares them for the local install.
   mode: both
   priority: P0
   stories:
@@ -2099,7 +2109,7 @@ features:
 - id: FEAT-179
   epic: EPIC-013
   title: Telemetry and phone-home controls
-  description: Govern every outbound call from an Antirion install back to Antirion-operated endpoints. Named channels are license (license heartbeat and entitlement-usage rollup), metrics (anonymous aggregate usage for product analytics), crash (crash reports with symbol frames), security (trust_and_safety signals — key-leak events, tenant-isolation breaches, break-glass usage), support (escalation path for FEAT-164) and docs (catalog refresh for FEAT-166). Each channel has an independent opt-out, a documented payload schema (with per-field data class), a documented retention policy at Antirion and an outbound-request audit in the local AuditLog. An explicit air-gapped pin disables every channel and is enforced at the egress layer — any compiled code that attempts an Antirion-endpoint call when air-gapped is a test-suite failure. Available in both modes — saas forces every channel on (the tenant is by definition talking to Antirion), and self_hosted defaults channels off for the ENTERPRISE
+  description: Govern every outbound call from an Antirion install back to Antirion-operated endpoints. Named channels are license (license heartbeat and entitlement-usage rollup), metrics (anonymous aggregate usage for product analytics), crash (crash reports with symbol frames), security (trust_and_safety signals — key-leak events and break-glass usage; tenant-isolation breaches are silently dropped in self_hosted per project.notifications_model since the tenant set is 1), support (escalation path for FEAT-164) and docs (catalog refresh for FEAT-166). Each channel has an independent opt-out, a documented payload schema (with per-field data class), a documented retention policy at Antirion and an outbound-request audit in the local AuditLog. An explicit air-gapped pin disables every channel and is enforced at the egress layer — any compiled code that attempts an Antirion-endpoint call when air-gapped is a test-suite failure. Available in both modes — saas forces every channel on (the tenant is by definition talking to Antirion), and self_hosted defaults channels off for the ENTERPRISE
     license tier and on for the CLOUD-ASSIST license tier.
   mode: both
   priority: P0
@@ -2260,8 +2270,9 @@ stories:
   - Session
   - TrustedBrowser
   non_functional:
-  - Membership and role changes are audited with actor, subject, timestamp and before/after
-  - Revocations and role changes propagate to every node within the config-reload SLA
+  - Trust cookie flags HttpOnly, Secure and SameSite=Lax; scoped to the app domain
+  - TrustedBrowser fingerprint is stable across reboots and expires at 30 days maximum
+  - Trust is revoked on password change, MFA reset or admin session revocation
 - id: STORY-003
   feature: FEAT-001
   title: Request password reset
@@ -2710,7 +2721,7 @@ stories:
   - User
   - Role
   non_functional:
-  - Role hierarchy owner (6) > admin (5) > developer (4) > analyst (3) > viewer (2) > service (1)
+  - Levels per Role.level; writes gated by level
   - Scopes checked server-side on every mutating endpoint
 - id: STORY-012
   feature: FEAT-005
@@ -2893,15 +2904,6 @@ stories:
     then:
     - The User.team_id becomes null
     - Their requests are no longer attributed to this team's budget
-  - id: AC-004
-    scenario: Prevent deleting team with active keys
-    given:
-    - A Team owns active ApiKeys
-    when:
-    - I try to delete the team
-    then:
-    - I see "Team still has 3 active keys — revoke or reassign them first"
-    - The Team is not deleted
   api:
   - method: PATCH
     path: /api/teams/:id
@@ -2941,20 +2943,9 @@ stories:
     - 403
     - 404
     inferred: true
-  - method: DELETE
-    path: /api/teams/:id
-    response:
-      ok: bool
-    errors:
-    - 401
-    - 403
-    - 404
-    - 409
-    inferred: true
   data_models:
   - Team
   - User
-  - ApiKey
   - AuditLog
   non_functional:
   - Membership and role changes are audited with actor, subject, timestamp and before/after
@@ -3041,6 +3032,15 @@ stories:
     then:
     - The Confirm button stays disabled and I see "Type the team slug to confirm"
     - The Team is not deleted
+  - id: AC-005
+    scenario: Block delete when team has active Projects
+    given:
+    - A Team has one or more active Projects referencing it
+    when:
+    - I click "Delete team"
+    then:
+    - I see "Team has N active projects — move or archive them first"
+    - The Team is not deleted
   api:
   - method: DELETE
     path: /api/teams/:id
@@ -3086,6 +3086,15 @@ stories:
     - All owned ApiKeys with type "user" are revoked
     - The User status becomes "offboarded"
     - An AuditLog entry records actor, target and action "user.offboard"
+  - id: AC-002
+    scenario: Block offboarding the last remaining owner
+    given:
+    - The target User is the only remaining user with role "owner"
+    when:
+    - I click "Offboard" on the user
+    then:
+    - I see "A workspace must have at least one owner"
+    - The User is not offboarded
   api:
   - method: POST
     path: /api/users/:id/offboard
@@ -3120,11 +3129,11 @@ stories:
   - id: AC-001
     scenario: Reassign to service account
     given:
-    - The leaving user owns 4 service keys
+    - The leaving user owns 4 ApiKeys where type = "service" and revoked_at IS NULL
     when:
     - I pick a target service account and click "Transfer"
     then:
-    - All 4 ApiKey.owner_user_id point at the target
+    - All 4 ApiKey.owner_user_id point at the target (only keys with type = "service" and revoked_at IS NULL are transferred)
     - An AuditLog entry records "key.transfer" for each key
   - id: AC-002
     scenario: Block offboarding on unassigned service keys
@@ -3228,7 +3237,7 @@ stories:
     so_that: suspicious accounts are tracked without offboarding them immediately
   priority: P1
   depends_on:
-  - STORY-018
+  - STORY-011
   acceptance_criteria:
   - id: AC-001
     scenario: Flag a user
@@ -3239,7 +3248,7 @@ stories:
     then:
     - The User.status becomes "flagged"
     - An AuditLog entry records actor, reason and action "user.flag"
-    - An AlertEvent of severity "warn" is generated for the security oncall
+    - A Notification of kind "security" is emitted to Org.security_contact (falling back to Org.owner in saas and to platform admin in self_hosted) per project.notifications_model
   - id: AC-002
     scenario: Clear the flag
     given:
@@ -3279,7 +3288,7 @@ stories:
   data_models:
   - User
   - AuditLog
-  - AlertEvent
+  - Notification
   non_functional:
   - Membership and role changes are audited with actor, subject, timestamp and before/after
   - Revocations and role changes propagate to every node within the config-reload SLA
@@ -3297,16 +3306,16 @@ stories:
   - id: AC-001
     scenario: Account locked after threshold
     given:
-    - The org lockout policy is 5 failures in 15 minutes
+    - The SessionPolicy specifies lockout_threshold=5 within lockout_window_minutes=15
     - A User has 4 recent failed attempts
     when:
     - A 5th failed attempt is recorded
     then:
-    - The User.status is set to "locked"
-    - locked_until is set to now + policy.lockout_minutes
+    - User.locked_until is set to now + SessionPolicy.lockout_duration_minutes
     - Further sign-in attempts return 423 Locked with a generic message
     - A LoginAttempt is recorded with outcome "locked"
-    - An AuditLog entry is written with action "user.locked"
+    - An AuditLog entry is written with action "user.locked" and records the resolved audience list
+    - A Notification of kind "security" ("user.locked") is emitted to the target User per project.notifications_model
   - id: AC-002
     scenario: IP throttled independent of user
     given:
@@ -3338,8 +3347,10 @@ stories:
   - User
   - LoginAttempt
   - AuditLog
+  - SessionPolicy
+  - Notification
   non_functional:
-  - Thresholds configurable via org-level policy with safe defaults
+  - Thresholds configurable via org-level SessionPolicy (lockout_threshold, lockout_window_minutes, lockout_duration_minutes) with safe defaults
   - Lock decisions must be race-free under concurrent login attempts
 - id: STORY-024
   feature: FEAT-009
@@ -3355,16 +3366,16 @@ stories:
   - id: AC-001
     scenario: Unlock from user detail
     given:
-    - A User has status "locked"
+    - A User has User.locked_until set in the future
     - I am a workspace admin
     when:
     - I open the user detail drawer and click "Unlock account"
     - I confirm the action
     then:
-    - The User.status becomes "active"
-    - locked_until is cleared
-    - An AuditLog entry is written with action "user.unlocked"
-    - The affected user receives an email stating the account was unlocked
+    - User.locked_until is cleared
+    - User.failed_login_count is reset to 0
+    - An AuditLog entry is written with action "user.unlocked" and records the resolved audience list
+    - A Notification of kind "security" ("user.unlocked") is emitted to the target User (owning principal) per project.notifications_model
   ui:
     screens:
     - Teams & Users
@@ -3389,8 +3400,9 @@ stories:
   data_models:
   - User
   - AuditLog
+  - Notification
   non_functional:
-  - Only roles owner/admin may unlock accounts
+  - Only roles owner/admin may unlock accounts; developer, analyst, viewer and service are denied
 - id: STORY-025
   feature: FEAT-010
   title: Initiate SAML Single Log-Out and accept back-channel logout receipts
@@ -3441,7 +3453,7 @@ stories:
     when:
     - I click "New service account" and enter a name and human owner
     then:
-    - A User row with is_service_account=true is created
+    - A User row with role="service" is created (human_owner_user_id set to the selected human owner, created_by_user_id set to the acting admin)
     - An initial credential is issued and shown once
   data_models:
   - User
@@ -3467,7 +3479,7 @@ stories:
     when:
     - I open the list
     then:
-    - I see name, human owner, team, last_used_at and status per row
+    - I see name, human_owner_user_id, team, User.last_active_at and status per row
   data_models:
   - User
   non_functional:
@@ -3509,6 +3521,9 @@ stories:
     i_want: to delete a retired service account
     so_that: unused machine identities are cleaned up
   priority: P1
+  depends_on:
+  - STORY-026
+  - STORY-028
   acceptance_criteria:
   - id: AC-001
     scenario: Delete with typed confirmation
@@ -3517,7 +3532,7 @@ stories:
     when:
     - I click "Delete" and type the service account name
     then:
-    - The service account User row is soft-deleted
+    - The service account User.status is set to "offboarded"
     - An AuditLog entry records "service_account.delete"
   - id: AC-002
     scenario: Block when credentials active
@@ -3550,7 +3565,7 @@ stories:
     when:
     - The page loads
     then:
-    - I see human owner, team, created_by, created_at and last 24h request count
+    - I see human_owner_user_id, team, created_by_user_id, User.joined_at, User.last_active_at and last 24h Request count
   data_models:
   - User
   - Request
@@ -3714,6 +3729,16 @@ stories:
     - I pick a PNG file and click "Save changes"
     then:
     - The image is uploaded and my avatar shows the new photo
+  - id: AC-004
+    scenario: Handle collision blocks save
+    given:
+    - Another User already has handle "p.okonkwo"
+    when:
+    - I change my handle to "p.okonkwo" and click "Save changes"
+    then:
+    - The PATCH returns 409
+    - I see "Handle already in use" inline
+    - My User record is unchanged
   ui:
     screens:
     - Account
@@ -3740,6 +3765,7 @@ stories:
     errors:
     - 400
     - 401
+    - 409
     inferred: true
   - method: POST
     path: /api/users/me/photo
@@ -3747,7 +3773,7 @@ stories:
       body:
         file: binary
     response:
-      photo_url: string
+      avatar_url: string
     errors:
     - 400
     - 401
@@ -3789,8 +3815,8 @@ stories:
     - I open the verification link
     then:
     - My User.email is updated to "new.email@acme.example"
-    - The EmailVerificationToken is marked used
-    - I see a success page with a link to sign in
+    - EmailVerificationToken.consumed_at is set to now
+    - I see a success page confirming the change; if I opened the link in a signed-out browser, the page offers a "Sign in" shortcut
   - id: AC-002
     scenario: Expired link
     given:
@@ -3874,6 +3900,7 @@ stories:
   priority: P0
   depends_on:
   - STORY-001
+  - STORY-006
   acceptance_criteria:
   - id: AC-001
     scenario: Successful password change
@@ -3887,6 +3914,8 @@ stories:
     - My User.password_hash is rotated
     - All other Sessions are revoked
     - I see a confirmation toast
+    - A Notification of kind "security" ("account.password_changed") is delivered to the acting principal via FEAT-102 channel routing
+    - An AuditLog entry with action "user.password_changed" is written and records the resolved audience list
   - id: AC-002
     scenario: Weak password rejected
     given:
@@ -3912,6 +3941,8 @@ stories:
   data_models:
   - User
   - Session
+  - AuditLog
+  - Notification
   non_functional:
   - Password hashed with argon2id on change
   - All other sessions invalidated on successful change
@@ -3923,16 +3954,18 @@ stories:
     i_want: to see enrolled MFA factors, regenerate recovery codes and clear trusted browsers
     so_that: I control my second factor
   priority: P0
+  depends_on:
+  - STORY-002
   acceptance_criteria:
   - id: AC-001
     scenario: Regenerate recovery codes
     given:
-    - I have 8 of 10 unused recovery codes
+    - I have 8 of 10 unused RecoveryCode rows
     when:
     - I click "Regenerate" in Recovery codes
     then:
-    - A new set of 10 codes is generated and shown once
-    - Old codes are invalidated
+    - All prior unused RecoveryCode rows are marked consumed (consumed_at set to now)
+    - 10 new RecoveryCode rows are created (code_hash stored; plaintext shown exactly once)
   - id: AC-002
     scenario: Clear trusted browsers
     given:
@@ -3961,6 +3994,7 @@ stories:
   data_models:
   - User
   - MfaFactor
+  - RecoveryCode
   - TrustedBrowser
   non_functional:
   - Profile and preference fields treated as PII — redacted from telemetry and error payloads
@@ -3991,7 +4025,7 @@ stories:
     when:
     - I click "Add security key" and complete the ceremony
     then:
-    - A new MfaFactor of type "webauthn" is created
+    - A new MfaFactor with kind "webauthn" is created
   data_models:
   - MfaFactor
   - User
@@ -4065,6 +4099,23 @@ stories:
     then:
     - The PersonalToken is deleted server-side
     - Requests using that token now return 401
+  - id: AC-003
+    scenario: Scope inheritance enforced
+    given:
+    - I am creating a new PersonalToken
+    when:
+    - I submit a scope the acting principal does not hold
+    then:
+    - The request returns 403
+    - No PersonalToken is created
+  - id: AC-004
+    scenario: List tokens
+    given:
+    - I own 3 PersonalToken rows
+    when:
+    - I open Account -> Personal tokens
+    then:
+    - I see each token with name, masked prefix, scopes, created_at and last_used_at (rendered as "never" when null)
   api:
   - method: POST
     path: /api/users/me/tokens
@@ -4088,11 +4139,18 @@ stories:
     - 401
     - 404
     inferred: true
+  - method: GET
+    path: /api/users/me/tokens
+    response:
+      items: PersonalToken[]
+    errors:
+    - 401
+    inferred: true
   data_models:
   - User
   - PersonalToken
   non_functional:
-  - Tokens inherit the user's role and scopes
+  - Tokens inherit the user's role and scopes; a scope the creator does not hold is rejected
   - Raw token shown once and stored only as hash
 - id: STORY-043
   feature: FEAT-017
@@ -4110,7 +4168,7 @@ stories:
     when:
     - I uncheck email for event "audit.weekly"
     then:
-    - My NotificationPreference for that event-channel pair is stored
+    - My NotificationPreference row for event "audit.weekly" has "email" removed from its channels array
     - I stop receiving that digest
   - id: AC-002
     scenario: Set quiet hours
@@ -4169,6 +4227,14 @@ stories:
     then:
     - I receive a ZIP archive containing profile.json, sessions.json, tokens.json, audit.json
     - The signed URL expires after first successful download
+  - id: AC-003
+    scenario: Audience recorded on completion per notifications_model
+    given:
+    - A DataExportJob has just transitioned to status "ready"
+    when:
+    - The worker fans out the completion event
+    then:
+    - An AuditLog entry records the resolved audience list - acting principal in both modes, with the Antirion dpo sub-queue added in saas and suppressed in self_hosted per project.notifications_model
   ui:
     screens:
     - Account
@@ -4181,7 +4247,7 @@ stories:
     - ready
   api:
   - method: POST
-    path: /api/account/data-exports
+    path: /api/users/me/data-exports
     response:
       job_id: string
       eta_at: timestamp
@@ -4190,7 +4256,7 @@ stories:
     - 409
     inferred: true
   - method: GET
-    path: /api/account/data-exports/:id
+    path: /api/users/me/data-exports/:id
     response:
       status: string
       download_url: string
@@ -4213,6 +4279,8 @@ stories:
     i_want: to see my recent successful and failed sign-ins
     so_that: I can spot unfamiliar access to my account
   priority: P1
+  depends_on:
+  - STORY-023
   acceptance_criteria:
   - id: AC-001
     scenario: List recent attempts
@@ -4221,7 +4289,7 @@ stories:
     when:
     - The page loads
     then:
-    - I see the last 30 LoginAttempt rows for my user with time, IP, device, location and outcome
+    - I see the last 30 LoginAttempt rows for my user with time, IP, user_agent, device, location and outcome
     - Failed attempts are visually distinct
     - A "Something unfamiliar? Reset password" shortcut is visible
   - id: AC-002
@@ -4243,7 +4311,7 @@ stories:
     - empty
   api:
   - method: GET
-    path: /api/account/login-history
+    path: /api/users/me/login-history
     request:
       query:
         limit: int
@@ -4274,11 +4342,11 @@ stories:
     - I am not the sole Org owner
     when:
     - I click "Delete my account"
-    - I confirm with my password or MFA and check the consequences box
+    - I confirm with my password or MFA and I type my account handle to confirm
     then:
     - An AccountDeletionRequest is created with status "pending" and scheduled_for now + 30 days
-    - The User.status becomes "pending_deletion"
-    - My personal tokens are marked as rotating and will be revoked at cutover
+    - User.status remains "active" until cutover - pending-deletion state is tracked via AccountDeletionRequest.status
+    - My PersonalToken rows have status set to "rotating" (to be revoked at cutover)
     - A confirmation email is sent to me and to each workspace owner
   - id: AC-002
     scenario: Owner cannot self-delete while sole owner
@@ -4301,15 +4369,17 @@ stories:
     - blocked
   api:
   - method: POST
-    path: /api/account/deletion
+    path: /api/users/me/deletion
     request:
       body:
         password: string
         mfa_code: string
+        confirm_handle: string
     response:
       request_id: string
       scheduled_for: timestamp
     errors:
+    - 400
     - 401
     - 409
     inferred: true
@@ -4340,8 +4410,7 @@ stories:
     - I click "Cancel deletion" on the security panel
     then:
     - The AccountDeletionRequest.status becomes "cancelled"
-    - User.status returns to "active"
-    - My tokens and keys are restored to "active"
+    - My PersonalToken rows with status "rotating" are restored to status "active"
     - An AuditLog entry with action "user.deletion.cancelled" is written
   ui:
     screens:
@@ -4354,7 +4423,7 @@ stories:
     - cancelled
   api:
   - method: DELETE
-    path: /api/account/deletion
+    path: /api/users/me/deletion
     response:
       ok: bool
     errors:
@@ -4375,6 +4444,8 @@ stories:
     i_want: to see my active sessions with device, location and last-active
     so_that: I can kick a lost device
   priority: P1
+  depends_on:
+  - STORY-006
   acceptance_criteria:
   - id: AC-001
     scenario: List sessions
@@ -4578,7 +4649,7 @@ stories:
     given:
     - The workspace has 120 ApiKey rows
     when:
-    - I filter by team "copilot", scope "read", and sort by last_used desc
+    - I filter by team "copilot", scope "chat.completions", and sort by last_used desc
     then:
     - I see a paginated list of matching keys with preview, owner, last_used and status
   - id: AC-002
@@ -4632,7 +4703,16 @@ stories:
     - A request comes from 203.0.113.5
     then:
     - The request is rejected with 403
-    - A SafetyEvent or AuditLog entry records the allowlist violation
+    - An AuditLog entry with action "apikey.ip_allowlist.violation" is recorded
+  - id: AC-003
+    scenario: TTL cap enforced
+    given:
+    - ApiAccessConfig.key_max_ttl_days is 90
+    when:
+    - I set expires_at beyond now + 90 days
+    then:
+    - The PATCH returns 400 with "expires_at exceeds ApiAccessConfig.key_max_ttl_days"
+    - The key expires_at is unchanged
   api:
   - method: PATCH
     path: /api/keys/:id
@@ -4646,6 +4726,7 @@ stories:
         rate_limit_tpm: int
         ip_allowlist:
         - string
+        expires_at: timestamp
     response:
       key: ApiKey
     errors:
@@ -4729,7 +4810,7 @@ stories:
     - The anomaly detector runs on its recent traffic
     then:
     - A KeyAnomaly of kind "geo" and medium severity is created
-    - It appears in the anomaly ticker and the key's detail panel
+    - It appears in the key's detail panel
   api:
   - method: GET
     path: /api/keys/:id/anomalies
@@ -4752,7 +4833,7 @@ stories:
     as_a: admin
     i_want: to bring my own key for each upstream provider
     so_that: the gateway uses our negotiated rates and rate limits
-  priority: P1
+  priority: P0
   acceptance_criteria:
   - id: AC-001
     scenario: Add a provider credential
@@ -4762,18 +4843,28 @@ stories:
     - I click "Add key" for provider "anthropic"
     - I paste the secret and click "Save"
     then:
-    - A BYOKCredential is stored (encrypted at rest)
+    - A BYOKCredential is stored (encrypted at rest) with status "active"
     - Outbound requests to Anthropic use this credential
     - Only the last 4 characters of the secret are ever shown
   - id: AC-002
-    scenario: Rotate a credential
+    scenario: Rotate a credential with grace overlap
     given:
     - An active BYOKCredential exists for "openai"
     when:
-    - I click "Rotate" and paste the new secret
+    - I click "Rotate" and paste the new secret with a grace window
     then:
-    - The new secret replaces the old
+    - A successor BYOKCredential is created and linked via the predecessor's successor_id
+    - rotation_grace_ends is set on the predecessor to now + grace window
+    - Both credentials are valid for outbound calls until rotation_grace_ends elapses, after which the predecessor status becomes "revoked"
     - An AuditLog entry records actor, provider and action "byok.rotate"
+  - id: AC-003
+    scenario: BYOK ciphertext stored in residency region
+    given:
+    - Org.region is "eu-west-1"
+    when:
+    - A BYOKCredential is registered or rotated
+    then:
+    - The BYOKCredential.ciphertext is stored only in the ResidencyConfig region (per FEAT-130)
   api:
   - method: POST
     path: /api/byok
@@ -4804,7 +4895,7 @@ stories:
   - BYOKCredential
   - AuditLog
   non_functional:
-  - Secret encrypted at rest with workspace CMK when residency region supports it
+  - Secret stored in the configured KMS and wrapped with the workspace CMK when FEAT-133 CMK is active for the byok_credential data class; if the CMK is revoked, outbound calls using this credential fail closed per FEAT-133
   - Secret never returned in API responses
 - id: STORY-057
   feature: FEAT-025
@@ -4921,7 +5012,7 @@ stories:
     when:
     - I open BYOK settings
     then:
-    - I see each credential with label, provider, last_rotated_at, status (healthy|expiring|invalid) and rotate_policy_days
+    - I see each credential with label, provider, last_rotated_at, status (active|degraded|overdue|invalid|revoked) and rotate_policy_days
   data_models:
   - BYOKCredential
   non_functional:
@@ -4970,7 +5061,7 @@ stories:
     - The daily policy check runs
     then:
     - The credential status becomes "overdue"
-    - An alert is raised to the security contact
+    - A Notification of kind "security" is emitted to Org.security_contact (falling back to Org.owner_user_id in saas and to platform admin in self_hosted) per project.notifications_model
   - id: AC-002
     scenario: Rotation resets clock
     given:
@@ -4978,7 +5069,7 @@ stories:
     when:
     - The admin rotates it
     then:
-    - last_rotated_at is updated and status returns to "healthy"
+    - last_rotated_at is updated and status returns to "active"
   data_models:
   - BYOKCredential
   - AuditLog
@@ -4988,24 +5079,14 @@ stories:
   - Provider credentials decrypt only at outbound-call time; rotation is zero-downtime with grace overlap
 - id: STORY-062
   feature: FEAT-026
-  title: Warn ahead of API key expiry
+  title: Surface imminent API key expiry on the key list
   narrative:
     as_a: service owner
-    i_want: early notice before a gateway key expires
-    so_that: I can rotate it before production calls fail
+    i_want: imminent-expiry keys visibly called out on the key list
+    so_that: I notice what needs rotation at a glance
   priority: P1
   acceptance_criteria:
   - id: AC-001
-    scenario: Warning at T-14d and T-3d
-    given:
-    - An ApiKey has expires_at in 14 days
-    when:
-    - The expiry reminder job runs daily
-    then:
-    - An email is sent to the key owner and to every user with role admin or owner
-    - An ApiKeyExpiryNotice row is written to avoid duplicate sends
-    - A subsequent run at 3 days sends a second reminder with severity "high"
-  - id: AC-002
     scenario: Surfaced on the key list
     given:
     - An ApiKey expires in under 14 days
@@ -5030,9 +5111,8 @@ stories:
     errors: []
   data_models:
   - ApiKey
-  - ApiKeyExpiryNotice
   non_functional:
-  - Reminder job is idempotent and safe to re-run
+  - UI derives the pill from ApiKey.expires_at; no background job required
 - id: STORY-063
   feature: FEAT-026
   title: Auto-revoke expired keys
@@ -5095,7 +5175,7 @@ stories:
     when:
     - The scheduler crosses 30, 14, 7 or 1 day before expiry
     then:
-    - A warning email is sent to the owner and admins at each checkpoint
+    - A Notification of kind "security" is emitted to ApiKey.owner_user_id (falling back to Org.security_contact, then Org.owner_user_id in saas and platform admin in self_hosted) per project.notifications_model
     - An ApiKeyExpiryNotice row records each sent warning
   - id: AC-002
     scenario: Rotation cancels pending warnings
@@ -5119,16 +5199,19 @@ stories:
     i_want: to request elevated scope on my API key
     so_that: I can do a specific task that my default scope does not allow
   priority: P1
+  depends_on:
+  - STORY-049
   acceptance_criteria:
   - id: AC-001
     scenario: Request elevated scope
     given:
-    - My ApiKey has scope "read"
+    - My ApiKey.base_scopes contains "chat.completions"
     when:
-    - I request scope "write" with reason and duration
+    - I request additional scope "cache.write" with reason and duration
     then:
     - An Approval of kind "key-elevated-scope" is created with target_type="ApiKey" and target_id=key
-    - My key's effective scope is unchanged until the Approval is approved
+    - The Approval.context records base_scopes and requested elevated_scopes
+    - ApiKey.scopes (effective) is unchanged until the Approval is approved
   data_models:
   - Approval
   - ApiKey
@@ -5144,6 +5227,7 @@ stories:
     so_that: scope changes are governed
   priority: P1
   depends_on:
+  - STORY-049
   - STORY-065
   acceptance_criteria:
   - id: AC-001
@@ -5153,16 +5237,19 @@ stories:
     when:
     - I approve with the requested duration
     then:
-    - The ApiKey's effective scope is elevated until the expiry
-    - An AuditLog entry records "key.scope.elevate"
+    - ApiKey.elevated_scopes is set to the requested scopes and ApiKey.elevated_until is set to now + duration
+    - ApiKey.scopes (effective) becomes base_scopes unioned with elevated_scopes
+    - A Notification of kind "security" is emitted to ApiKey.owner_user_id and Org.security_contact per project.notifications_model
+    - An AuditLog entry records "key.scope.elevate" with the resolved audience list
   - id: AC-002
     scenario: Expire reverts scope
     given:
-    - The elevated scope expiry passes
+    - ApiKey.elevated_until is in the past
     when:
     - The scheduled job runs
     then:
-    - The ApiKey returns to its base scope
+    - ApiKey.elevated_scopes is cleared and elevated_until is set to null
+    - ApiKey.scopes (effective) reverts to ApiKey.base_scopes
   data_models:
   - Approval
   - ApiKey
@@ -5178,6 +5265,8 @@ stories:
     i_want: to accept a signed notification from GitHub or a partner secret-scan service
     so_that: a leaked key can be acted on immediately
   priority: P0
+  depends_on:
+  - STORY-049
   acceptance_criteria:
   - id: AC-001
     scenario: Valid signed notification
@@ -5186,7 +5275,7 @@ stories:
     when:
     - The gateway validates the signature
     then:
-    - A KeyAnomaly of type "leak" is recorded on the matching ApiKey
+    - A KeyAnomaly of kind "leak" is recorded on the matching ApiKey
     - The leak response job is enqueued
   - id: AC-002
     scenario: Invalid signature rejected
@@ -5196,6 +5285,14 @@ stories:
     - It hits the ingestion endpoint
     then:
     - The response is 401 and no state changes
+  - id: AC-003
+    scenario: Air-gapped or disabled inbound endpoint
+    given:
+    - The install is self_hosted and inbound secret-scan ingestion is disabled (per FEAT-028 air-gapped policy)
+    when:
+    - A notification hits the endpoint
+    then:
+    - The response is 404 and no state is written
   data_models:
   - ApiKey
   - KeyAnomaly
@@ -5265,6 +5362,8 @@ stories:
     i_want: a single dashboard of KPIs, charts and breakdowns for the selected time range
     so_that: I know the health of the gateway at a glance
   priority: P0
+  depends_on:
+  - STORY-086
   acceptance_criteria:
   - id: AC-001
     scenario: Populated overview for 6h range
@@ -5371,9 +5470,11 @@ stories:
   title: Filter the request log
   narrative:
     as_a: engineer
-    i_want: to filter the request log by provider, team, model, env, status, tag, cached, streamed, flagged, latency and cost
+    i_want: to filter the request log by provider, team, model, env, status, tag, cached, streamed, flagged, latency, cost, api key and user
     so_that: I can find the exact requests I care about
   priority: P0
+  depends_on:
+  - STORY-086
   acceptance_criteria:
   - id: AC-001
     scenario: Apply multiple filters
@@ -5454,6 +5555,10 @@ stories:
         status_class:
         - string
         tag:
+        - string
+        api_key_id:
+        - string
+        user_id:
         - string
         cached: string
         streamed: string
@@ -5597,7 +5702,7 @@ stories:
     when:
     - I press "e"
     then:
-    - The CSV export flow starts for the current filtered view (see STORY for CSV export)
+    - The CSV export flow starts for the current filtered view (see STORY-088)
   - id: AC-007
     scenario: Shortcut hints footer
     given:
@@ -5842,14 +5947,14 @@ stories:
     - A cURL command with the original route, headers (key redacted) and body is placed on the clipboard
     - I see a "Copied" toast
   - id: AC-002
-    scenario: Replay a request
+    scenario: Replay entry point
     given:
     - The drawer is open for a request
     - My role has the "requests.replay" scope
     when:
     - I click "Replay"
     then:
-    - A new Request is sent through the gateway using the original prompt
+    - The replay flow owned by STORY-090 is invoked (canonical endpoint POST /api/requests/:id/replay)
     - A new drawer opens for the replay result
   - id: AC-003
     scenario: Replay blocked by role
@@ -5859,16 +5964,6 @@ stories:
     - I try to replay a request
     then:
     - The Replay button is disabled with a tooltip explaining the missing scope
-  api:
-  - method: POST
-    path: /api/requests/:id/replay
-    response:
-      new_request: Request
-    errors:
-    - 401
-    - 403
-    - 404
-    inferred: true
   data_models:
   - Request
   non_functional:
@@ -5932,6 +6027,8 @@ stories:
 - id: STORY-082
   feature: FEAT-032
   title: Explore spend and SLA analytics
+  depends_on:
+  - STORY-086
   narrative:
     as_a: engineering manager
     i_want: trend, SLA and efficiency analytics
@@ -6162,7 +6259,19 @@ stories:
     when:
     - I click "Mark reviewed"
     then:
-    - The anomaly's review status becomes "reviewed" with my user as the reviewer
+    - Anomaly.review_status becomes "reviewed"
+    - Anomaly.reviewed_at is set to now and Anomaly.reviewed_by_user_id is set to my user id
+  - id: AC-003
+    scenario: Sustained/critical anomaly resolves audience per notifications_model
+    given:
+    - An Anomaly of severity "crit" or a sustained anomaly is raised
+    when:
+    - The anomaly-detection worker writes the row
+    then:
+    - Anomaly.audience_snapshot records the resolved audience list per project.notifications_model (acting principal, owner, Org contacts)
+    - In saas mode the event is dispatched to the Antirion trust_and_safety sub-queue
+    - In self_hosted mode the cross-tenant signal is silently dropped (per project.notifications_model)
+    - The resolved audience list is visible in the drawer
   api:
   - method: GET
     path: /api/anomalies
@@ -6266,6 +6375,15 @@ stories:
     - I search "invoice totals"
     then:
     - /requests filters to rows whose prompt matches
+  - id: AC-003
+    scenario: RBAC and team scope honored
+    given:
+    - The caller has role "developer" in team "copilot"
+    when:
+    - Search results are computed
+    then:
+    - Results include only Request rows the caller can list in /requests per FEAT-005 roles and team membership
+    - When a row is redacted for the caller, only Request.prompt_redacted is matched and rendered
   api:
   - method: GET
     path: /api/search
@@ -6298,20 +6416,32 @@ stories:
     scenario: Export <= 10k rows
     given:
     - The filtered set has 4,200 rows
+    - The caller holds the "requests.export" scope
     when:
     - I click "Export CSV"
     then:
     - A CSV is downloaded with the displayed columns
     - Each row corresponds to one Request
+    - Exported bodies honor the caller's effective PII-redaction policy (per RetentionConfig / FEAT-113)
+    - An AuditLog entry records actor, filter set, row count and action "requests.export"
   - id: AC-002
     scenario: Export too large
     given:
     - The filtered set has 250k rows
+    - The caller holds the "requests.export" scope
     when:
     - I click "Export CSV"
     then:
     - A modal offers an async export
-    - I receive a download link by email/webhook when ready
+    - On completion a Notification is delivered to the acting principal via FEAT-102 channel routing
+  - id: AC-003
+    scenario: Missing scope
+    given:
+    - The caller does not hold the "requests.export" scope
+    when:
+    - I attempt to export
+    then:
+    - The response is 403 and no export job is created
   api:
   - method: POST
     path: /api/requests/export
@@ -6323,11 +6453,14 @@ stories:
       download_url: string
       async: bool
     errors:
-    - 401
     - 400
+    - 401
+    - 403
     inferred: true
   data_models:
   - Request
+  - AuditLog
+  - Notification
   non_functional:
   - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
   - Dashboards and analytics read from pre-aggregated rollups computed by the worker fleet; raw-log fallback only within the last minute
@@ -6546,6 +6679,7 @@ stories:
   - ShareLink
   - SavedView
   - Request
+  - AuditLog
   non_functional:
   - Tokens are signed with a rotating key; only the hash is stored
 - id: STORY-093
@@ -6556,6 +6690,8 @@ stories:
     i_want: to share a saved analytics view with a colleague via a signed link
     so_that: they can see the same dashboard without rebuilding it
   priority: P2
+  depends_on:
+  - STORY-092
   acceptance_criteria:
   - id: AC-001
     scenario: Create analytics_view share link
@@ -6581,6 +6717,7 @@ stories:
   non_functional:
   - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
   - Dashboards and analytics read from pre-aggregated rollups computed by the worker fleet; raw-log fallback only within the last minute
+  - Tokens are signed with a rotating key; only the hash is stored
 - id: STORY-094
   feature: FEAT-040
   title: View spend broken down by model, team and cost component
@@ -6589,6 +6726,8 @@ stories:
     i_want: cost broken down by model, team, project, key and environment
     so_that: I can allocate spend internally
   priority: P1
+  depends_on:
+  - STORY-086
   acceptance_criteria:
   - id: AC-001
     scenario: Breakdown for the current month
@@ -6607,6 +6746,14 @@ stories:
     - I click "Export CSV"
     then:
     - I receive a CSV with columns group_keys, input_cost, output_cost, cache_cost, total_cost, request_count
+  - id: AC-003
+    scenario: Breakdown by project, api_key and env
+    given:
+    - I am on /analytics
+    when:
+    - I group by Project, by API Key or by Environment
+    then:
+    - The chart and table recompute for each dimension using MetricSeries rollups when the range exceeds 7 days (MetricSeries.scope in project|api_key|env)
   ui:
     screens:
     - Analytics
@@ -6650,9 +6797,9 @@ stories:
     when:
     - The page loads
     then:
-    - I see each detector with category, enabled status, threshold summary and last_fired_at
+    - I see each AnomalyDetector with category, enabled status, threshold_config summary and last_fired_at
   data_models:
-  - Anomaly
+  - AnomalyDetector
   non_functional:
   - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
   - Dashboards and analytics read from pre-aggregated rollups computed by the worker fleet; raw-log fallback only within the last minute
@@ -6668,13 +6815,28 @@ stories:
   - id: AC-001
     scenario: Set thresholds
     given:
-    - A detector "latency_spike" has threshold "p95 > 2s for 5m"
+    - An AnomalyDetector "latency_spike" has threshold_config {"p95_ms":2000,"window_seconds":300}
     when:
-    - I change to "p95 > 3s for 10m" and save
+    - I change to {"p95_ms":3000,"window_seconds":600} and save
     then:
-    - The detector config is updated and an AuditLog entry records the change
+    - AnomalyDetector.threshold_config is updated and an AuditLog entry records the change
+  api:
+  - method: PATCH
+    path: /api/anomaly-detectors/:id
+    request:
+      body:
+        enabled: bool
+        threshold_config: json
+    response:
+      detector: AnomalyDetector
+    errors:
+    - 400
+    - 401
+    - 403
+    - 404
+    inferred: true
   data_models:
-  - Anomaly
+  - AnomalyDetector
   - AuditLog
   non_functional:
   - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
@@ -6691,14 +6853,14 @@ stories:
   - id: AC-001
     scenario: Disable category
     given:
-    - The "cost_spike" category is enabled
+    - An AnomalyDetector of category "cost_spike" is enabled
     when:
-    - I toggle it off
+    - I toggle it off via PATCH /api/anomaly-detectors/:id { enabled: false }
     then:
-    - No new Anomaly rows of that category are created
+    - AnomalyDetector.enabled becomes false and no new Anomaly rows of that category are created
     - An AuditLog entry records the toggle
   data_models:
-  - Anomaly
+  - AnomalyDetector
   - AuditLog
   non_functional:
   - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
@@ -6734,16 +6896,17 @@ stories:
     so_that: colleagues can open the same view
   priority: P1
   depends_on:
+  - STORY-093
   - STORY-098
   acceptance_criteria:
   - id: AC-001
-    scenario: Create share link
+    scenario: Reuses FEAT-039 share-link flow
     given:
     - I have a SavedView of type analytics
     when:
     - I click "Share"
     then:
-    - A ShareLink with resource_type="analytics_view" is created
+    - The flow owned by STORY-093 runs unchanged (ShareLink with resource_type="analytics_view" is created); this story exists only to surface the entry point on the analytics view picker
   data_models:
   - SavedView
   - ShareLink
@@ -6897,7 +7060,7 @@ stories:
   - Provider
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-105
   feature: FEAT-045
   title: Inspect a model's detail panel
@@ -6945,7 +7108,7 @@ stories:
   - Team
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-106
   feature: FEAT-045
   title: View provider headroom strip on the models page
@@ -7000,7 +7163,7 @@ stories:
   - ProviderRateLimitWindow
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-107
   feature: FEAT-045
   title: View and edit the catalog policy panel
@@ -7027,7 +7190,7 @@ stories:
     - I click "Edit" on a row and change the value
     then:
     - The CatalogPolicy is updated and an AuditLog entry records action "catalog_policy.update" with old and new values
-    - Downstream resolvers (router, edge auth) pick up the change within 60 seconds
+    - Downstream resolvers (router, edge auth) pick up the change within the config-reload SLA
   - id: AC-003
     scenario: Read-only for non-admins
     given:
@@ -7070,12 +7233,12 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-108
   feature: FEAT-046
   title: Add a new model to the catalog
   narrative:
-    as_a: admin
+    as_a: workspace admin
     i_want: to add a model with provider, id, tier and initial status
     so_that: the workspace can start using it
   priority: P0
@@ -7122,7 +7285,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-109
   feature: FEAT-046
   title: Change model lifecycle status
@@ -7173,7 +7336,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-110
   feature: FEAT-047
   title: Manage model aliases
@@ -7222,7 +7385,7 @@ stories:
   - Model
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Failover cascade decisions execute in under 1 ms p95 and never exceed a single additional retry on the hot path
 - id: STORY-111
   feature: FEAT-047
@@ -7293,7 +7456,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Failover cascade decisions execute in under 1 ms p95 and never exceed a single additional retry on the hot path
 - id: STORY-112
   feature: FEAT-048
@@ -7336,7 +7499,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Canary rollbacks complete within 30 seconds of the trigger — no manual step required
 - id: STORY-113
   feature: FEAT-048
@@ -7372,7 +7535,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Canary rollbacks complete within 30 seconds of the trigger — no manual step required
 - id: STORY-114
   feature: FEAT-049
@@ -7440,7 +7603,7 @@ stories:
   - Model
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Shadow traffic is never billed to the tenant and never surfaces to the caller
 - id: STORY-115
   feature: FEAT-049
@@ -7508,7 +7671,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Shadow traffic is never billed to the tenant and never surfaces to the caller
 - id: STORY-116
   feature: FEAT-049
@@ -7543,7 +7706,7 @@ stories:
   - RoutingDeploy
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Shadow traffic is never billed to the tenant and never surfaces to the caller
 - id: STORY-117
   feature: FEAT-049
@@ -7619,7 +7782,7 @@ stories:
   - ProviderHealth
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Shadow traffic is never billed to the tenant and never surfaces to the caller
 - id: STORY-118
   feature: FEAT-050
@@ -7648,6 +7811,8 @@ stories:
   - AlertEvent
   non_functional:
   - Canary health evaluated at least every 30 seconds
+  - Routing and model-catalog changes reach every edge node within the config-reload SLA
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-119
   feature: FEAT-050
   title: Configure a shadow routing rule
@@ -7682,7 +7847,8 @@ stories:
   - Request
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
+  - Shadow traffic is never billed to the tenant and never surfaces to the caller
   - Sticky routing uses a consistent-hash ring so node loss minimally re-shuffles assignments
 - id: STORY-120
   feature: FEAT-050
@@ -7722,7 +7888,7 @@ stories:
   - RoutingRule
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Sticky routing uses a consistent-hash ring so node loss minimally re-shuffles assignments
 - id: STORY-121
   feature: FEAT-051
@@ -7761,7 +7927,7 @@ stories:
   - RoutingDecision
   - AlertEvent
   non_functional:
-  - Circuit breaker state persists in Redis (or equivalent) with TTL = cooldown
+  - Circuit breaker state persists in the shared store per project.non_functional_baseline.statelessness with TTL = cooldown; runtime transitions are owned by FEAT-142
 - id: STORY-122
   feature: FEAT-052
   title: Dry-run a routing rule against recent traffic
@@ -7813,7 +7979,7 @@ stories:
   - Request
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Rule and catalog hot-reload must not drop in-flight streams
 - id: STORY-123
   feature: FEAT-052
@@ -7911,7 +8077,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-125
   feature: FEAT-053
   title: Auto-graduate canary when metrics pass
@@ -7948,7 +8114,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-126
   feature: FEAT-053
   title: Configure canary graduation metric thresholds
@@ -7967,7 +8133,7 @@ stories:
     when:
     - I set error_rate < 1%, p95_latency_ms < 1.2x primary and cost_per_request within 1.1x primary, all over 60m
     then:
-    - The thresholds persist on the rule and drive STORY-118 auto-graduation
+    - The thresholds persist on the rule and drive STORY-125 auto-graduation
   - id: AC-002
     scenario: Org default thresholds
     given:
@@ -7980,7 +8146,7 @@ stories:
   - RoutingRule
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-127
   feature: FEAT-054
   title: Record every routing-rule change as a deploy
@@ -8068,7 +8234,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-129
   feature: FEAT-055
   title: Deprecate a model with migration runbook
@@ -8088,7 +8254,7 @@ stories:
     then:
     - The Model.status becomes "deprecated" and deprecated_on is set
     - A ModelDeprecationNotice is created listing keys and teams still calling the model in the last 7 days
-    - Each affected user with role admin or owner receives an email
+    - A Notification is delivered to the owning principal on each affected resource (ApiKey.owner_user_id, Team.owner) and to Org.tech_contact, with fallback to Org.owner_user_id in saas and platform admin in self_hosted per project.notifications_model; AuditLog records the resolved audience list
     - Requests continue to succeed but include an X-Antirion-Deprecation-Warning header
   - id: AC-002
     scenario: Migration progress
@@ -8212,14 +8378,14 @@ stories:
     when:
     - I click "Delete model" and type the slug
     then:
-    - Deletion proceeds as in STORY-122
+    - Deletion proceeds as in STORY-130
   data_models:
   - Model
   - Request
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-132
   feature: FEAT-057
   title: Request a routing rule change
@@ -8243,12 +8409,12 @@ stories:
   - RoutingRule
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-133
   feature: FEAT-057
   title: Approve or reject a routing rule change
   narrative:
-    as_a: platform engineering lead
+    as_a: engineering manager
     i_want: to approve or reject routing rule changes
     so_that: only sanctioned changes reach production
   priority: P1
@@ -8278,7 +8444,7 @@ stories:
   - RoutingDeploy
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-134
   feature: FEAT-058
   title: Version prompts and templates
@@ -8301,7 +8467,7 @@ stories:
   - PromptTemplateVersion
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-135
   feature: FEAT-058
   title: Assign owners to a prompt template
@@ -8324,7 +8490,7 @@ stories:
   - User
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-136
   feature: FEAT-058
   title: Approval gate for template changes
@@ -8347,7 +8513,7 @@ stories:
   - Approval
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-137
   feature: FEAT-058
   title: A/B test prompt templates
@@ -8371,7 +8537,7 @@ stories:
   - Request
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-138
   feature: FEAT-058
   title: Template lineage
@@ -8394,7 +8560,7 @@ stories:
   - PromptTemplateVersion
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-139
   feature: FEAT-059
   title: Define a golden dataset
@@ -8416,7 +8582,7 @@ stories:
   - GoldenDataset
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-140
   feature: FEAT-059
   title: Compare models on a golden dataset
@@ -8439,10 +8605,10 @@ stories:
   - Model
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-141
   feature: FEAT-059
-  title: Translation regression suite for FEAT-072
+  title: Translation regression suite for FEAT-146 (and related EPIC-011 dialect translation features)
   narrative:
     as_a: platform engineer
     i_want: a suite that exercises cross-dialect translation
@@ -8461,15 +8627,15 @@ stories:
   - GoldenDataset
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-142
   feature: FEAT-060
   title: Configure caching per model
   narrative:
     as_a: platform engineer
-    i_want: to choose backend (exact/prompt/semantic), TTL, key strategy and size caps per model
+    i_want: to choose backend (exact|prompt_prefix|semantic), TTL, key strategy (canonical|raw|normalized-semantic) and size caps per model
     so_that: I can tune cost and correctness for each workload
-  priority: P1
+  priority: P0
   acceptance_criteria:
   - id: AC-001
     scenario: Enable exact cache on a model
@@ -8480,6 +8646,7 @@ stories:
     - I save
     then:
     - A CacheConfig row is created for the model
+    - The cache key is computed over (org_id, resolved_model_id, resolved_provider_id, redacted_prompt) - not over aliases or raw prompts
     - 'Subsequent identical requests return cached responses with "cached: true"'
   - id: AC-002
     scenario: Lower TTL
@@ -8518,7 +8685,8 @@ stories:
         key_strategy: string
         max_entry_kb: int
         max_items: int
-        token_discount: number
+        max_size_mb: int
+        eviction_policy: string
         enabled: bool
     response:
       config: CacheConfig
@@ -8532,8 +8700,8 @@ stories:
   - CacheConfig
   - Model
   non_functional:
-  - Cache lookups complete within 5 ms p95 on a hit and never block a miss
-  - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage
+  - Cache lookup (hit-or-miss decision, excluding upstream dispatch on miss) completes in under 500 µs p95 as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
+  - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage, and are partitioned by CacheEntry.org_id so tenant isolation is schema-enforced
 - id: STORY-143
   feature: FEAT-061
   title: Create a semantic cache config
@@ -8673,9 +8841,18 @@ stories:
     given:
     - A day of cached and uncached requests
     when:
-    - The savings report runs
+    - The savings report runs (see STORY-153 analytics endpoint under FEAT-066)
     then:
     - Tokens-saved and dollars-saved are attributed correctly per model/team
+  - id: AC-003
+    scenario: Request cost decomposition on hit
+    given:
+    - A Request was served from cache (Request.cached = true)
+    when:
+    - Cost is computed
+    then:
+    - Request.input_cost = 0 and Request.output_cost = 0
+    - Request.cache_cost = cache_tokens * Model.cache_price / 1,000,000 (see STORY-332)
   data_models:
   - Request
   - CacheConfig
@@ -8707,7 +8884,7 @@ stories:
     when:
     - The previous version v7 is marked retired
     then:
-    - Its status becomes "cold" and its TTL drops to 0
+    - PromptSegment.status becomes "retired" and its TTL drops to 0
   api:
   - method: GET
     path: /api/cache/segments
@@ -8746,8 +8923,9 @@ stories:
     scenario: Bulk invalidate by model
     given:
     - I have searched for entries of model "claude-sonnet-4-5"
+    - The matching set exceeds 100 entries
     when:
-    - I click "Invalidate all in view" and confirm
+    - I click "Invalidate all in view" and type the target model (or team) slug to confirm per project.destructive_action_confirmation_policy
     then:
     - All matching entries are deleted
   api:
@@ -8772,6 +8950,7 @@ stories:
       ok: bool
     errors:
     - 401
+    - 403
     - 404
     inferred: true
   - method: POST
@@ -8780,6 +8959,7 @@ stories:
       body:
         scope: string
         target_id: uuid
+        confirm_slug: string
     response:
       invalidated: int
     errors:
@@ -8793,8 +8973,9 @@ stories:
   - Team
   - AuditLog
   non_functional:
-  - Cache lookups complete within 5 ms p95 on a hit and never block a miss
-  - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage
+  - Cache lookup (hit-or-miss decision, excluding upstream dispatch on miss) completes in under 500 µs p95 as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
+  - Cache keys are partitioned by CacheEntry.org_id so tenant isolation is schema-enforced
+  - POST /api/cache/invalidate scope ∈ {model, team, key, org}; org scope requires platform-operator privileges and typed-slug confirmation
 - id: STORY-148
   feature: FEAT-063
   title: Invalidate cache entries on BYOK rotation
@@ -8811,7 +8992,7 @@ stories:
     when:
     - The rotation completes
     then:
-    - Matching CacheEntry rows for the affected provider are invalidated
+    - An async purge deletes CacheEntry rows where byok_credential_id = the rotated credential (or, for rows without byok_credential_id, rows matched via Request.api_key_id -> ApiKey.owner -> BYOKCredential); eventual-consistency window documented per config-reload SLA
     - An AuditLog entry records "cache.invalidate" with reason "byok.rotate"
   data_models:
   - CacheEntry
@@ -9044,7 +9225,7 @@ stories:
     - loading
   api:
   - method: GET
-    path: /api/caching/analytics
+    path: /api/cache/analytics
     request:
       query:
         from: timestamp
@@ -9079,9 +9260,11 @@ stories:
     when:
     - I click "Warm up cache" and confirm
     then:
-    - A CacheWarmupJob is created with status "queued"
-    - Each segment is issued as a non-billable cache write request, subject to the segment's TTL
-    - The job records succeeded, failed, skipped counts and completes within the stated ETA
+    - A CacheWarmupJob is created with status "queued" (linked to the acting ApiKey and to the resolved BYOKCredential)
+    - Each segment is issued through the full request pipeline - edge auth, safety detectors (FEAT-070..081), residency enforcement (FEAT-130) and budget enforcement (EPIC-008) apply unchanged
+    - '"Non-billable" refers to Antirion-side markup only; upstream provider charges (for managed or BYOK) still apply and still decrement budget counters by Request.cache_cost on subsequent hits'
+    - Cache writes populate CacheEntry.org_id so tenant isolation is preserved
+    - The job records succeeded, failed, skipped counts
   ui:
     screens:
     - Cache
@@ -9095,7 +9278,7 @@ stories:
     - done
   api:
   - method: POST
-    path: /api/caching/warmup
+    path: /api/cache/warmup
     request:
       body:
         model_id: string
@@ -9147,8 +9330,8 @@ stories:
     - default
     - saving
   api:
-  - method: PUT
-    path: /api/caching/configs/:id
+  - method: PATCH
+    path: /api/cache/configs/:id
     request:
       body:
         eviction_policy: string
@@ -9182,7 +9365,7 @@ stories:
     when:
     - An entry is evicted
     then:
-    - An eviction event is written with reason (policy|ttl|size|safety_policy_change|manual_purge) and rule_id if applicable
+    - A CacheEvictionEvent row is written with reason (policy|ttl|size|safety_policy_change|manual_purge) and rule_id if applicable
   - id: AC-002
     scenario: Browse evictions
     given:
@@ -9192,6 +9375,7 @@ stories:
     then:
     - I see the last 24h of events with reason breakdown
   data_models:
+  - CacheEvictionEvent
   - CacheEntry
   - CacheConfig
   non_functional:
@@ -9323,20 +9507,24 @@ stories:
     scenario: Credit card blocked
     given:
     - A prompt contains a Luhn-valid credit-card number
-    - PII category "cc" has action "block"
+    - PiiCategory "cc" has action "block"
     when:
     - The request is processed
     then:
-    - The gateway returns 451 to the client
-    - A SafetyEvent of action "block" is recorded and visible to the owner team
+    - The gateway returns 451 with Request.status_label = "safety_blocked"
+    - A SafetyEvent of action "block" is recorded
+    - A Notification of kind "security" is emitted to Org.security_contact and Org.privacy_officer (with saas fanout to Antirion trust_and_safety for sustained patterns; in self_hosted the cross-tenant fanout is dropped) per project.notifications_model
+    - Original prompts are never persisted; reversible spans are tokenized into RedactionVaultEntry and only FEAT-080 can reveal them
   data_models:
   - SafetyEvent
   - DetectionRule
   - PiiCategory
+  - RedactionVaultEntry
   - Request
+  - Notification
   non_functional:
   - Inline redaction p95 latency <= 50 ms per request
-  - Reversible redaction keys stored in a vault with workspace-scoped access
+  - Reversible redaction tokens stored in RedactionVaultEntry (workspace-scoped, residency-pinned, CMK-bound); original spans are never written to SafetyEvent or Request
 - id: STORY-160
   feature: FEAT-070
   title: Set per-workspace PII strictness
@@ -9512,7 +9700,7 @@ stories:
     - The rule stops evaluating
   api:
   - method: POST
-    path: /api/safety/rules
+    path: /api/detection-rules
     request:
       body:
         name: string
@@ -9529,7 +9717,7 @@ stories:
     - 403
     inferred: true
   - method: PATCH
-    path: /api/safety/rules/:id
+    path: /api/detection-rules/:id
     request:
       body:
         enabled: bool
@@ -9579,7 +9767,7 @@ stories:
     - Open SafetyEvents linked to the rule retain their rule_id for history
   api:
   - method: PATCH
-    path: /api/safety/rules/:id
+    path: /api/detection-rules/:id
     request:
       body:
         name: string
@@ -9598,7 +9786,7 @@ stories:
     - 404
     inferred: true
   - method: DELETE
-    path: /api/safety/rules/:id
+    path: /api/detection-rules/:id
     response:
       ok: bool
     errors:
@@ -9630,7 +9818,7 @@ stories:
     - I click "False positive"
     then:
     - The event is tagged false_positive
-    - The DetectionRule.fp_rate is recomputed as fp_count / fire_count
+    - DetectionRule.fp_count is incremented; DetectionRule.fp_rate = fp_count / fire_count is recomputed (both fields on the DetectionRule model)
   data_models:
   - SafetyEvent
   - DetectionRule
@@ -9801,18 +9989,21 @@ stories:
   title: Version every change to a detection rule
   narrative:
     as_a: security officer
-    i_want: every edit to a DetectionRule captured as a version
+    i_want: every edit to a published DetectionRule captured as a version
     so_that: I can diff and roll back
   priority: P1
+  depends_on:
+  - STORY-168
   acceptance_criteria:
   - id: AC-001
-    scenario: Version recorded on save
+    scenario: Version recorded on save of a published rule
     given:
-    - I edit a DetectionRule and save
+    - I edit a DetectionRule whose status = "published"
     when:
     - The save completes
     then:
     - A SafetyRuleVersion row is created with actor, timestamp, before/after JSON and a change summary
+    - Edits to status = "draft" rules do not write a SafetyRuleVersion row (publish writes the initial version per STORY-168)
   - id: AC-002
     scenario: Roll back to prior version
     given:
@@ -10145,7 +10336,7 @@ stories:
     - I reject with reason
     then:
     - The proposed change is discarded
-    - The requester is notified
+    - A Notification is delivered to the requester (acting principal) per project.notifications_model and the AuditLog records the resolved audience list
   data_models:
   - Approval
   - AuditLog
@@ -10170,7 +10361,7 @@ stories:
     when:
     - The SLA is at 80%
     then:
-    - The approver is reminded; on breach, the Approval is marked "sla_breached" and an AlertEvent fires
+    - The approver is reminded; on breach, the Approval is marked "sla_breached" and an AlertEvent fires, with audience routed to Org.security_contact (and Antirion trust_and_safety sub-queue in saas; collapsed to platform admin in self_hosted) per project.notifications_model
   - id: AC-002
     scenario: Delegate while OOO
     given:
@@ -10211,7 +10402,7 @@ stories:
     - I click "Request unredact" and type a reason
     then:
     - A PiiUnredactRequest is created in state "pending"
-    - An Approval of kind "policy-change" is created linked to it
+    - An Approval of kind "data-reveal" is created linked to it, with approver routed to Org.privacy_officer per project.notifications_model (in saas, also fanout to Antirion DPO sub-queue; in self_hosted, collapse to platform admin)
   data_models:
   - PiiUnredactRequest
   - Approval
@@ -10480,7 +10671,7 @@ stories:
     given:
     - I am on /budgets and click "New budget"
     when:
-    - I pick scope "team", scope_id "copilot", amount 120000, cycle "monthly"
+    - I pick scope "team", scope_id the UUID of team "copilot" (slugs are resolved to Team.id before write), amount 120000, cycle "monthly"
     - I click Create
     then:
     - A Budget is created for the current cycle
@@ -10535,7 +10726,7 @@ stories:
   title: Reconcile direct-waiver and Approval-based budget paths
   narrative:
     as_a: finance operations lead
-    i_want: the behavior of direct-waiver (STORY-088) and Approval-based waivers (STORY-091) to be clearly separated by threshold
+    i_want: the behavior of direct-waiver (STORY-193) and Approval-based waivers (STORY-196) to be clearly separated by threshold
     so_that: small waivers are fast and big waivers are governed
   priority: P1
   acceptance_criteria:
@@ -10585,7 +10776,7 @@ stories:
     when:
     - I assign shares 50/30/20 and save
     then:
-    - Each Project.budget is 60000 / 36000 / 24000
+    - A Budget row is created (or updated) per Project with scope="project" and amount 60000 / 36000 / 24000 respectively; Project.budget_id is set to the created Budget
     - The sum matches the team budget
   - id: AC-002
     scenario: Over-allocation warning
@@ -10646,7 +10837,7 @@ stories:
     when:
     - A new request arrives for that team
     then:
-    - The gateway returns 429 with "budget exhausted"
+    - The gateway returns 402 Payment Required with error code "budget_exhausted" (aligned with FEAT-180 license hard-close); Retry-After is set only when the cycle boundary is within the retry horizon
     - A BudgetEvent of type "enforce" is recorded
   api:
   - method: PATCH
@@ -10686,7 +10877,7 @@ stories:
   - id: AC-001
     scenario: Downgrade applied
     given:
-    - A BudgetPolicy with hard-cap 100% and action "downgrade-model" to "claude-haiku-4-5"
+    - A BudgetPolicy with hard-cap 100% and action "downgrade-model" to "claude-haiku-4-5-20251001"
     - Team is at 102% of budget
     when:
     - A request to "claude-sonnet-4-5" arrives for the team
@@ -10976,7 +11167,7 @@ stories:
     when:
     - I change amount from 5000 to 10000
     then:
-    - An Approval is created with kind "budget-overage"
+    - An Approval is created with kind "budget-change"
     - Budget.amount remains 5000 until the Approval is approved
   ui:
     screens:
@@ -11141,9 +11332,8 @@ stories:
     - The metering pipeline writes the latest bucket
     then:
     - A BudgetEvent of type "overage" is written
-    - Notifications are sent to Budget.owner and Org.billing_contact via the configured channels in saas mode
-    - In self_hosted mode Org.billing_contact has no meaning against Antirion billing, so the same notification falls back to Org.finance_contact if set else platform admin
-    - Sustained overage across the tenant roster in saas mode additionally fans out to Antirion trust_and_safety as an abuse-correlation signal; this branch is silently skipped in self_hosted because the tenant set is 1
+    - Notifications are delivered to Budget.owner_user_id and Org.billing_contact via the configured channels in both deployment modes (tenant-scoped roles behave identically per project.notifications_model)
+    - If Org.finance_contact is set, it is added to the audience; otherwise the billing_contact audience stands
     - The notification is deduped for 1 hour on the same Budget
   ui:
     screens:
@@ -11410,7 +11600,7 @@ stories:
     when:
     - I edit thresholds
     then:
-    - All attached Budgets immediately see the new policy
+    - All attached Budgets see the new policy within the config-reload SLA (per project.non_functional_baseline.config_hot_reload)
   - id: AC-004
     scenario: Delete blocked when in use
     given:
@@ -11764,7 +11954,7 @@ stories:
     - I fill name "Anthropic p95 latency regression", category "latency"
     - I pick severity "warn" from the radio set {info, warn, crit}
     - I set scope "provider:openai" using the scoped-entity picker
-    - I set condition metric "p95_latency_ms", operator ">", threshold 1500
+    - I set condition metric "p95_latency_ms", operator ">", threshold 1500, window "30m"
     - I set for_duration "5m" (sustained duration the condition must hold before firing)
     - I set cooldown "15m" (re-fire suppression window after a fire)
     - I pick channels [email, slack]
@@ -11780,7 +11970,7 @@ stories:
     when:
     - I change any of name, scope, metric, operator, threshold, for_duration, severity or cooldown
     then:
-    - The preview renders "when {scope}.{metric} {operator} {threshold} for {for_duration} → fire {severity}, cooldown {cooldown}"
+    - The preview renders "when {scope}.{metric} over {window} {operator} {threshold} for {for_duration} → fire {severity}, cooldown {cooldown}"
     - Example shown below the form always reflects the current form state
   - id: AC-003
     scenario: Severity must be one of info, warn, crit
@@ -12493,7 +12683,7 @@ stories:
     given:
     - I am on /alerts/history
     when:
-    - I filter by severity "high" and the last 30 days
+    - I filter by severity "crit" and the last 30 days
     then:
     - I see a table of AlertEvent rows with duration, acked-by, resolved-by and affected-requests
   - id: AC-002
@@ -12554,7 +12744,7 @@ stories:
   - id: AC-001
     scenario: Declare from an alert
     given:
-    - An AlertEvent is firing at severity "high"
+    - An AlertEvent is firing at severity "crit"
     when:
     - I click "Declare incident", pick severity SEV-2 and add 2 participants
     then:
@@ -12864,7 +13054,7 @@ stories:
     given:
     - I open SLOs
     when:
-    - I create an SLO "gateway-availability" with target 99.9% over 30d
+    - I create an SLO "gateway-availability" with target 99.95% over 30d (matches project.availability_slo gateway data-plane target)
     then:
     - An SLO row is created and the error budget is initialized
   data_models:
@@ -13177,19 +13367,26 @@ stories:
     then:
     - All ApiKey rows owned by the user are revoked
     - PersonalToken rows are revoked
-    - Pending Approval rows assigned to the user are reassigned to the team lead
+    - All Session rows for the user are revoked (FEAT-003)
+    - All TrustedBrowser rows for the user are deleted (FEAT-015)
+    - Pending Invite rows addressed to the user's email are marked revoked (FEAT-004)
+    - Pending Approval rows assigned to the user are reassigned via the fallback chain Team.lead_user_id -> Org.owner_user_id -> platform admin (self_hosted) / Antirion trust_and_safety (saas)
     - Active PiiUnredactRequest reveals are expired immediately
     - UserBudget rows are closed
-    - AlertRule.owner_user_id is reassigned to the team lead
-    - An AuditLog entry summarises every cascade step
+    - AlertRule.owner_user_id and Webhook.owner_user_id are reassigned using the same fallback chain
+    - An AuditLog entry summarises every cascade step and records the resolved fallback target for each reassignment
   data_models:
   - User
   - ApiKey
   - PersonalToken
+  - Session
+  - TrustedBrowser
+  - Invite
   - Approval
   - PiiUnredactRequest
   - UserBudget
   - AlertRule
+  - Webhook
   - AuditLog
   non_functional:
   - Cascade runs in a single transactional job and is retried on partial failure
@@ -14265,7 +14462,7 @@ stories:
     given:
     - An org signing secret exists (used for webhook HMAC defaults)
     when:
-    - I click "Rotate signing secret" and confirm
+    - I click "Rotate signing secret" and type the workspace slug to confirm per project.destructive_action_confirmation_policy
     then:
     - A new signing secret is generated and shown once
     - The previous secret continues to validate for a 5-minute replay window
@@ -14293,10 +14490,14 @@ stories:
     inferred: true
   - method: POST
     path: /api/danger/secret/rotate
+    request:
+      body:
+        confirm_slug: string
     response:
       secret: string
       rotated_at: timestamp
     errors:
+    - 400
     - 401
     - 403
     inferred: true
@@ -14322,7 +14523,7 @@ stories:
     when:
     - I click "Pause" and type the model slug to confirm
     then:
-    - Model.paused becomes true
+    - Model.status becomes "paused"
     - Subsequent requests targeting the model get a 503 with structured reason
     - An AuditLog entry records "model.pause"
   data_models:
@@ -15415,7 +15616,7 @@ stories:
   - Model
   non_functional:
   - Wire-compatible with OpenAI v1 chat.completion schema
-  - p95 overhead (gateway decision + ingress/egress) <= 15 ms excluding upstream
+  - Additions to this phase must not breach the project performance_slo for gateway-added latency (<= 1 ms p95 excluding provider time)
 - id: STORY-313
   feature: FEAT-135
   title: Serve /v1/chat/completions with SSE streaming
@@ -15447,7 +15648,7 @@ stories:
     then:
     - The gateway emits a final event with an error object, then closes
     - The Request is recorded with status 502 and partial token counts
-    - If configured, a retry is attempted on the next target with the request repeated from the beginning
+    - If no bytes have reached the client, a retry is attempted per RoutingRule.retries (full reissue against the same or fallback target); if any bytes have reached the client, no retry is attempted on the same target and failover - if configured - reissues the full request against the next target, otherwise the stream is closed with an error event
   api:
   - method: POST
     path: /v1/chat/completions
@@ -15466,7 +15667,7 @@ stories:
   data_models:
   - Request
   non_functional:
-  - TTFT p95 <= 250 ms excluding upstream
+  - Gateway-added latency p95 <= 1 ms (per project.performance_slo); user-observable TTFT p95 = upstream TTFT + gateway-added latency
   - Client disconnect cancels the outbound stream within 100 ms
 - id: STORY-314
   feature: FEAT-135
@@ -15914,6 +16115,16 @@ stories:
     then:
     - The response is 401 with error code "api_key_revoked"
     - An AuditLog entry records the attempt with actor_type "service" and the key prefix
+  - id: AC-005
+    scenario: Rotating key during grace window
+    given:
+    - An ApiKey with status "rotating" and rotation_grace_ends in the future
+    - The successor ApiKey has its own secret_hash
+    when:
+    - A client presents either predecessor or successor secret
+    then:
+    - Both predecessor and successor secret_hash values are valid; authorization succeeds against either
+    - After rotation_grace_ends elapses, only the successor secret_hash is accepted and the predecessor returns 401
   api:
   - method: POST
     path: /v1/chat/completions
@@ -15974,7 +16185,7 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-  - Edge auth and rate-limit decisions complete in under 2 ms p95
+  - Edge auth and rate-limit decisions complete in under 250 µs p95 as a sub-budget of the gateway-added latency baseline (<= 1 ms p95 end-to-end)
 - id: STORY-325
   feature: FEAT-138
   title: Enforce rate limits with Retry-After
@@ -16017,7 +16228,7 @@ stories:
   - ApiAccessConfig
   - Team
   non_functional:
-  - Distributed token-bucket backed by Redis; lock-free hot path (CRC-sharded)
+  - Shared-store sliding-window limiter per project.non_functional_baseline.shared_limiters; lock-free hot path (CRC-sharded)
   - Edge synchronization within 60 seconds of config changes
 - id: STORY-326
   feature: FEAT-138
@@ -16050,7 +16261,7 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-  - Edge auth and rate-limit decisions complete in under 2 ms p95
+  - Edge auth and rate-limit decisions complete in under 250 µs p95 as a sub-budget of the gateway-added latency baseline (<= 1 ms p95 end-to-end)
 - id: STORY-327
   feature: FEAT-139
   title: Retry upstream with exponential backoff and jitter
@@ -16078,8 +16289,7 @@ stories:
     when:
     - The upstream drops
     then:
-    - No retry is attempted on the same target
-    - The stream is closed with an error event
+    - No retry is attempted on the same target; if a fallback target is configured and the fallback will re-issue the full request, failover runs and the client sees the stream continue; otherwise the stream is closed with an error event (consistent with STORY-313 and project.streaming baseline)
   - id: AC-003
     scenario: Retry budget exhausted
     given:
@@ -16088,7 +16298,7 @@ stories:
     - Another failure occurs
     then:
     - The failure is returned to the client with the original upstream status
-    - If a fallback target exists, failover runs instead (STORY-134)
+    - If a fallback target exists, failover runs instead (STORY-329)
   data_models:
   - RoutingRule
   - Request
@@ -16515,7 +16725,7 @@ stories:
     when:
     - A request is served
     then:
-    - A span "antirion.gateway.request" is exported with attributes model, provider, team, user, api_key_id, cost, input_tokens, output_tokens, latency_ms, ttft_ms
+    - A span "antirion.gateway.request" is exported with attributes request_id, org_id, team_id, user_id, api_key_id, model, provider, routing_rule_id, routing_strategy, canary_arm, shadow, cost, input_tokens, output_tokens, latency_ms, ttft_ms
     - Child spans are emitted for dialect translation, outbound call, retry attempts and streaming
   - id: AC-002
     scenario: Inbound traceparent preserved
@@ -16606,7 +16816,7 @@ stories:
     when:
     - I set head-based sampling to 5% and keep always-sample-on-error
     then:
-    - TelemetryConfig is updated and takes effect within 60s
+    - TelemetryConfig is updated and takes effect within the config-reload SLA (per project.non_functional_baseline.config_hot_reload)
   data_models:
   - Request
   - TelemetryConfig
@@ -16631,7 +16841,7 @@ stories:
     when:
     - The upstream emits chunks
     then:
-    - The gateway translates each chunk to OpenAI's SSE format in under 10 ms
+    - The gateway translates each chunk to OpenAI's SSE format on the hot path within the 1 ms p95 gateway-added latency budget (no per-chunk buffering)
     - Keep-alive comments are sent every 15 seconds during silence
     - On upstream error mid-stream, an "error" SSE event is emitted before close
   - id: AC-002
@@ -16801,12 +17011,13 @@ stories:
     given:
     - All providers for a route are open-circuit
     - The org has graceful degradation set to "serve-cached"
-    - A matching CacheEntry exists for the request
+    - A matching CacheEntry exists for the request in the request's resolved residency region (ResidencyConfig.region) per FEAT-130
     when:
     - The request is processed
     then:
     - The gateway returns the cached response with header X-Antirion-Degraded = true
     - Request.cached is true and Request.status is 200
+    - A cached entry outside the resolved residency region is never served - in that case AC-002 (structured 503) applies instead
   - id: AC-002
     scenario: Structured 503 fallback
     given:
@@ -17596,7 +17807,7 @@ stories:
     - I click "Create break-glass key" with reason and duration
     then:
     - An Approval of kind "key-elevated-scope" is created for the break-glass key
-    - A creation notification is sent to Org.security_contact (falling back to Org.owner in saas and platform admin in self_hosted)
+    - A creation notification is sent to Org.security_contact; only when Org.security_contact is unset does it fall back to Org.owner_user_id in saas or platform admin in self_hosted per project.notifications_model
     - In saas mode the creation event additionally notifies Antirion trust_and_safety at severity "warn" so Antirion staff can observe elevated access in-flight; in self_hosted this fanout is skipped unless the "security" phone-home channel (FEAT-179) is enabled
   data_models:
   - ApiKey
@@ -17936,7 +18147,7 @@ stories:
     when:
     - I view the overview
     then:
-    - The card shows "Configure limits" with a link to STORY-394's screen
+    - The card shows "Configure limits" with a link to STORY-382's screen
   - id: AC-003
     scenario: Drill-down to request log
     given:
@@ -17986,11 +18197,11 @@ stories:
   - id: AC-001
     scenario: Threshold alert on provider pressure
     given:
-    - An AlertRule of type "provider_rate_limit_pressure" with provider_id=anthropic, threshold=90 and for_duration_s=120
+    - An AlertRule with category "provider_rate_limit_pressure", scope "provider:anthropic", metric "rate_limit_utilization_pct", operator ">=", threshold 90 and for_duration "2m"
     when:
     - rpm_utilization stays above 90% for 120 seconds
     then:
-    - An AlertEvent is created and the configured NotificationChannels fire (see FEAT-101)
+    - An AlertEvent is created and the configured NotificationPreference/audience routes fire (see FEAT-102)
     - The event body includes binding_layer, rpm and tpm utilization and top offending keys
   - id: AC-002
     scenario: Auto-resolve on recovery
@@ -18094,16 +18305,20 @@ stories:
     i_want: a checklist guiding me through inviting teammates, connecting a provider, creating a key and issuing a test request
     so_that: I see value fast
   priority: P1
+  depends_on:
+  - STORY-387
   acceptance_criteria:
   - id: AC-001
     scenario: Checklist on empty workspace
     given:
     - My Org has only me as a member and no keys or models configured
+    - A ResidencyConfig exists for the Org (STORY-387 has completed)
     when:
     - I land on /gateway
     then:
     - A SetupChecklist card shows 4 items: Invite, Connect provider, Create key, Issue test request
     - Each item links to the corresponding screen
+    - When no ResidencyConfig exists, the checklist does not render and the user is redirected to the residency picker
   - id: AC-002
     scenario: Items tick off automatically
     given:
@@ -18294,7 +18509,7 @@ stories:
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
-  - Status-page updates propagate within 5 minutes of a component state change
+  - Status-page updates propagate within the config-reload SLA (<= 30 s) of a component state change, consistent with the FEAT-173 broadcast path that feeds the in-app widget
 - id: STORY-393
   feature: FEAT-164
   title: Open a support ticket from the shell
@@ -18775,7 +18990,7 @@ stories:
   title: View fleet roster across gateway, control-plane and workers
   navigation: operator
   narrative:
-    as_a: SRE or workspace owner
+    as_a: platform operator (Antirion SRE in saas, platform admin in self_hosted)
     i_want: a live roster of every replica across the gateway, control-plane API and worker fleets with version, region, AZ, state, CPU, in-flight count and stream count
     so_that: I can spot an unhealthy replica or a stuck rolling deploy before it affects traffic
   priority: P1
@@ -19465,7 +19680,7 @@ stories:
   - An incident in one region must not block writes or reads of incidents in another region — the store is regionally partitioned and globally read-replicated
 - id: STORY-413
   feature: FEAT-173
-  title: Compute affected tenants from routing and budgets
+  title: Compute affected tenants from routing
   navigation: operator
   narrative:
     as_a: Antirion platform operator
@@ -20023,7 +20238,7 @@ stories:
     - For "warn" the affected Org.primary_contact (falling back to Org.owner) receives a warn notification with the rule, evidence summary and cure-by date
     - For "suspend-for-review" and "suspend" the affected Org.owner and Org.primary_contact are notified via email and in-product inbox with the reason and appeal path; in saas mode Antirion legal is additionally notified because platform suspension is a commercial action
     - In self_hosted mode with a single tenant the notifications collapse to Org.owner and platform admin; the "dismiss" action emits no tenant notification
-    - For suspend actions, STORY-414 is invoked inline with the flag id as the reason
+    - For suspend actions, STORY-411 is invoked inline with the flag id as the reason
     - An AuditLog "abuse.triaged" is written with actor, flag id, action and the resolved notification audience
   ui:
     screens:
@@ -20144,7 +20359,7 @@ stories:
     given:
     - A fresh install emits a one-time bootstrap token to the container logs on first start
     when:
-    - I POST the token plus a chosen email and password to /api/bootstrap
+    - I POST the token plus a chosen email and password to /api/operator/install/bootstrap
     then:
     - A User is created with role platform admin
     - The bootstrap token is invalidated and cannot be reused
@@ -20157,7 +20372,7 @@ stories:
     - I submit the SSO IdP metadata and a claimed identifier
     then:
     - The first user matching the claimed identifier on SSO sign-in is granted platform admin
-    - No password is set and /api/bootstrap is disabled
+    - No password is set and /api/operator/install/bootstrap is disabled
   data_models:
   - User
   - AuditLog
@@ -20729,12 +20944,25 @@ models:
     type: int
   - name: seat_cap
     type: int
+  - name: owner_user_id
+    type: FK:User
+    nullable: true
+    description: Workspace owner for notifications_model fallback resolution
   - name: billing_contact
     type: string
   - name: tech_contact
     type: string
   - name: security_contact
     type: string
+  - name: finance_contact
+    type: string
+    nullable: true
+  - name: privacy_officer
+    type: string
+    nullable: true
+  - name: primary_contact
+    type: string
+    nullable: true
   - name: timezone
     type: string
   - name: fiscal_year_start
@@ -20745,6 +20973,18 @@ models:
     nullable: true
   - name: scheduled_for_deletion
     type: timestamp
+    nullable: true
+  - name: state
+    type: string
+    description: active|suspended|pending_deletion
+  - name: suspension_reason
+    type: string
+    nullable: true
+  - name: suspended_at
+    type: timestamp
+    nullable: true
+  - name: suspended_by_user_id
+    type: FK:User
     nullable: true
   - name: sso_enforced
     type: bool
@@ -20792,7 +21032,7 @@ models:
     nullable: true
   - name: role
     type: string
-    description: owner|admin|developer|analyst|viewer|service
+    description: owner|admin|developer|analyst|viewer|service|platform_admin (platform_admin is assignable only in self_hosted installs; rejected in saas)
   - name: status
     type: string
     description: active|pending|flagged|inactive|offboarded
@@ -20832,6 +21072,14 @@ models:
   - name: offboarded_at
     type: timestamp
     nullable: true
+  - name: human_owner_user_id
+    type: FK:User
+    nullable: true
+    description: For role='service' users, the human principal accountable for the service account
+  - name: created_by_user_id
+    type: FK:User
+    nullable: true
+    description: Actor who created this user (service accounts and invitations)
   relations:
   - type: belongs_to
     model: Org
@@ -20943,6 +21191,28 @@ models:
   - name: secret_hash
     type: string
     nullable: true
+  - name: is_primary
+    type: bool
+    description: Exactly one MfaFactor per user is primary at a time
+  - name: created_at
+    type: timestamp
+  relations:
+  - type: belongs_to
+    model: User
+- name: RecoveryCode
+  description: Hashed, single-use recovery code issued for MFA bypass.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: user_id
+    type: FK:User
+  - name: code_hash
+    type: string
+    unique: true
+  - name: consumed_at
+    type: timestamp
+    nullable: true
   - name: created_at
     type: timestamp
   relations:
@@ -21005,18 +21275,26 @@ models:
   - type: has_many
     model: Project
 - name: Role
-  description: Named role with inherited scopes.
+  description: Named role with inherited permissions. Built-in roles have org_id=null; custom roles are scoped to an Org and their name is unique within (org_id, name).
   fields:
   - name: id
     type: uuid
     pk: true
+  - name: org_id
+    type: FK:Org
+    nullable: true
+    description: Null for global built-in roles; set for tenant-scoped custom roles
   - name: name
     type: string
-    unique: true
+    description: Unique within (org_id, name); built-in names are globally reserved
   - name: level
     type: int
-  - name: scopes
+  - name: permissions
     type: json
+    description: Grouped permission identifiers granted to the role
+  - name: builtin
+    type: bool
+    description: True for platform-defined built-in roles; false for tenant-created custom roles
   - name: description
     type: string
 - name: PersonalToken
@@ -21034,6 +21312,9 @@ models:
     unique: true
   - name: scopes
     type: json
+  - name: status
+    type: string
+    description: active|rotating|revoked
   - name: created_at
     type: timestamp
   - name: last_used_at
@@ -21098,6 +21379,18 @@ models:
     description: service|user|ephemeral
   - name: scopes
     type: json
+    description: Effective scopes at authorization time (base_scopes unioned with elevated_scopes while elevated_until is in the future)
+  - name: base_scopes
+    type: json
+    description: Scopes granted at creation; restored when elevated_until expires
+  - name: elevated_scopes
+    type: json
+    nullable: true
+    description: Time-bounded elevated scopes granted via FEAT-027 approvals
+  - name: elevated_until
+    type: timestamp
+    nullable: true
+    description: When set in the future, elevated_scopes are additive to base_scopes
   - name: models
     type: json
   - name: rate_limit_rpm
@@ -21155,7 +21448,7 @@ models:
     type: FK:ApiKey
   - name: kind
     type: string
-    description: geo|spike|ua
+    description: geo|spike|ua|leak
   - name: severity
     type: string
   - name: message
@@ -21178,20 +21471,30 @@ models:
     type: FK:Org
   - name: provider_id
     type: FK:Provider
-  - name: name
+  - name: label
     type: string
+    description: Display label shown in BYOK UI surfaces
   - name: key_last4
     type: string
   - name: ciphertext
     type: json
   - name: status
     type: string
+    description: active|degraded|overdue|invalid|revoked (precedence overdue < degraded < invalid < revoked; active when none apply)
   - name: rotate_policy_days
     type: int
     nullable: true
-  - name: rotated_at
+  - name: last_rotated_at
     type: timestamp
     nullable: true
+  - name: successor_id
+    type: FK:BYOKCredential
+    nullable: true
+    description: Successor credential during zero-downtime rotation
+  - name: rotation_grace_ends
+    type: timestamp
+    nullable: true
+    description: When set, both this credential and successor_id are valid for outbound calls until this time
   - name: rate_limit_rpm
     type: int
     nullable: true
@@ -21252,7 +21555,7 @@ models:
     nullable: true
   - name: status
     type: string
-    description: enabled|disabled|preview|deprecated|restricted
+    description: enabled|disabled|preview|deprecated|restricted|paused
   - name: default
     type: bool
   - name: ctx
@@ -21481,8 +21784,15 @@ models:
     nullable: true
   - name: streamed
     type: bool
-  - name: tools
+  - name: tool_count
     type: int
+    description: Number of tool invocations on this request (see ToolInvocation)
+  - name: client_cancelled
+    type: bool
+    description: True when the client disconnected before the response completed
+  - name: mid_stream_dropped
+    type: bool
+    description: True when a streaming response was truncated by a transport error
   - name: pii_flag
     type: bool
   - name: safety_flag
@@ -21527,7 +21837,7 @@ models:
     type: FK:Org
   - name: scope
     type: string
-    description: org|team|provider|model
+    description: org|team|provider|model|project|api_key|env
   - name: scope_id
     type: string
     nullable: true
@@ -21535,6 +21845,15 @@ models:
     type: int
   - name: spend
     type: number
+  - name: spend_input
+    type: number
+    description: Portion of spend attributable to input tokens
+  - name: spend_output
+    type: number
+    description: Portion of spend attributable to output tokens
+  - name: spend_cache
+    type: number
+    description: Portion of spend attributable to cache read/write
   - name: errors
     type: int
   - name: p50_ms
@@ -21550,7 +21869,7 @@ models:
   - name: output_tokens
     type: int
 - name: SavedView
-  description: A saved request-log filter view.
+  description: A saved request-log or analytics filter view.
   fields:
   - name: id
     type: uuid
@@ -21562,6 +21881,12 @@ models:
     type: FK:Org
   - name: name
     type: string
+  - name: scope
+    type: string
+    description: personal|workspace (workspace requires admin to save)
+  - name: view_type
+    type: string
+    description: requests|analytics
   - name: filters
     type: json
   - name: starred
@@ -21579,8 +21904,15 @@ models:
     pk: true
   - name: org_id
     type: FK:Org
+  - name: detector_id
+    type: FK:AnomalyDetector
+    nullable: true
+  - name: category
+    type: string
+    description: cost_spike|latency_spike|error_spike|traffic_drop|other
   - name: severity
     type: string
+    description: info|warn|crit
   - name: provider_id
     type: FK:Provider
     nullable: true
@@ -21597,12 +21929,74 @@ models:
     type: json
   - name: detected_at
     type: timestamp
+  - name: review_status
+    type: string
+    description: open|reviewed|suppressed
   - name: reviewed_at
     type: timestamp
     nullable: true
   - name: reviewed_by_user_id
     type: FK:User
     nullable: true
+  - name: suppress_until
+    type: timestamp
+    nullable: true
+  - name: audience_snapshot
+    type: json
+    nullable: true
+    description: Resolved audience list (per project.notifications_model) at the time the anomaly was raised
+- name: AnomalyDetector
+  description: Configuration for an auto-detector that produces Anomaly rows.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+  - name: category
+    type: string
+    description: cost_spike|latency_spike|error_spike|traffic_drop|other
+  - name: enabled
+    type: bool
+  - name: threshold_config
+    type: json
+    description: Category-specific thresholds (e.g. p95_ms, window_seconds)
+  - name: cooldown_seconds
+    type: int
+  - name: last_fired_at
+    type: timestamp
+    nullable: true
+  relations:
+  - type: has_many
+    model: Anomaly
+- name: ToolInvocation
+  description: A single tool (function) call recorded inside a Request for tool-use analytics.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: request_id
+    type: FK:Request
+  - name: tool_name
+    type: string
+  - name: tool_id
+    type: string
+    nullable: true
+  - name: input_tokens
+    type: int
+    nullable: true
+  - name: output_tokens
+    type: int
+    nullable: true
+  - name: latency_ms
+    type: int
+    nullable: true
+  - name: status
+    type: string
+    description: ok|error|timeout
+  relations:
+  - type: belongs_to
+    model: Request
 - name: RoutingRule
   description: A priority-ordered rule governing routing decisions.
   fields:
@@ -21678,19 +22072,20 @@ models:
   - name: t
     type: timestamp
 - name: CacheConfig
-  description: Per-model cache configuration.
+  description: Per-model cache configuration. Effective cache cost is driven by Model.cache_price; token_discount has been removed (M-6). Eviction policy and size ceiling live here.
   fields:
   - name: id
     type: uuid
     pk: true
   - name: model_id
     type: FK:Model
-    unique: true
+    description: Not globally unique — one config per (model_id, scope, scope_id); scope-level overrides live in CacheOverride
   - name: backend
     type: string
-    description: exact|prompt|semantic
+    description: exact|prompt_prefix|semantic
   - name: key_strategy
     type: string
+    description: canonical|raw|normalized-semantic
   - name: ttl_sec
     type: int
   - name: max_entry_kb
@@ -21698,8 +22093,13 @@ models:
   - name: max_items
     type: int
     nullable: true
-  - name: token_discount
-    type: number
+  - name: max_size_mb
+    type: int
+    nullable: true
+    description: Aggregate size ceiling per (model, scope) before eviction_policy kicks in
+  - name: eviction_policy
+    type: string
+    description: LRU|LFU|TTL-first
   - name: enabled
     type: bool
   - name: note
@@ -21774,20 +22174,41 @@ models:
     type: string
     nullable: true
 - name: CacheEntry
-  description: A single cached response.
+  description: A single cached response. Tenant-partitioned by org_id; indexed on (org_id, model_id, key_hash).
   fields:
   - name: id
     type: uuid
     pk: true
+  - name: org_id
+    type: FK:Org
   - name: model_id
     type: FK:Model
+  - name: provider_id
+    type: FK:Provider
+    nullable: true
+    description: Resolved provider at write time; used by BYOK rotation invalidation (STORY-148)
+  - name: byok_credential_id
+    type: FK:BYOKCredential
+    nullable: true
+  - name: semantic_cache_config_id
+    type: FK:SemanticCacheConfig
+    nullable: true
   - name: backend
     type: string
+    description: exact|prompt_prefix|semantic
   - name: team_id
     type: FK:Team
     nullable: true
+  - name: user_id
+    type: FK:User
+    nullable: true
+    description: Populated for user-scoped caches; enables InvalidationRule.action = drop-user
+  - name: streamed
+    type: bool
+    description: True when the stored body originated from a streaming request (affects replay framing)
   - name: key_preview
     type: string
+    description: Truncated to 128 chars; generated from the redacted prompt (never raw PII)
   - name: key_hash
     type: string
   - name: size_kb
@@ -21806,6 +22227,34 @@ models:
   - name: similarity_score
     type: number
     nullable: true
+    description: Populated only when backend = semantic; null otherwise
+- name: CacheEvictionEvent
+  description: A single cache-eviction occurrence captured for STORY-156 and downstream observability.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+  - name: cache_entry_id
+    type: uuid
+    description: Denormalized — the evicted entry may already be gone; FK not enforced
+  - name: model_id
+    type: FK:Model
+  - name: reason
+    type: string
+    description: policy|ttl|size|safety_policy_change|manual_purge
+  - name: rule_id
+    type: FK:InvalidationRule
+    nullable: true
+    description: Populated only when reason originates from an InvalidationRule
+  - name: size_kb
+    type: int
+  - name: ttl_remaining_sec
+    type: int
+    nullable: true
+  - name: evicted_at
+    type: timestamp
 - name: InvalidationRule
   description: Event-driven cache invalidation rule.
   fields:
@@ -21832,14 +22281,14 @@ models:
   - name: firings_24h
     type: int
 - name: CacheOverride
-  description: Team- or key-level override of a cache setting.
+  description: Scope-level override of a CacheConfig setting. Precedence (most specific wins) key > byok > env > project > team > model default.
   fields:
   - name: id
     type: uuid
     pk: true
   - name: scope
     type: string
-    description: team|key
+    description: team|key|project|env|byok
   - name: target_id
     type: uuid
   - name: setting
@@ -21868,7 +22317,7 @@ models:
   - name: request_id
     type: FK:Request
     nullable: true
-  - name: sev
+  - name: severity
     type: string
     description: crit|high|med|low
   - name: action
@@ -21901,12 +22350,10 @@ models:
     type: int
   - name: fingerprint
     type: string
-  - name: prompt_original
-    type: string
-    nullable: true
   - name: prompt_redacted
     type: string
     nullable: true
+    description: Redacted prompt span copy for event drawer rendering; original prompts are never persisted — FEAT-080 unredact reads from the reversible RedactionVault by token
   - name: spans
     type: json
     nullable: true
@@ -21951,9 +22398,24 @@ models:
     type: bool
   - name: hits_24h
     type: int
+  - name: fire_count
+    type: int
+    description: Lifetime monotonic count of rule firings; denominator for fp_rate
+  - name: fp_count
+    type: int
+    description: Lifetime monotonic count of firings marked false positive by reviewers
   - name: fp_rate
     type: number
     nullable: true
+    description: Derived fp_count / fire_count; recomputed when reviewers mark events
+  - name: installed_template_id
+    type: FK:SafetyRuleTemplate
+    nullable: true
+    description: Set when this rule was installed from a template pack (STORY-173)
+  - name: deleted_at
+    type: timestamp
+    nullable: true
+    description: Soft-delete; SafetyEvent.rule_id remains valid for history after delete
   - name: note
     type: string
     nullable: true
@@ -21993,8 +22455,29 @@ models:
   - name: readiness
     type: number
     description: Composite 0..100 score rendered on the flow diagram
+- name: RedactionVaultEntry
+  description: A workspace-scoped, residency-pinned, CMK-bound reversible-redaction token mapping to the original span. Read only via FEAT-080 unredact flow.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+  - name: token
+    type: string
+    unique: true
+  - name: ciphertext
+    type: text
+    description: FPE or CMK-wrapped ciphertext of the original span
+  - name: category
+    type: string
+  - name: region
+    type: string
+    description: ResidencyConfig-pinned region; the vault entry never leaves this region
+  - name: created_at
+    type: timestamp
 - name: PiiCategory
-  description: A named PII detector category with strictness.
+  description: A named PII detector category with strictness and per-category action.
   fields:
   - name: id
     type: string
@@ -22006,6 +22489,9 @@ models:
   - name: strictness
     type: string
     description: loose|balanced|strict
+  - name: action
+    type: string
+    description: block|redact|flag|allow
   - name: risk
     type: string
 - name: Budget
@@ -22103,15 +22589,22 @@ models:
     nullable: true
   - name: created_at
     type: timestamp
+  - name: deleted_at
+    type: timestamp
+    nullable: true
+    description: Soft-delete timestamp; Projects remain visible in audit history after delete
   relations:
   - type: belongs_to
     model: Team
 - name: UserBudget
-  description: A per-user allocation of a project or team budget.
+  description: A per-user allocation of a parent Budget; team_id and project_id are derived from the parent Budget scope.
   fields:
   - name: id
     type: uuid
     pk: true
+  - name: budget_id
+    type: FK:Budget
+    description: Canonical parent Budget; enables cycle rollover to reset spent correctly
   - name: user_id
     type: FK:User
   - name: project_id
@@ -22134,11 +22627,29 @@ models:
   - name: id
     type: uuid
     pk: true
+  - name: budget_id
+    type: FK:Budget
+    nullable: true
+  - name: approval_id
+    type: FK:Approval
+    nullable: true
+    description: Linked Approval when the event originates from an approval decision (waiver, edit)
   - name: t
     type: timestamp
   - name: type
     type: string
     description: overage|forecast|threshold|waiver|change|enforce
+  - name: amount
+    type: number
+    nullable: true
+    description: Waiver magnitude (type=waiver) or enforcement blocked-request cost (type=enforce); null for informational events
+  - name: reason
+    type: string
+    nullable: true
+  - name: valid_until
+    type: timestamp
+    nullable: true
+    description: For type=waiver, the cycle end after which the waiver no longer applies
   - name: severity
     type: string
   - name: scope
@@ -22155,13 +22666,22 @@ models:
     type: FK:User
     nullable: true
 - name: AlertRule
-  description: A threshold-based alert rule.
+  description: A threshold-based alert rule. org_id is null when scope_kind = "platform" (platform-scope rules owned by the platform operator, e.g. ingestion-health).
   fields:
   - name: id
     type: uuid
     pk: true
   - name: org_id
     type: FK:Org
+    nullable: true
+    description: Null when scope_kind = "platform"
+  - name: scope_kind
+    type: string
+    description: tenant|platform
+  - name: owner_user_id
+    type: FK:User
+    nullable: true
+    description: Rule owner; defaults to the creator; used by notifications_model "resource owner" resolution and by deprovisioning cascades (STORY-269)
   - name: team_id
     type: FK:Team
     nullable: true
@@ -22211,13 +22731,18 @@ models:
   - name: updated_at
     type: timestamp
 - name: AlertEvent
-  description: A single fire of an alert rule.
+  description: A single fire of an alert rule or system signal.
   fields:
   - name: id
     type: uuid
     pk: true
   - name: rule_id
     type: FK:AlertRule
+    nullable: true
+    description: Set when the event was produced by an AlertRule evaluation; null for system-generated signals (set source accordingly)
+  - name: source
+    type: string
+    description: rule|budget|anomaly|slo|system
   - name: severity
     type: string
   - name: status
@@ -22338,6 +22863,18 @@ models:
   - name: default_role
     type: string
     nullable: true
+  - name: slo_url
+    type: string
+    nullable: true
+    description: IdP Single Logout endpoint used for SAML LogoutRequest
+  - name: back_channel_logout_url
+    type: string
+    nullable: true
+    description: Endpoint receiving IdP back-channel logout receipts
+  - name: signing_cert
+    type: text
+    nullable: true
+    description: IdP signing certificate (PEM) used to validate SLO receipts and assertions
 - name: ScimConfig
   description: SCIM 2.0 provisioning configuration.
   fields:
@@ -22432,12 +22969,22 @@ models:
   - name: cmk_rotated_at
     type: timestamp
     nullable: true
-  - name: dpo_contact
-    type: string
-    nullable: true
-  - name: migration_ends_at
+  - name: pinned_at
     type: timestamp
     nullable: true
+    description: When the residency region was pinned at first-run (immutable after set)
+  - name: pinned_by_user_id
+    type: FK:User
+    nullable: true
+    description: Principal who confirmed the pin at first-run
+  - name: source
+    type: string
+    nullable: true
+    description: first_run|install_config|user|api (how the region was pinned - see FEAT-162 saas / FEAT-177 self_hosted)
+  - name: mode
+    type: string
+    nullable: true
+    description: initial|migrated (all current installs must be "initial" - migration is not supported)
 - name: RetentionConfig
   description: Retention and redaction policy for stored request data.
   fields:
@@ -22450,6 +22997,9 @@ models:
     type: int
   - name: metadata_days
     type: int
+  - name: anomalies_days
+    type: int
+    description: Retention window for reviewed/suppressed Anomaly rows before the worker sweep deletes them
   - name: pii_redaction_enabled
     type: bool
   - name: custom_pii_entities
@@ -22462,6 +23012,10 @@ models:
     pk: true
   - name: org_id
     type: FK:Org
+  - name: owner_user_id
+    type: FK:User
+    nullable: true
+    description: Webhook owner; used by deprovisioning cascade and by notifications_model resource-owner resolution
   - name: name
     type: string
   - name: url
@@ -22509,13 +23063,18 @@ models:
   - name: status
     type: string
 - name: AuditLog
-  description: Immutable record of security-relevant actions in the workspace.
+  description: Immutable record of security-relevant actions. Tenant-plane rows carry org_id; operator-plane rows (EPIC-013 actions by Antirion staff or platform admin against a non-tenant target) set org_id=null and actor_plane="operator".
   fields:
   - name: id
     type: uuid
     pk: true
   - name: org_id
     type: FK:Org
+    nullable: true
+    description: Null on operator-plane rows
+  - name: actor_plane
+    type: string
+    description: tenant|operator
   - name: t
     type: timestamp
   - name: actor_user_id
@@ -22540,6 +23099,17 @@ models:
   - name: user_agent
     type: string
     nullable: true
+  - name: prev_hash
+    type: string
+    nullable: true
+    description: Hash of the prior AuditLog row in the per-org chain; null on the genesis row
+  - name: hash
+    type: string
+    description: Hash over (prev_hash, payload, signing_key_id); enables tamper-evident verification per project.non_functional_baseline.security
+  - name: signing_key_id
+    type: string
+    nullable: true
+    description: KMS key id used to seal this row; null on genesis rows prior to signing-key issuance
 - name: Integration
   description: A third-party integration available or connected for the workspace.
   fields:
@@ -22625,7 +23195,7 @@ models:
     type: FK:Org
   - name: kind
     type: string
-    description: budget-overage|policy-change|key-elevated-scope|routing-rule-change
+    description: budget-overage|budget-change|policy-change|key-elevated-scope|routing-rule-change|data-reveal
   - name: status
     type: string
     description: pending|approved|rejected|expired
@@ -22875,7 +23445,7 @@ models:
     type: FK:RoutingRule
   - name: type
     type: string
-    description: edit|canary.promote|rollback|toggle
+    description: edit|canary.promote|rollback
   - name: before
     type: json
     nullable: true
@@ -23040,13 +23610,17 @@ models:
   - name: stale
     type: bool
 - name: AlertSnooze
-  description: Time-bounded suppression of an AlertRule's notifications.
+  description: Time-bounded suppression of an AlertRule's notifications. When fingerprint is null the whole rule is snoozed; when set, only matching events are snoozed.
   fields:
   - name: id
     type: uuid
     pk: true
   - name: rule_id
     type: FK:AlertRule
+  - name: fingerprint
+    type: string
+    nullable: true
+    description: When set, matches AlertEvent.fingerprint for per-event mute
   - name: reason
     type: string
   - name: created_by_user_id
@@ -23062,7 +23636,7 @@ models:
   - type: belongs_to
     model: AlertRule
 - name: PostMortem
-  description: Narrative analysis attached to a resolved AlertEvent.
+  description: Structured analysis attached to a resolved AlertEvent. Template is enforced at save time - summary, timeline, impact, root_cause, action_items are required.
   fields:
   - name: id
     type: uuid
@@ -23071,8 +23645,14 @@ models:
     type: FK:AlertEvent
   - name: title
     type: string
-  - name: content
-    type: string
+  - name: summary
+    type: text
+  - name: timeline
+    type: text
+  - name: impact
+    type: text
+  - name: root_cause
+    type: text
   - name: author_user_id
     type: FK:User
   - name: created_at
@@ -23082,6 +23662,32 @@ models:
   relations:
   - type: belongs_to
     model: AlertEvent
+  - type: has_many
+    model: ActionItem
+- name: ActionItem
+  description: Structured action item attached to a PostMortem.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: post_mortem_id
+    type: FK:PostMortem
+  - name: description
+    type: text
+  - name: owner_user_id
+    type: FK:User
+    nullable: true
+  - name: due_date
+    type: timestamp
+    nullable: true
+  - name: status
+    type: string
+    description: open|in_progress|done
+  - name: created_at
+    type: timestamp
+  relations:
+  - type: belongs_to
+    model: PostMortem
 - name: OncallSchedule
   description: A named on-call rotation owned by a team.
   fields:
@@ -23149,7 +23755,7 @@ models:
   - name: updated_at
     type: timestamp
 - name: SessionPolicy
-  description: Org-wide browser session timeout policy.
+  description: Org-wide browser session timeout and sign-in lockout policy.
   fields:
   - name: org_id
     type: FK:Org
@@ -23158,6 +23764,15 @@ models:
     type: int
   - name: absolute_max_hours
     type: int
+  - name: lockout_threshold
+    type: int
+    description: Failed sign-in attempts within lockout_window_minutes that trigger a lock
+  - name: lockout_window_minutes
+    type: int
+    description: Rolling window for counting failed sign-in attempts
+  - name: lockout_duration_minutes
+    type: int
+    description: How long locked_until is set into the future after a lock fires
   - name: updated_at
     type: timestamp
 - name: AuditSinkHealthCheck
@@ -23240,11 +23855,15 @@ models:
     type: timestamp
     nullable: true
 - name: StatusPageIncident
-  description: A public incident posted on the status page.
+  description: A public incident posted on the status page; this is the public-facing projection of a PlatformIncident (FEAT-173). The tenant-internal response-incident lives on the Incident model.
   fields:
   - name: id
     type: uuid
     pk: true
+  - name: platform_incident_id
+    type: FK:PlatformIncident
+    nullable: true
+    description: Link to the platform-side incident this post projects from (null for pre-FEAT-173 posts)
   - name: title
     type: string
   - name: impact
@@ -23262,6 +23881,36 @@ models:
     type: timestamp
   - name: resolved_at
     type: timestamp
+    nullable: true
+- name: Incident
+  description: Tenant-internal response incident declared from an AlertEvent. Distinct from StatusPageIncident (public). Promoted to a StatusPageIncident via FEAT-173.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+  - name: alert_event_id
+    type: FK:AlertEvent
+    nullable: true
+  - name: severity
+    type: string
+    description: info|warn|crit
+  - name: title
+    type: string
+  - name: participants
+    type: json
+    description: List of User.id of responders
+  - name: state
+    type: string
+    description: investigating|identified|monitoring|resolved
+  - name: started_at
+    type: timestamp
+  - name: resolved_at
+    type: timestamp
+    nullable: true
+  - name: published_status_page_incident_id
+    type: FK:StatusPageIncident
     nullable: true
 - name: SupportTicket
   description: An in-product support request with attached workspace context.
@@ -23282,14 +23931,66 @@ models:
     description: Current screen, recent request_ids, browser, app version
   - name: status
     type: string
-    description: open|in_progress|waiting|resolved|closed
+    description: new|triaged|open|in_progress|waiting|awaiting_customer|resolved|closed
   - name: priority
     type: string
     description: low|normal|high|urgent
+  - name: severity
+    type: string
+    nullable: true
+    description: sev1|sev2|sev3 (set by FEAT-181 triage; drives SLA timers)
+  - name: assignee_user_id
+    type: FK:User
+    nullable: true
+  - name: install_id
+    type: string
+    nullable: true
+    description: Set on tickets originating from a self_hosted install (FEAT-179 phone-home)
+  - name: triaged_at
+    type: timestamp
+    nullable: true
+  - name: sla_due_at
+    type: timestamp
+    nullable: true
+  - name: destination
+    type: string
+    description: local_only|antirion_support_queue|local_and_antirion
+  - name: redaction_profile
+    type: string
+    nullable: true
+    description: Profile applied to ticket body before mirroring into the Antirion support queue (see STORY-393)
+  - name: antirion_ticket_id
+    type: string
+    nullable: true
+    description: Opaque id returned by FEAT-181 when the ticket is mirrored
   - name: created_at
     type: timestamp
   - name: resolved_at
     type: timestamp
+    nullable: true
+- name: LegalDocument
+  description: A versioned legal document surfaced via FEAT-165. In saas org_id is null (Antirion-global); in self_hosted org_id is set (customer uploads via platform admin).
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+    nullable: true
+    description: Null for Antirion-global documents (saas); set for customer-uploaded documents (self_hosted)
+  - name: kind
+    type: string
+    description: tos|dpa|privacy|aup
+  - name: version
+    type: string
+  - name: content
+    type: text
+  - name: effective_at
+    type: timestamp
+  - name: published_at
+    type: timestamp
+  - name: published_by_user_id
+    type: FK:User
     nullable: true
 - name: TosAcceptance
   description: Immutable record of ToS/DPA/privacy acceptance by a user at a version.
@@ -23331,7 +24032,28 @@ models:
     description: Screen identifiers this article is contextual to
   - name: tags
     type: json
+  - name: local_anchor
+    type: string
+    nullable: true
+    description: Bundled-with-install anchor used when air-gapped and the external URL is unreachable (self_hosted)
+  - name: view_count
+    type: int
+    description: Denormalized counter of help-palette opens; drives STORY-398 usage stats
   - name: updated_at
+    type: timestamp
+- name: HelpArticlePin
+  description: Per-workspace pin of a HelpArticle at the top of the help palette (STORY-398).
+  fields:
+  - name: org_id
+    type: FK:Org
+    pk: true
+  - name: article_id
+    type: FK:HelpArticle
+    pk: true
+  - name: pinned_by_user_id
+    type: FK:User
+    nullable: true
+  - name: pinned_at
     type: timestamp
 - name: WorkerQueue
   description: An internal background-job queue (aggregation, webhook delivery, retention, etc.).
@@ -23359,13 +24081,17 @@ models:
   - name: last_updated_at
     type: timestamp
 - name: WorkerJob
-  description: A single job scheduled on a WorkerQueue.
+  description: A single job scheduled on a WorkerQueue. owner_org_id is set for tenant-scoped jobs (per-org retention sweep, export generation, etc.) and null for platform-wide jobs; STORY-400 cancel/requeue by tenant admins is restricted to jobs matching the caller's org_id.
   fields:
   - name: id
     type: uuid
     pk: true
   - name: queue_id
     type: FK:WorkerQueue
+  - name: owner_org_id
+    type: FK:Org
+    nullable: true
+    description: Null for platform-wide jobs (metric aggregation, cross-tenant work); set for tenant-scoped jobs
   - name: status
     type: string
     description: queued|running|done|failed|retrying
@@ -23457,6 +24183,27 @@ models:
   - name: affected_org_ids
     type: string[]
     description: Computed from routing rollups at declaration time
+- name: IncidentTimelineEntry
+  description: One mutable timeline update appended to a PlatformIncident (see STORY-412 AC-002).
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: incident_id
+    type: FK:PlatformIncident
+  - name: state
+    type: string
+    description: investigating|identified|mitigated|resolved|cancelled
+  - name: body
+    type: text
+  - name: actor_user_id
+    type: FK:User
+    nullable: true
+  - name: at
+    type: timestamp
+  relations:
+  - type: belongs_to
+    model: PlatformIncident
 - name: FleetDeployment
   description: A single rollout of a ReleaseArtefact across the fleet × region matrix with canary, staged promotion and rollback state. Shared by FEAT-174 (saas) and FEAT-178 (self_hosted).
   fields:
@@ -23516,6 +24263,9 @@ models:
     type: int
   - name: retention_days_limit
     type: int
+  - name: tier
+    type: string
+    description: enterprise|cloud_assist (drives FEAT-179 phone-home channel defaults and FEAT-180 grace-window default)
   - name: features
     type: string[]
   - name: state
@@ -23947,7 +24697,7 @@ models:
     type: FK:User
   - name: kind
     type: string
-    description: alert|approval|job|deprecation|billing|security
+    description: alert|approval|job|deprecation|billing|security|maintenance|incident|license|license_violation|platform_notice
   - name: title
     type: string
   - name: body
@@ -24130,6 +24880,13 @@ models:
     type: timestamp
   - name: resolved_at
     type: timestamp
+  - name: renewal_confirmation_id
+    type: string
+    nullable: true
+    description: Antirion renewals reference; set when STORY-435 shield flow honors an in-flight renewal
+  - name: shielded_by_user_id
+    type: FK:User
+    nullable: true
   - name: last_actor_user_id
     type: FK:User
 - name: EngineeringIssueLink
