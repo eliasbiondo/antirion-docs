@@ -17,7 +17,7 @@ project:
     horizontal_scaling: Each fleet auto-scales on CPU, request rate and queue depth. Capacity plans hold the performance SLO under load with headroom for a 3x traffic burst without shedding. A node-loss event never loses more than that node's in-flight requests.
     workers: Background work — metric aggregation, request-log ingestion, webhook delivery, cache eviction, retention sweeps, export generation, anomaly scoring, fine-tune job polling, SCIM sync, audit sink fan-out, notification delivery — runs in a dedicated worker fleet that consumes durable queues with visibility timeouts, exponential-backoff retry, poison-message dead-letter queues and at-least-once semantics. Handlers must be idempotent. Worker fleet health is surfaced by FEAT-167.
     concurrency_and_backpressure: Each node enforces a max concurrent request cap and returns 429 or 503 with Retry-After when saturated; streaming connections count against the cap. Upstream provider pools, database connection pools and queue consumer pools are bounded with explicit acquire timeouts. Saturation on any tier surfaces as its own alert signal rather than bleeding into latency.
-    shared_limiters: Edge rate limits (FEAT-138), budget counters (EPIC-008) and provider outbound limiters (FEAT-161) use a shared-store sliding-window implementation so horizontal scaling does not multiply a tenant's effective limit. Idempotency-Key lookup (FEAT-142) is cluster-wide and survives node loss.
+    shared_limiters: Edge rate limits (FEAT-138), budget counters (EPIC-008) and provider outbound limiters (FEAT-161) use a shared-store sliding-window implementation so horizontal scaling does not multiply a tenant's effective limit. Idempotency-Key lookup (FEAT-141) is cluster-wide and survives node loss.
     config_hot_reload: Routing rules, model catalog, safety and budget policies, rate limits, alert rules and feature flags propagate to every node within 30 seconds without restart and without dropping in-flight requests.
     graceful_shutdown: On SIGTERM a node deregisters from the load balancer, stops accepting new work, drains in-flight requests up to a configurable timeout (default 60 seconds for API, 10 minutes for workers), flushes buffered telemetry and exits zero. Streaming connections receive a terminal event and close cleanly.
     health_checks: Every service exposes a liveness probe (process up) and a readiness probe (dependencies reachable, config loaded, migrations applied, circuit-breaker state hydrated). Not-ready nodes are excluded from load-balancer routing and from queue consumption.
@@ -28,7 +28,7 @@ project:
     availability_slo: Control-plane API targets 99.9% monthly availability; gateway data plane targets 99.95%. Error budgets are tracked per FEAT-106 and gate release promotion when burned.
     multi_region_and_dr: Every stateful dependency (Postgres, Redis, ClickHouse, object store, queue broker — NATS JetStream) is deployed across at least three availability zones with automatic failover. Control plane targets RPO <= 5 minutes and RTO <= 30 minutes; gateway data plane targets RPO <= 1 minute and RTO <= 10 minutes. Disaster recovery is exercised at least quarterly. Cross-region failover honors residency per FEAT-130 and fails closed rather than crossing a residency boundary.
     data_durability: Postgres uses synchronous replication to at least one standby. ClickHouse ingestion targets >= 99.99% row durability for the request log; ingestion gaps trigger the ingestion-health alert. Redis shards holding budget, rate-limit or idempotency state use AOF with appendfsync everysec; pure cache shards are best-effort.
-    streaming: SSE and chunked responses are proxied end-to-end without buffering. Mid-stream upstream failure retries only the remaining prefix. Long streams do not depend on sticky sessions — the L7 load balancer drains connections on deploy.
+    streaming: SSE and chunked responses are proxied end-to-end without buffering. Mid-stream upstream failure retries per RoutingRule.retries only when no bytes have reached the client; once any bytes have been streamed, the same target is not retried - an optional fallback target may reissue the full request, otherwise the stream closes with an error event. Long streams do not depend on sticky sessions — the L7 load balancer drains connections on deploy.
     observability: Every request, job and background task emits an OpenTelemetry span with Request-Id, org_id, team_id, user_id, model and provider. Structured JSON logs correlate by Request-Id. Prometheus metrics cover RED (rate, errors, duration) for request paths, USE (utilization, saturation, errors) for resources and queue depth / age / retry-count for workers.
     security: TLS 1.2+ is required on every externally exposed endpoint; internal service-to-service traffic uses mTLS. Secrets live in the configured KMS (with FEAT-133 CMK where enabled) and never appear in logs, telemetry or persisted payloads. Audit log writes are append-only with tamper-evident hashing.
     tenant_isolation: Every query is partitioned by org_id. Per-tenant quotas bound concurrency, CPU-seconds, queue slots and storage so a noisy tenant cannot degrade others. Tenant-isolation is continuously verified by FEAT-134.
@@ -1886,7 +1886,8 @@ features:
 - id: FEAT-158
   epic: EPIC-011
   title: Egress proxy configuration
-  description: Configure an outbound HTTP proxy (with credentials and per-provider override) for upstream provider calls.
+  description: Configure an outbound HTTP proxy (with credentials and per-provider override) for upstream provider calls. Available in both modes; typically required in self_hosted where air-gapped networks mandate an explicit proxy and optional in saas where Antirion's egress NAT is the default.
+  mode: both
   priority: P1
   stories:
   - STORY-372
@@ -1895,7 +1896,8 @@ features:
 - id: FEAT-159
   epic: EPIC-011
   title: Private connectivity
-  description: Configure PrivateLink or VPC peering for ingress/egress and verify the private endpoint.
+  description: Configure PrivateLink or VPC peering for ingress/egress and verify the private endpoint. PrivateLink ingress is a saas concept; self_hosted installs use equivalent VPC peering or direct in-cluster connectivity.
+  mode: both
   priority: P2
   stories:
   - STORY-375
@@ -1903,7 +1905,8 @@ features:
 - id: FEAT-160
   epic: EPIC-011
   title: Emergency break-glass scope
-  description: Create an audited, approval-gated, auto-expiring API key with elevated scope for incident response.
+  description: Create an audited, approval-gated, auto-expiring API key with elevated scope for incident response. In saas the approval audience includes Antirion trust_and_safety; in self_hosted it collapses to platform admin per project.notifications_model.
+  mode: both
   priority: P1
   stories:
   - STORY-377
@@ -15606,7 +15609,7 @@ stories:
   - Model
   non_functional:
   - Wire-compatible with OpenAI v1 chat.completion schema
-  - p95 overhead (gateway decision + ingress/egress) <= 15 ms excluding upstream
+  - Additions to this phase must not breach the project performance_slo for gateway-added latency (<= 1 ms p95 excluding provider time)
 - id: STORY-313
   feature: FEAT-135
   title: Serve /v1/chat/completions with SSE streaming
@@ -15638,7 +15641,7 @@ stories:
     then:
     - The gateway emits a final event with an error object, then closes
     - The Request is recorded with status 502 and partial token counts
-    - If configured, a retry is attempted on the next target with the request repeated from the beginning
+    - If no bytes have reached the client, a retry is attempted per RoutingRule.retries (full reissue against the same or fallback target); if any bytes have reached the client, no retry is attempted on the same target and failover - if configured - reissues the full request against the next target, otherwise the stream is closed with an error event
   api:
   - method: POST
     path: /v1/chat/completions
@@ -15657,7 +15660,7 @@ stories:
   data_models:
   - Request
   non_functional:
-  - TTFT p95 <= 250 ms excluding upstream
+  - Gateway-added latency p95 <= 1 ms (per project.performance_slo); user-observable TTFT p95 = upstream TTFT + gateway-added latency
   - Client disconnect cancels the outbound stream within 100 ms
 - id: STORY-314
   feature: FEAT-135
@@ -16175,7 +16178,7 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-  - Edge auth and rate-limit decisions complete in under 2 ms p95
+  - Edge auth and rate-limit decisions complete in under 250 µs p95 as a sub-budget of the gateway-added latency baseline (<= 1 ms p95 end-to-end)
 - id: STORY-325
   feature: FEAT-138
   title: Enforce rate limits with Retry-After
@@ -16218,7 +16221,7 @@ stories:
   - ApiAccessConfig
   - Team
   non_functional:
-  - Distributed token-bucket backed by Redis; lock-free hot path (CRC-sharded)
+  - Shared-store sliding-window limiter per project.non_functional_baseline.shared_limiters; lock-free hot path (CRC-sharded)
   - Edge synchronization within 60 seconds of config changes
 - id: STORY-326
   feature: FEAT-138
@@ -16251,7 +16254,7 @@ stories:
   non_functional:
   - Every phase (auth, translate, upstream, post-processing) has an explicit timeout; the pipeline is cancellation-safe
   - Additions to this phase must not breach the project performance_slo for gateway-added latency
-  - Edge auth and rate-limit decisions complete in under 2 ms p95
+  - Edge auth and rate-limit decisions complete in under 250 µs p95 as a sub-budget of the gateway-added latency baseline (<= 1 ms p95 end-to-end)
 - id: STORY-327
   feature: FEAT-139
   title: Retry upstream with exponential backoff and jitter
@@ -16279,8 +16282,7 @@ stories:
     when:
     - The upstream drops
     then:
-    - No retry is attempted on the same target
-    - The stream is closed with an error event
+    - No retry is attempted on the same target; if a fallback target is configured and the fallback will re-issue the full request, failover runs and the client sees the stream continue; otherwise the stream is closed with an error event (consistent with STORY-313 and project.streaming baseline)
   - id: AC-003
     scenario: Retry budget exhausted
     given:
@@ -16289,7 +16291,7 @@ stories:
     - Another failure occurs
     then:
     - The failure is returned to the client with the original upstream status
-    - If a fallback target exists, failover runs instead (STORY-134)
+    - If a fallback target exists, failover runs instead (STORY-329)
   data_models:
   - RoutingRule
   - Request
@@ -16807,7 +16809,7 @@ stories:
     when:
     - I set head-based sampling to 5% and keep always-sample-on-error
     then:
-    - TelemetryConfig is updated and takes effect within 60s
+    - TelemetryConfig is updated and takes effect within the config-reload SLA (per project.non_functional_baseline.config_hot_reload)
   data_models:
   - Request
   - TelemetryConfig
@@ -16832,7 +16834,7 @@ stories:
     when:
     - The upstream emits chunks
     then:
-    - The gateway translates each chunk to OpenAI's SSE format in under 10 ms
+    - The gateway translates each chunk to OpenAI's SSE format on the hot path within the 1 ms p95 gateway-added latency budget (no per-chunk buffering)
     - Keep-alive comments are sent every 15 seconds during silence
     - On upstream error mid-stream, an "error" SSE event is emitted before close
   - id: AC-002
@@ -17002,12 +17004,13 @@ stories:
     given:
     - All providers for a route are open-circuit
     - The org has graceful degradation set to "serve-cached"
-    - A matching CacheEntry exists for the request
+    - A matching CacheEntry exists for the request in the request's resolved residency region (ResidencyConfig.region) per FEAT-130
     when:
     - The request is processed
     then:
     - The gateway returns the cached response with header X-Antirion-Degraded = true
     - Request.cached is true and Request.status is 200
+    - A cached entry outside the resolved residency region is never served - in that case AC-002 (structured 503) applies instead
   - id: AC-002
     scenario: Structured 503 fallback
     given:
@@ -17797,7 +17800,7 @@ stories:
     - I click "Create break-glass key" with reason and duration
     then:
     - An Approval of kind "key-elevated-scope" is created for the break-glass key
-    - A creation notification is sent to Org.security_contact (falling back to Org.owner in saas and platform admin in self_hosted)
+    - A creation notification is sent to Org.security_contact; only when Org.security_contact is unset does it fall back to Org.owner_user_id in saas or platform admin in self_hosted per project.notifications_model
     - In saas mode the creation event additionally notifies Antirion trust_and_safety at severity "warn" so Antirion staff can observe elevated access in-flight; in self_hosted this fanout is skipped unless the "security" phone-home channel (FEAT-179) is enabled
   data_models:
   - ApiKey
@@ -18137,7 +18140,7 @@ stories:
     when:
     - I view the overview
     then:
-    - The card shows "Configure limits" with a link to STORY-394's screen
+    - The card shows "Configure limits" with a link to STORY-382's screen
   - id: AC-003
     scenario: Drill-down to request log
     given:
@@ -18187,7 +18190,7 @@ stories:
   - id: AC-001
     scenario: Threshold alert on provider pressure
     given:
-    - An AlertRule of type "provider_rate_limit_pressure" with provider_id=anthropic, threshold=90 and for_duration_s=120
+    - An AlertRule with category "provider_rate_limit_pressure", scope "provider:anthropic", metric "rate_limit_utilization_pct", operator ">=", threshold 90 and for_duration "2m"
     when:
     - rpm_utilization stays above 90% for 120 seconds
     then:

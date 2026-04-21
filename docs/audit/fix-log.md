@@ -262,3 +262,26 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-010 | M-8 team-lead fallback chain | applied | Covered by C-5 |
 | EPIC-010 | m-1..m-9 minors | deferred | Editorial |
 | EPIC-010 | X-1..X-7 cross-epic | deferred | Mostly need product input |
+| EPIC-011 | C1 STORY-312 15ms p95 | applied | Replaced with baseline reference |
+| EPIC-011 | C2 STORY-313 TTFT | applied | Split into gateway-added latency + upstream TTFT |
+| EPIC-011 | C3 STORY-341 per-chunk 10ms | applied | Now hot-path budget per baseline |
+| EPIC-011 | C4 STORY-324/326 2ms | applied | Tightened to 250µs p95 as sub-budget |
+| EPIC-011 | C5 shared_limiters FEAT-142 → FEAT-141 | applied | Completed baseline fix |
+| EPIC-011 | C6 token-bucket → sliding-window | applied | STORY-325 aligned with baseline |
+| EPIC-011 | C7 streaming retry | applied | STORY-313/327 and baseline all unified: fallback may reissue full request, no same-target retry after bytes |
+| EPIC-011 | C8 STORY-385 ref | applied | STORY-394 → STORY-382 |
+| EPIC-011 | C9 STORY-386 FEAT-101 | applied | Done in EPIC-009 pass |
+| EPIC-011 | C10 STORY-327 STORY-134 | applied | Changed to STORY-329 |
+| EPIC-011 | M1 failover ownership | deferred | Needs product decision |
+| EPIC-011 | M2 pipeline ordering feature | deferred | Needs new feature |
+| EPIC-011 | M3 FEAT-160 → EPIC-003 | deferred | Structural epic move |
+| EPIC-011 | M4 provider API split | deferred | Epic restructure |
+| EPIC-011 | M6 FEAT-148 residency check | applied | STORY-345 AC-001 now requires region match |
+| EPIC-011 | M7 mode declarations | applied | Added mode:both to FEAT-158/159/160 |
+| EPIC-011 | M8 STORY-386 AlertRule fields | applied | Rewritten to use category/scope/metric |
+| EPIC-011 | M9 STORY-323 rejection metadata | deferred | Needs product input |
+| EPIC-011 | M10 STORY-377 fallback condition | applied | Conditioned on Org.security_contact IS NULL |
+| EPIC-011 | M11 FEAT-143/149 overlap | deferred | Needs product decision |
+| EPIC-011 | m9 STORY-340 60s → 30s | applied | References config_hot_reload |
+| EPIC-011 | m1..m12 other minors | deferred | Editorial |
+| EPIC-011 | X1..X7 cross-epic | deferred | Need coordination/product input |

@@ -102,3 +102,14 @@ Each entry: brief description, source audit citation, reason deferred.
 - **Minor m-1..m-9 editorial** — SCIM NFR misapplication, FEAT-131 GeoPolicy model, FEAT-132 DlpExportConfig, ResidencyConfig.dpo_contact consolidation, SsoConfig.signed_users, /api/v1 versioning consistency, SSO-enforced invite race, AuditSink.credentials encryption, webhook signature replay-window wording. (docs/audit/epic-010-review.md §m-1..m-9)
 - **X-1..X-7 cross-epic** — FEAT-107 vs FEAT-095/096/098, FEAT-127 vs FEAT-170, delete-org vs install lifecycle, FEAT-133 CMK data classes for BYOK, FEAT-113 PII toggle vs FEAT-070, STORY-280 audit-sink audience. Mostly product input. (docs/audit/epic-010-review.md §X-1..X-7)
 
+### EPIC-011
+
+- **M1 failover/circuit-breaker ownership split between EPIC-005 and EPIC-011** — declare which feature owns config vs runtime vs state machine. Needs product decision. (docs/audit/epic-011-review.md §M1)
+- **M2 canonical pipeline ordering feature** — no feature describes where safety/cache/budget/retry/translation sit on the hot path. Needs new feature. (docs/audit/epic-011-review.md §M2)
+- **M3 FEAT-160 break-glass belongs in EPIC-003** — structural move; FEAT-027 already has the Approval pattern. Needs product input. (docs/audit/epic-011-review.md §M3)
+- **M4 provider API surface split** — Files/Batches/Audio/Image/Moderation/Embeddings/Fine-tune don't belong in the pipeline epic. Needs epic reshuffle. (docs/audit/epic-011-review.md §M4)
+- **M9 STORY-323 rejection metadata contract** — pick Request row with nulls vs separate AccessLog. Needs product input. (docs/audit/epic-011-review.md §M9)
+- **M11 FEAT-143 vs FEAT-149 sampling overlap** — choose owner for TelemetryConfig. Needs product decision. (docs/audit/epic-011-review.md §M11)
+- **X2..X7** — cross-epic coordination (shared-credentials toggle, cache/safety/budget pipeline positions, telemetry cross-link, per-tenant concurrency cap). (docs/audit/epic-011-review.md §X2..X7)
+- **Minor editorial (m1..m12)** — boilerplate NFRs, skeletal Files/Batches stories, minor wording. (docs/audit/epic-011-review.md §m1..m12)
+
