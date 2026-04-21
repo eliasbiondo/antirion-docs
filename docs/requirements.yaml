@@ -1498,7 +1498,7 @@ features:
 - id: FEAT-111
   epic: EPIC-010
   title: Workspace API access configuration
-  description: Base URL, key TTL defaults, org rate limits, and staff metadata API. The canonical org-level IP allowlist lives in FEAT-107.
+  description: Base URL, key TTL defaults, org rate limits, and staff metadata API. The canonical org-level IP allowlist lives in FEAT-121 (OrgIpAllowlist).
   priority: P0
   stories:
   - STORY-254
@@ -13787,6 +13787,7 @@ stories:
     - If it succeeds the row disappears and an AuditLog entry records "scim.reconcile"
   data_models:
   - ScimConfig
+  - ScimConflict
   - AuditLog
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
@@ -13920,9 +13921,6 @@ stories:
     request:
       body:
         base_url: string
-        ip_allowlist_enabled: bool
-        ip_cidrs:
-        - string
         key_default_ttl_days: int
         key_max_ttl_days: int
         org_rate_limit_rpm: int
@@ -14353,7 +14351,7 @@ stories:
     then:
     - Its status becomes "degraded"
     - An AlertEvent of severity "warn" fires for "audit.sink.degraded"
-    - The event is delivered to Org.security_contact (falling back to Org.owner) and to the platform operator audience — Antirion SRE in saas, platform admin in self_hosted — because a broken audit path is both a tenant compliance signal and a platform-health signal
+    - The event is delivered to Org.security_contact (falling back to Org.owner_user_id in saas and to platform admin in self_hosted per project.notifications_model) and to the platform operator audience — Antirion SRE in saas, platform admin in self_hosted — because a broken audit path is both a tenant compliance signal and a platform-health signal
   api:
   - method: POST
     path: /api/audit/sinks
@@ -15199,7 +15197,7 @@ stories:
     - I refresh the sink list
     then:
     - The sink shows a "degraded" badge
-    - An Alert with category "audit_sink_degraded" is raised
+    - An Alert with category "audit_sink_degraded" is raised; audience resolution follows STORY-263 AC-002 (Org.security_contact with the canonical fallback chain, plus the platform operator audience)
   ui:
     screens:
     - Settings
@@ -15801,7 +15799,7 @@ stories:
     when:
     - The notifier runs
     then:
-    - Workspace admins receive an email and in-app notification with links
+    - Notifications are delivered via FEAT-102 to users with role="admin" or "owner" on the Org, plus Org.tech_contact when set, recording the resolved audience list and channel attempt per project.notifications_model
   data_models: []
   non_functional:
   - SCIM and provisioning operations are idempotent and safe to replay
@@ -15926,14 +15924,14 @@ stories:
     when:
     - I click "Revoke" and type the ARN to confirm
     then:
-    - Writes fall back to the emergency key or are paused, and re-encryption is scheduled
+    - In saas mode, writes may fall back to the Antirion-held emergency envelope key (opt-in) or are paused, and re-encryption is scheduled per FEAT-133 description
+    - In self_hosted mode, revocation strictly fails closed — traffic requiring the revoked key stops and is not rerouted to any platform key
   data_models:
   - CmkBinding
   - AuditLog
   non_functional:
-  - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
-  - CMK revocation fails closed — traffic requiring the revoked key stops rather than falling back to a platform key
+  - CMK revocation behavior is mode-gated per FEAT-133 description (saas: optional emergency-key fallback; self_hosted: fail-closed)
 - id: STORY-310
   feature: FEAT-133
   title: Multiple CMKs per data class
@@ -23437,6 +23435,31 @@ models:
     type: int
   - name: pending_deprovisions
     type: int
+- name: ScimConflict
+  description: A per-user SCIM sync failure row shown in STORY-251 conflict inbox.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+  - name: email
+    type: string
+  - name: external_id
+    type: string
+    nullable: true
+  - name: reason
+    type: string
+  - name: first_attempt_at
+    type: timestamp
+  - name: last_attempt_at
+    type: timestamp
+  - name: state
+    type: string
+    description: pending|ignored|resolved
+  - name: resolved_by_user_id
+    type: FK:User
+    nullable: true
 - name: MfaConfig
   description: Org-level MFA policy.
   fields:
@@ -23455,20 +23478,13 @@ models:
     type: number
     nullable: true
 - name: ApiAccessConfig
-  description: Org-level API access configuration.
+  description: Org-level API access configuration. IP allowlist storage is canonical on OrgIpAllowlist (FEAT-121); this model carries key-TTL and rate-limit defaults only.
   fields:
   - name: org_id
     type: FK:Org
     pk: true
   - name: base_url
     type: string
-  - name: ip_allowlist_enabled
-    type: bool
-  - name: ip_cidrs
-    type: json
-  - name: org_ip_allowlist_mode
-    type: string
-    description: disabled|dry-run|enforcing
   - name: key_default_ttl_days
     type: int
   - name: key_max_ttl_days
@@ -23518,7 +23534,7 @@ models:
   - name: mode
     type: string
     nullable: true
-    description: initial|migrated (all current installs must be "initial" - migration is not supported)
+    description: Always "initial"; migration is not supported (FEAT-112 mandates immutability for the life of the workspace)
 - name: RetentionConfig
   description: Retention and redaction policy for stored request data.
   fields:
@@ -23534,6 +23550,12 @@ models:
   - name: anomalies_days
     type: int
     description: Retention window for reviewed/suppressed Anomaly rows before the worker sweep deletes them
+  - name: audit_logs_days
+    type: int
+    description: Retention window for AuditLog rows; governs the STORY-258 audit_logs class
+  - name: safety_events_days
+    type: int
+    description: Retention window for SafetyEvent rows; governs the STORY-258 safety_events class
   - name: pii_redaction_enabled
     type: bool
   - name: custom_pii_entities
@@ -23572,7 +23594,7 @@ models:
   - name: created_at
     type: timestamp
 - name: AuditSink
-  description: Configured audit log sink.
+  description: Configured audit log sink. Credential material lives in credentials_ciphertext, KMS-wrapped per project.non_functional_baseline.security.
   fields:
   - name: id
     type: uuid
@@ -23586,9 +23608,10 @@ models:
     type: string
   - name: format
     type: string
-  - name: credentials
+  - name: credentials_ciphertext
     type: json
     nullable: true
+    description: KMS-wrapped credential material; plaintext is never persisted
   - name: last_write_at
     type: timestamp
     nullable: true

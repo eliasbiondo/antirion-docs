@@ -198,6 +198,16 @@ Each entry: brief description, source audit citation, reason deferred.
 - **X7 tenant-internal vs public incident publication** — addressed by C5 model split; FEAT-173 publication flow still needs an explicit story. (docs/audit/epic-009-review.md §X7)
 - **minor editorial (m1..m10)** — multiple small issues. (docs/audit/epic-009-review.md §m1..m10)
 
+### EPIC-010 (2026-04-20 re-audit)
+
+- **C-1 FEAT-107 mode split (identity vs billing)** — structural. (docs/audit/epic-010-review-2026-04-20.md §C-1)
+- **C-3 FEAT-127 DR mode gating** — structural. (docs/audit/epic-010-review-2026-04-20.md §C-3)
+- **M-2 STORY-296 DR-drill audience** — needs product input on mode. (docs/audit/epic-010-review-2026-04-20.md §M-2)
+- **M-6 FEAT-131 geoip default** — fail-open vs fail-closed default unresolved. (docs/audit/epic-010-review-2026-04-20.md §M-6)
+- **m-1..m-9 minors** — boilerplate NFRs, GeoPolicy/DlpExportConfig models, tech_contact roster gap, etc. (docs/audit/epic-010-review-2026-04-20.md §m*)
+- **X-1..X-7 cross-epic** — FEAT-107 billing split, DR vs fleet health ownership, delete-org vs install lifecycle, SCIM cascade depends_on, CMK data-class coverage for BYOK ciphertext, STORY-257 PII precedence, STORY-280 alerting conventions. (docs/audit/epic-010-review-2026-04-20.md §X*)
+- **U-1..U-11 uncited-but-required** — audit-log signing-key lifecycle (Critical), ScimConflict workflow (partial via M-10), restore-request ticket, cancel-delete, break-glass runtime state, Webhook auto-disable threshold, GeoPolicy model, DlpExportConfig model, ingestion-health alert, Org signing-secret lifecycle, Integration credentials encryption. (docs/audit/epic-010-review-2026-04-20.md §U*)
+
 ### EPIC-010
 
 - **C-4 FEAT-133 revocation semantics** — reconcile saas fallback vs self_hosted fail-closed across the feature description and STORY-308/309/310 NFRs. Needs product input. (docs/audit/epic-010-review.md §C-4)

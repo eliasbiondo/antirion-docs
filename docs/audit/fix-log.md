@@ -561,3 +561,21 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-009 (2026-04-20) | m2..m11 minors | deferred | Editorial/new-story work |
 | EPIC-009 (2026-04-20) | X1..X8 cross-epic | deferred | Most tie to C6 / release-gate / worker wiring |
 | EPIC-009 (2026-04-20) | U1..U11 missing features | deferred | Net-new features (evaluation worker, dispatch worker, inbound PD receiver, subscription CRUD, platform rule authoring, etc.) |
+| EPIC-010 (2026-04-20) | C-1 FEAT-107 mode split | deferred | Structural feature split needed; product input |
+| EPIC-010 (2026-04-20) | C-2 CMK revocation contract | applied | STORY-309 AC-001 now mode-gated; NFR aligned with FEAT-133 description |
+| EPIC-010 (2026-04-20) | C-3 DR mode gating | deferred | Structural; product input |
+| EPIC-010 (2026-04-20) | C-4 IP allowlist triple-storage | applied | Removed ip_allowlist_enabled/ip_cidrs/org_ip_allowlist_mode from ApiAccessConfig; OrgIpAllowlist is canonical |
+| EPIC-010 (2026-04-20) | C-5 FEAT-111 citation | applied | FEAT-107 → FEAT-121 |
+| EPIC-010 (2026-04-20) | M-1 STORY-263 fallback | applied | Uses mode-aware fallback chain per project.notifications_model |
+| EPIC-010 (2026-04-20) | M-2 STORY-296 audience | deferred | Needs product input on saas/self_hosted gating |
+| EPIC-010 (2026-04-20) | M-3 STORY-280 audience | applied | AC-002 now cites STORY-263 audience resolution |
+| EPIC-010 (2026-04-20) | M-4 ResidencyConfig.mode enum | applied | Description now asserts "always initial" |
+| EPIC-010 (2026-04-20) | M-5 org_ip_allowlist_mode | applied | Field removed as part of C-4 |
+| EPIC-010 (2026-04-20) | M-6 geoip fail-open | deferred | Product input on default |
+| EPIC-010 (2026-04-20) | M-7 RetentionConfig classes | applied | Added audit_logs_days + safety_events_days |
+| EPIC-010 (2026-04-20) | M-8 STORY-304 canonical roles | applied | Now resolves via FEAT-102 with role+contact audience |
+| EPIC-010 (2026-04-20) | M-9 AuditSink.credentials | applied | Renamed to credentials_ciphertext with KMS description |
+| EPIC-010 (2026-04-20) | M-10 ScimConflict model | applied | New model added; STORY-251 data_models extended |
+| EPIC-010 (2026-04-20) | m-1..m-9 minors | deferred | Editorial / scope decisions |
+| EPIC-010 (2026-04-20) | X-1..X-7 cross-epic | deferred | Need coordination |
+| EPIC-010 (2026-04-20) | U-1..U-11 missing features | deferred | Signing-key lifecycle, restore ticket, cancel-delete, break-glass state, etc.; product input |
