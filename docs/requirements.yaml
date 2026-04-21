@@ -22436,6 +22436,416 @@ stories:
   non_functional:
   - Catalog reads are served from local cache; the forecast path never blocks on refresh
   - The refresh worker is idempotent on (provider_id, model_id, effective_at)
+- id: STORY-463
+  feature: FEAT-001
+  title: Sign in with a recovery code
+  narrative:
+    as_a: user who lost my MFA device
+    i_want: to sign in by presenting an unused RecoveryCode
+    so_that: I can recover without admin intervention
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Present a valid recovery code
+    given:
+    - I have signed in with email+password and been prompted for a second factor
+    - At least one RecoveryCode for my user exists with consumed_at IS NULL
+    when:
+    - I paste a recovery code and submit
+    then:
+    - The matching RecoveryCode row is marked with consumed_at=now
+    - A Session is created and I am signed in
+    - An AuditLog entry records action "user.recovery_code.consumed"
+    - A Notification of kind "security" is emitted to the acting principal per project.notifications_model
+  - id: AC-002
+    scenario: Low remaining-code warning
+    given:
+    - Unused RecoveryCode count for my user drops below 3 after consumption
+    when:
+    - The sign-in completes
+    then:
+    - The post-sign-in screen shows a banner "Generate new recovery codes" linking to STORY-039
+  data_models:
+  - RecoveryCode
+  - Session
+  - AuditLog
+  - Notification
+  non_functional:
+  - Recovery-code verification is constant-time against the stored hash
+- id: STORY-464
+  feature: FEAT-025
+  title: Configure BYOK rotation policy
+  narrative:
+    as_a: security lead
+    i_want: to set a rotation window per BYOK credential
+    so_that: STORY-061 enforcement has a configured threshold instead of a dead column
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Set rotation window
+    given:
+    - A BYOKCredential exists
+    when:
+    - I PATCH /api/byok/:id with body { rotate_policy_days: 90 }
+    then:
+    - BYOKCredential.rotate_policy_days becomes 90
+    - STORY-061 enforcement uses this value
+    - An AuditLog entry records action "byok.rotation_policy.update"
+  api:
+  - method: PATCH
+    path: /api/byok/:id
+    request:
+      body:
+        rotate_policy_days: int
+    response:
+      credential: BYOKCredential
+    errors:
+    - 400
+    - 401
+    - 403
+    - 404
+    inferred: true
+  data_models:
+  - BYOKCredential
+  - AuditLog
+- id: STORY-465
+  feature: FEAT-025
+  title: Auto-revoke predecessor BYOK credential at grace-window end
+  narrative:
+    as_a: security officer
+    i_want: the predecessor BYOK credential to transition to revoked automatically when rotation_grace_ends passes
+    so_that: stale credentials do not keep selecting into outbound traffic
+  priority: P0
+  depends_on:
+  - STORY-056
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Grace window expired
+    given:
+    - A BYOKCredential has rotation_grace_ends in the past and a successor_id pointing to an active successor
+    when:
+    - The grace-end worker runs
+    then:
+    - BYOKCredential.status becomes "revoked"
+    - STORY-148 AC-001 fires (cache invalidation) and a Notification is delivered to Org.security_contact per project.notifications_model
+    - An AuditLog entry records action "byok.rotation.grace_end" with actor_kind="system"
+  data_models:
+  - BYOKCredential
+  - AuditLog
+  - Notification
+  non_functional:
+  - Parallel to STORY-063 (ApiKey TTL auto-revoke); idempotent on BYOKCredential.id
+- id: STORY-466
+  feature: FEAT-028
+  title: Inbound BYOK upstream-secret leak scan
+  narrative:
+    as_a: security officer
+    i_want: FEAT-028's inbound secret-scan partner to also cover BYOK upstream-provider secrets
+    so_that: a leaked provider key is rotated without waiting for manual probe
+  priority: P1
+  depends_on:
+  - STORY-067
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Partner reports a leaked BYOK secret
+    given:
+    - An inbound signed notification matches a BYOKCredential's key fingerprint
+    when:
+    - The notification passes signature verification
+    then:
+    - BYOKCredential.status becomes "invalid" and rotation is scheduled
+    - A Notification of kind "security" is delivered to Org.security_contact with the canonical fallback chain
+    - An AuditLog entry records action "byok.leak.response"
+  data_models:
+  - BYOKCredential
+  - AuditLog
+  - Notification
+- id: STORY-467
+  feature: FEAT-033
+  title: Promote severity=crit Anomaly to an AlertEvent
+  narrative:
+    as_a: platform engineer
+    i_want: severity-crit or sustained Anomaly rows to emit an AlertEvent
+    so_that: the standard ack/resolve/snooze lifecycle applies and operators see a consistent inbox
+  priority: P1
+  depends_on:
+  - STORY-085
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Crit anomaly fans out
+    given:
+    - An Anomaly is written with severity="crit" (or sustained for >= 15 minutes)
+    when:
+    - The fan-out worker processes the Anomaly
+    then:
+    - An AlertEvent is created with source="anomaly", rule_id=null, category/provider_id/team_id inherited from the Anomaly
+    - Ack/resolve/snooze run per FEAT-100 / FEAT-103
+    - An AuditLog entry records the linkage
+  data_models:
+  - Anomaly
+  - AlertEvent
+  - AuditLog
+- id: STORY-468
+  feature: FEAT-146
+  title: Emit ToolInvocation rows per tool call
+  narrative:
+    as_a: platform engineer
+    i_want: each tool/function call recorded as a ToolInvocation row
+    so_that: FEAT-043 tool-use analytics have a non-null source of truth
+  priority: P1
+  depends_on:
+  - STORY-447
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Post-hoc worker writes ToolInvocation
+    given:
+    - A Request finished streaming with tool_count > 0 and the streaming event log captured each call
+    when:
+    - The post-hoc tool-invocation worker consumes the Request's event log
+    then:
+    - One ToolInvocation row is written per tool call with (request_id, tool_name, tool_id, input_tokens, output_tokens, latency_ms, status)
+    - The worker is idempotent on (request_id, tool_name, ordinal)
+  data_models:
+  - Request
+  - ToolInvocation
+  non_functional:
+  - Emission runs on the worker fleet; the hot-path gateway does not write ToolInvocation synchronously
+- id: STORY-469
+  feature: FEAT-039
+  title: Share a specific request
+  narrative:
+    as_a: engineer debugging an incident
+    i_want: a shareable link to a specific Request with explicit audience scope
+    so_that: colleagues can reproduce without me pasting filters
+  priority: P2
+  depends_on:
+  - STORY-092
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Create a workspace-audience request share
+    given:
+    - The request drawer is open for a specific Request
+    when:
+    - I click "Share" and pick audience=workspace
+    then:
+    - A ShareLink is created with resource_type="request", resource_id=request.id, audience="workspace"
+    - An AuditLog entry records action "share_link.create"
+  - id: AC-002
+    scenario: Redaction enforced at visit time
+    given:
+    - A ShareLink with resource_type="request" exists
+    when:
+    - A workspace member opens the link
+    then:
+    - Prompt and response are rendered respecting the viewer's effective PII-redaction posture, not the creator's
+    - An AuditLog entry records action "share_link.visit" with the resolved viewer redaction posture; ShareLink.open_count and last_opened_at are incremented atomically
+  - id: AC-003
+    scenario: Public-read visit blocks raw prompt
+    given:
+    - A ShareLink with audience="public-read" and resource_type="request"
+    when:
+    - An anonymous visitor opens the link
+    then:
+    - The response renders only fields marked public-safe; prompt body is replaced by prompt_redacted or suppressed entirely
+  data_models:
+  - ShareLink
+  - Request
+  - AuditLog
+- id: STORY-470
+  feature: FEAT-139
+  title: Route downgrade-model directive into the routing engine
+  narrative:
+    as_a: gateway
+    i_want: to honour BudgetPolicy.action="downgrade-model" and its target when the budget is exceeded
+    so_that: traffic continues on a cheaper model instead of 402'ing
+  priority: P0
+  depends_on:
+  - STORY-451
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Downgrade directive observed
+    given:
+    - STORY-451 AC-003 admitted a request into the pipeline with a downgrade directive
+    when:
+    - The routing engine resolves the target
+    then:
+    - Request.model_id is rewritten to BudgetPolicy.downgrade_target_model_id
+    - Request.downgraded=true and Request.original_model_id records the requested model
+    - The RoutingDecision outcome="downgraded" and carries the source budget_id in context
+  data_models:
+  - Request
+  - BudgetPolicy
+  - RoutingDecision
+- id: STORY-471
+  feature: FEAT-174
+  title: Gate release promotion on burned error budget
+  narrative:
+    as_a: release engineer
+    i_want: promote to be rejected when any covering SLO has exhausted its error budget
+    so_that: the baseline's gate-on-burn guarantee is honored
+  priority: P0
+  depends_on:
+  - STORY-415
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Gate rejects promote
+    given:
+    - A FleetDeployment is requested to promote to the next stage
+    - An Slo covering the target scope has error_budget_remaining <= 0
+    when:
+    - I POST /api/operator/releases/:id/promote
+    then:
+    - The request is rejected with 409 and error_code "slo-burned"
+    - An AuditLog entry records action "release.gate.slo_burned" with the offending Slo.id and error_budget_remaining value
+    - The FleetDeployment.state remains unchanged
+  data_models:
+  - FleetDeployment
+  - Slo
+  - AuditLog
+- id: STORY-472
+  feature: FEAT-060
+  title: Residency-aware cache lookup on the happy path
+  narrative:
+    as_a: platform engineer
+    i_want: cache lookup partitioned by the requesting tenant's resolved residency region
+    so_that: a cross-region cache read never violates FEAT-130
+  priority: P0
+  depends_on:
+  - STORY-142
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Lookup excludes cross-region entries
+    given:
+    - A tenant's ResidencyConfig.region is "eu-west-1"
+    when:
+    - The gateway performs a cache lookup on the happy path
+    then:
+    - Only CacheEntry rows with region="eu-west-1" are considered; entries in other regions are never returned
+    - An AuditLog or telemetry signal is emitted on cross-region misses for the residency-compliance report
+  data_models:
+  - CacheEntry
+  - ResidencyConfig
+- id: STORY-473
+  feature: FEAT-177
+  title: Seed and manage the first platform admin
+  narrative:
+    as_a: person bringing up a new install
+    i_want: the install wizard to mint the first platform_admin via the bootstrap intent
+    so_that: FEAT-012's grant/revoke flow takes over once the install is up
+  priority: P0
+  depends_on:
+  - STORY-425
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Password-based seed
+    given:
+    - STORY-425 AC-001 has created a platform admin User via one-time bootstrap token
+    when:
+    - The install transitions to state="complete"
+    then:
+    - Subsequent grants/revokes of the platform admin role go through FEAT-012's role management flow
+  - id: AC-002
+    scenario: SSO-based seed
+    given:
+    - STORY-425 AC-003 has consumed an InstallBootstrapIntent on first SSO sign-in
+    when:
+    - The granted User signs in again
+    then:
+    - The User's role remains platform_admin; subsequent grants follow FEAT-012
+  data_models:
+  - User
+  - OperatorPrincipal
+  - InstallBootstrapIntent
+- id: STORY-474
+  feature: FEAT-166
+  title: Serve bundled help catalog when air-gapped
+  narrative:
+    as_a: platform admin on an air-gapped self_hosted install
+    i_want: the help palette to serve the bundled catalog without outbound calls
+    so_that: offline users still get inline help
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Air-gapped serves bundled catalog only
+    given:
+    - project.deployment_modes resolves to self_hosted and no phone-home channel is enabled
+    when:
+    - A user opens the help palette
+    then:
+    - Articles are served from the install-image bundled catalog; no outbound call is made
+    - HelpArticle.url values that would require the public internet are replaced with HelpArticle.local_anchor references
+  data_models:
+  - HelpArticle
+- id: STORY-475
+  feature: FEAT-166
+  title: Refresh help catalog via docs phone-home channel
+  narrative:
+    as_a: platform admin
+    i_want: to opt in to periodic help-catalog refresh via FEAT-179 docs channel
+    so_that: docs stay current on connected self_hosted installs
+  priority: P1
+  depends_on:
+  - STORY-474
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Refresh flow with audit
+    given:
+    - The "docs" phone-home channel (FEAT-179) is enabled
+    when:
+    - The catalog-refresh worker runs
+    then:
+    - The Antirion docs catalog is fetched, verified and applied to the local bundle
+    - An AuditLog entry records action "help.catalog.refresh" with the row count and source signature
+  data_models:
+  - HelpArticle
+  - AuditLog
+- id: STORY-476
+  feature: FEAT-169
+  title: Inbox platform notice surfaces in saas
+  narrative:
+    as_a: signed-in saas user
+    i_want: Antirion platform notices (maintenance windows, invoice-ready, plan-change confirmations) to show up in the inbox
+    so_that: platform changes are visible without leaving the product
+  priority: P1
+  depends_on:
+  - STORY-412
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Platform notice renders in inbox
+    given:
+    - The install mode is saas and FEAT-173 emits a PlatformIncident of kind="maintenance"
+    when:
+    - The broadcast reaches my User
+    then:
+    - A Notification row with kind="maintenance" (or "platform_notice"/"incident" as appropriate) is written and rendered in the FEAT-169 inbox
+    - In self_hosted this AC does not fire; the broadcast is skipped
+  data_models:
+  - Notification
+  - PlatformIncident
+- id: STORY-477
+  feature: FEAT-169
+  title: Inbox license-event surfaces in self_hosted
+  narrative:
+    as_a: signed-in self_hosted user
+    i_want: license renewal-approaching, entitlement-breach and fail-closed-warning events to show in the inbox
+    so_that: license health is not hidden behind operator surfaces
+  priority: P1
+  depends_on:
+  - STORY-418
+  acceptance_criteria:
+  - id: AC-001
+    scenario: License event renders
+    given:
+    - The install mode is self_hosted and a License transitions (e.g. to expiring_soon)
+    when:
+    - FEAT-175 emits the event
+    then:
+    - A Notification row with kind="license" (or "license_violation" for FEAT-180 events) is written per affected user
+    - The inbox renders the row with the appropriate tab; saas users never see license-kind rows in their inbox
+  data_models:
+  - Notification
+  - License
+  - LicenseIncident
 models:
 - name: Org
   description: The workspace (organization) that owns everything.
