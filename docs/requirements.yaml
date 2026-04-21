@@ -2189,8 +2189,9 @@ features:
 - id: FEAT-181
   epic: EPIC-013
   title: Antirion-side inbound support queue
-  description: The Antirion-staff counterpart of FEAT-164 — the queue that receives tickets submitted by saas tenants and by self_hosted tenants who have opted in to Antirion escalation under FEAT-179. Supports triage (severity, SLA timer, assignee), link to tenant context pulled from FEAT-172 tenant roster and FEAT-182 CRM, canned replies, conversation thread with the submitter, and escalation into Antirion engineering with a linked internal issue. Surfaces live on the Antirion-staff console only. Available in saas mode on every install; in self_hosted mode the feature is installed only on Antirion's own operator console and is never rendered on customer installs.
-  mode: saas
+  description: The Antirion-staff counterpart of FEAT-164 — the queue that receives tickets submitted by saas tenants and by self_hosted tenants who have opted in to Antirion escalation under FEAT-179. Supports triage (severity, SLA timer, assignee), link to tenant context pulled from FEAT-172 tenant roster and FEAT-182 CRM, canned replies, conversation thread with the submitter, and escalation into Antirion engineering with a linked internal issue. Surfaces live on the Antirion-staff console only.
+  mode: both
+  installed_on: antirion_console
   priority: P1
   stories:
   - STORY-436
@@ -2199,13 +2200,162 @@ features:
 - id: FEAT-182
   epic: EPIC-013
   title: Antirion platform CRM and tenant contact book
-  description: Antirion-staff CRM that complements FEAT-172. For every Org on the saas platform it stores the primary, billing, security and privacy contacts, outreach history, renewal and commitment dates, NPS and CSAT, and cross-links to the support queue (FEAT-181) and the tenant detail view (FEAT-172). Lets Antirion staff record an outreach, schedule a follow-up, attach meeting notes and trigger the tenant-contact audit trail so every staff interaction with a tenant's primary contact is evidenced. In self_hosted mode for Antirion's internal tracking of its own customers this CRM runs only on Antirion's operator console and carries one row per self_hosted install that has opted in to the "license" phone-home channel under FEAT-179; on a customer install itself, this surface is never rendered. Available in saas mode on every install, and on Antirion's own operator console for self_hosted tracking.
-  mode: saas
+  description: Antirion-staff CRM that complements FEAT-172. For every Org on the saas platform it stores the primary, billing, security and privacy contacts, outreach history, renewal and commitment dates, NPS and CSAT, and cross-links to the support queue (FEAT-181) and the tenant detail view (FEAT-172). Lets Antirion staff record an outreach, schedule a follow-up, attach meeting notes and trigger the tenant-contact audit trail so every staff interaction with a tenant's primary contact is evidenced. In self_hosted installs tracked by Antirion (via the "license" phone-home channel under FEAT-179), each install shows as one row.
+  mode: both
+  installed_on: antirion_console
   priority: P1
   stories:
   - STORY-439
   - STORY-440
   - STORY-441
+- id: FEAT-183
+  epic: EPIC-001
+  title: Transactional email delivery
+  description: Owns transactional product emails to recipients who may not have a User row yet — invite, invite resend, password reset, email verification, trial/billing notices. Covers provider selection, DKIM/SPF, template inventory, retry/backoff, bounce handling and dead-letter queue. FEAT-102 stays the destination for signed-in user-addressed notifications; this feature covers pre-signin email-addressed recipients.
+  mode: both
+  priority: P0
+  stories:
+  - STORY-442
+  - STORY-443
+- id: FEAT-184
+  epic: EPIC-001
+  title: Session policy admin edit
+  description: Per-Org admin surface to read and update SessionPolicy (idle_timeout_minutes, absolute_max_hours, lockout_threshold, lockout_window_minutes, lockout_duration_minutes) and to enforce idle/absolute timeouts on every authenticated request.
+  mode: both
+  priority: P1
+  stories:
+  - STORY-444
+  - STORY-445
+- id: FEAT-185
+  epic: EPIC-002
+  title: Account deletion cutover worker
+  description: Background feature that flips AccountDeletionRequest from pending to completed at scheduled_for, hard-deletes or offboards User, revokes PersonalToken rows with status="rotating", cascades reassignment of ApiKey/AlertRule/Webhook/PromptTemplate owner_user_id to Org.owner_user_id with AuditLog, and writes user.deletion.completed.
+  mode: both
+  priority: P0
+  stories:
+  - STORY-446
+- id: FEAT-186
+  epic: EPIC-004
+  title: Request-log ingestion pipeline
+  description: Durable pipeline from a live gateway request to a persisted Request row. Queue contract, at-least-once semantics, idempotent handlers, backfill on ClickHouse ingestion gap, ingestion-health alert wiring, and an operator-visible ingestion dashboard.
+  mode: both
+  priority: P0
+  stories:
+  - STORY-447
+  - STORY-448
+- id: FEAT-187
+  epic: EPIC-004
+  title: MetricSeries rollup worker
+  description: Pre-aggregates MetricSeries rows on 1m/5m/1h/1d cadences per scope (org|team|provider|model|project|api_key|env); handles late-arriving data backfill; reconciles against ClickHouse raw logs; honours retention.
+  mode: both
+  priority: P0
+  stories:
+  - STORY-449
+- id: FEAT-188
+  epic: EPIC-008
+  title: Budget metering and ledger reconciliation
+  description: Counter write-back pipeline Request.cost → Budget.spent (including cache_cost contribution; downgrade-served cost counted against the served model's budget). Reconciles live shared-store counters against persisted ledger on a worker cadence and raises the budget.counter.drift alert on deviation.
+  mode: both
+  priority: P0
+  stories:
+  - STORY-450
+- id: FEAT-189
+  epic: EPIC-008
+  title: Gateway budget admission
+  description: Hot-path pipeline stage that reads the budget counter and, when the hard cap is reached, rejects with 402 Payment Required (error_code="budget_exhausted", cycle-aware Retry-After). Emits BudgetEvent.type="enforce". Placed between idempotency lookup and cache lookup per FEAT-191.
+  mode: both
+  priority: P0
+  stories:
+  - STORY-451
+- id: FEAT-190
+  epic: EPIC-005
+  title: Provider catalog sync
+  description: Periodic reconciliation with provider catalog APIs. Discovers new models, flags upstream-retired models for deprecation, produces a reconciliation diff surface under FEAT-046. Default cadence 24h (configurable per provider).
+  mode: both
+  priority: P1
+  stories:
+  - STORY-452
+- id: FEAT-191
+  epic: EPIC-011
+  title: Gateway pipeline ordering
+  description: Canonical declaration of the total order of stages on the gateway request path. Order - ingress dialect → edge auth (FEAT-138) → size limit (FEAT-147) → rate-limit (FEAT-138) → idempotency lookup (FEAT-141) → input safety (EPIC-007) → cache lookup (FEAT-060) → budget admission (FEAT-189) → routing (FEAT-049/050) → translation (FEAT-137) → outbound auth (FEAT-140) → outbound limiter (FEAT-161) → upstream call → output safety (EPIC-007) → cache write (FEAT-060) → cost attribution (FEAT-141) → telemetry (FEAT-143). Every story that names a pipeline position cites this feature.
+  mode: both
+  priority: P0
+  stories:
+  - STORY-453
+- id: FEAT-197
+  epic: EPIC-011
+  title: Per-tenant concurrency cap
+  description: Org-scoped bounded concurrency on the gateway data plane (distinct from per-key rpm/tpm rate limits and from per-node concurrency caps). Default 100 concurrent per Org; configurable via ApiAccessConfig.org_concurrency_limit.
+  mode: both
+  priority: P1
+  stories:
+  - STORY-454
+- id: FEAT-192
+  epic: EPIC-013
+  title: Operator paging integration
+  description: Configuration surface for the platform-operator paging integration (PagerDuty, Opsgenie or equivalent) used by severity-crit operator-plane alerts and FEAT-196 cross-tenant signals. Distinct from FEAT-102 tenant-scoped notification channels.
+  mode: both
+  priority: P0
+  stories:
+  - STORY-455
+- id: FEAT-193
+  epic: EPIC-013
+  title: Install identity and signing keys
+  description: Mints, rotates (365d default) and audits the InstallIdentityKey each install uses to sign FEAT-179 phone-home payloads and to identify itself to Antirion-side surfaces (FEAT-181 support, FEAT-182 CRM). Initial mint runs at FEAT-177 wizard completion.
+  mode: both
+  priority: P1
+  stories:
+  - STORY-456
+- id: FEAT-194
+  epic: EPIC-013
+  title: License tier catalog
+  description: Antirion-staff-managed catalog of LicenseTier rows. Drives FEAT-175 license issuance defaults, FEAT-180 grace-window-per-tier and FEAT-179 phone-home channel defaults.
+  mode: both
+  installed_on: antirion_console
+  priority: P1
+  stories:
+  - STORY-457
+- id: FEAT-195
+  epic: EPIC-013
+  title: Tenant satisfaction surveys
+  description: Collects NPS and CSAT scores per Org. Saas - in-product survey at key moments (post-onboarding, quarterly). Self_hosted - survey responses travel on FEAT-179 as a "survey" channel. Stores per-Org latest on Org.nps_latest / Org.csat_latest (read by STORY-439, STORY-441).
+  mode: both
+  priority: P2
+  stories:
+  - STORY-458
+- id: FEAT-196
+  epic: EPIC-007
+  title: Cross-tenant safety abuse correlation
+  description: Aggregator that rolls up per-tenant SafetyEvent rates (jailbreak mills, PII-egress, classification-toxic, credential stuffing) over a 5-minute rolling window, produces AbuseFlag rows when thresholds breach, and routes to Antirion trust_and_safety in saas (silently dropped in self_hosted because tenant set is 1). Consumer dashboards live under FEAT-176.
+  mode: both
+  priority: P0
+  stories:
+  - STORY-459
+- id: FEAT-198
+  epic: EPIC-010
+  title: Audit log signing-key lifecycle
+  description: Issues, rotates (90d default with overlap window), escrows (via FEAT-133 CMK envelope) and revokes the audit signing key referenced by AuditLog.signing_key_id. Provides a break-glass verification export path that re-validates the full hash chain against escrowed keys.
+  mode: both
+  priority: P0
+  stories:
+  - STORY-460
+- id: FEAT-199
+  epic: EPIC-008
+  title: Budget to AlertRule bridge
+  description: Provisions system-managed AlertRule rows (category="budget") per Budget at create/edit time. Metrics budget.utilisation_pct (threshold=BudgetPolicy.soft_alert_pct), budget.overage, budget.forecast.mape, budget.fx.staleness_hours, budget.counter.drift. Resolves the parallel-paging gap (prior M1/M2/M3/M8) by making the AlertRule the single paging source; BudgetEvent stays as the audit trail.
+  mode: both
+  priority: P0
+  stories:
+  - STORY-461
+- id: FEAT-200
+  epic: EPIC-012
+  title: Pricing catalog cache and forecast variance
+  description: Read-through cache of provider pricing plus (in saas) Antirion plan fees, refreshed daily. Also computes the 30-day observed-variance series used by STORY-401 AC-001's confidence band. No third-party calls are made from the forecast path.
+  mode: both
+  priority: P1
+  stories:
+  - STORY-462
 stories:
 - id: STORY-001
   feature: FEAT-001
@@ -21469,6 +21619,459 @@ stories:
   non_functional:
   - The pipeline reads from operator rollups so request-path latency is never affected
   - All figures are recomputed on a bounded schedule — freshness is bounded rather than real-time
+- id: STORY-442
+  feature: FEAT-183
+  title: Send transactional email
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Invite email sent
+    given:
+    - STORY-007 has created an Invite
+    when:
+    - The invite flow requests an email
+    then:
+    - The transactional-email provider is called with a templated invite payload
+    - A delivery attempt is recorded with status queued|sent|bounced|failed
+    - On failure, backoff retry up to 6h; terminal failures go to a dead-letter queue
+  data_models:
+  - Invite
+  - AuditLog
+  non_functional:
+  - DKIM and SPF are aligned for every outbound sender domain; bounce feedback is consumed and suspends further sends to a bouncing address
+- id: STORY-443
+  feature: FEAT-183
+  title: Password-reset and verification emails
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Password reset and email-change use transactional email
+    given:
+    - STORY-003 or STORY-035 AC-002 triggers an email send
+    when:
+    - The flow calls the transactional email service
+    then:
+    - The email is delivered via FEAT-183 using the password-reset or email-verification template
+    - An AuditLog entry records action "email.transactional.sent" with template id and resolved recipient address
+  data_models:
+  - AuditLog
+- id: STORY-444
+  feature: FEAT-184
+  title: Read and update SessionPolicy
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Admin updates session policy
+    given:
+    - An admin on /settings/security opens Session policy
+    when:
+    - I PATCH /api/org/session-policy with new values
+    then:
+    - SessionPolicy fields update
+    - Changes propagate to every node within the config_hot_reload SLA
+    - An AuditLog entry records the before/after
+  api:
+  - method: GET
+    path: /api/org/session-policy
+    response:
+      config: SessionPolicy
+    errors:
+    - 401
+    - 403
+    inferred: true
+  - method: PATCH
+    path: /api/org/session-policy
+    request:
+      body:
+        idle_timeout_minutes: int
+        absolute_max_hours: int
+        lockout_threshold: int
+        lockout_window_minutes: int
+        lockout_duration_minutes: int
+    response:
+      config: SessionPolicy
+    errors:
+    - 400
+    - 401
+    - 403
+    inferred: true
+  data_models:
+  - SessionPolicy
+  - AuditLog
+- id: STORY-445
+  feature: FEAT-184
+  title: Enforce idle and absolute session timeouts
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Idle session rejected
+    given:
+    - Session.last_active_at is older than SessionPolicy.idle_timeout_minutes
+    when:
+    - The authenticated request arrives
+    then:
+    - The request is rejected with 401 and a forced re-authentication signal
+    - Session.expires_at is set in the past and the row is marked revoked
+  - id: AC-002
+    scenario: Absolute maximum reached
+    given:
+    - Session.created_at is older than SessionPolicy.absolute_max_hours
+    when:
+    - The authenticated request arrives
+    then:
+    - The request is rejected with 401 and a forced re-authentication signal
+  data_models:
+  - Session
+  - SessionPolicy
+- id: STORY-446
+  feature: FEAT-185
+  title: Account deletion cutover job
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Grace window elapsed
+    given:
+    - An AccountDeletionRequest has status "pending" and scheduled_for <= now
+    when:
+    - The cutover worker runs
+    then:
+    - AccountDeletionRequest.status becomes "completed" and completed_at is set
+    - User.status becomes "offboarded"
+    - PersonalToken rows with status="rotating" transition to status="revoked" with revoked_at=now
+    - Session, TrustedBrowser, RecoveryCode, MfaFactor rows for the user are revoked/deleted
+    - ApiKey / AlertRule / Webhook / PromptTemplate owner_user_id values owned by the user are reassigned to Org.owner_user_id; STORY-019 transfer flow is a precondition for service-typed ApiKeys
+    - An AuditLog entry records action "user.deletion.completed" with the resolved audience list
+  data_models:
+  - AccountDeletionRequest
+  - User
+  - PersonalToken
+  - Session
+  - TrustedBrowser
+  - RecoveryCode
+  - MfaFactor
+  - ApiKey
+  - AlertRule
+  - Webhook
+  - PromptTemplate
+  - AuditLog
+  non_functional:
+  - Cutover runs as a single transaction per user with idempotent handlers; retries are safe
+- id: STORY-447
+  feature: FEAT-186
+  title: Ingest Request rows into the durable store
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Request row persisted with at-least-once
+    given:
+    - A gateway node finishes a Request
+    when:
+    - The ingestion pipeline consumes the event
+    then:
+    - A Request row is written with org_id, provider_id, model_id, cost, tokens, latency_ms and status
+    - Handlers are idempotent on Request.id so replays do not duplicate rows
+    - Backlog or missed ingests raise their own operational alert
+  data_models:
+  - Request
+  non_functional:
+  - The ingest queue uses durable delivery with exponential backoff and a dead-letter queue per baseline workers
+- id: STORY-448
+  feature: FEAT-186
+  title: Alert on ingestion gap
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: ClickHouse durability below baseline
+    given:
+    - project.non_functional_baseline.data_durability requires ClickHouse row durability >= 99.99%
+    when:
+    - Rolling 5-minute row durability drops below the threshold
+    then:
+    - An ingestion-health AlertRule fires (platform-scope, category="ingestion") and pages the platform-operator audience
+  data_models:
+  - AlertRule
+  - AlertEvent
+- id: STORY-449
+  feature: FEAT-187
+  title: Pre-aggregate MetricSeries
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Rollups at defined cadences
+    given:
+    - Request rows arrive in the durable store
+    when:
+    - The rollup worker runs
+    then:
+    - MetricSeries rows exist at 1m (live), 5m (24h retention), 1h (30d), 1d (90d+) cadences per scope
+    - Late-arriving rows within the cadence window are backfilled and the counters are recomputed idempotently
+  data_models:
+  - Request
+  - MetricSeries
+- id: STORY-450
+  feature: FEAT-188
+  title: Write back Request.cost into Budget.spent
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Budget counter moves with each Request
+    given:
+    - A Request is finalised with cost set
+    when:
+    - The metering pipeline consumes the event
+    then:
+    - The shared-store budget counter increments for every applicable Budget scope
+    - Cache-hit cost (Request.cache_cost) contributes to the counter
+    - Downgrade-served cost counts against the served model's Budget (not the requested one)
+    - A periodic reconciliation reads the ledger and raises budget.counter.drift if live-counter vs ledger diverges by > 1%
+  data_models:
+  - Request
+  - Budget
+  - UserBudget
+  - BudgetEvent
+- id: STORY-451
+  feature: FEAT-189
+  title: Reject over-budget requests at the gateway
+  priority: P0
+  depends_on:
+  - STORY-453
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Hard cap reached
+    given:
+    - A Budget for the caller has BudgetPolicy.action="block" and spent >= amount
+    when:
+    - A request arrives on the gateway
+    then:
+    - The admission stage returns 402 Payment Required with error_code "budget_exhausted"
+    - Retry-After is set when the cycle boundary is within a reasonable retry horizon
+    - A BudgetEvent.type="enforce" row is written
+  data_models:
+  - Budget
+  - BudgetPolicy
+  - BudgetEvent
+  non_functional:
+  - The admission stage sits between idempotency lookup and cache lookup per FEAT-191
+- id: STORY-452
+  feature: FEAT-190
+  title: Sync provider catalog
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Nightly reconciliation
+    given:
+    - A provider exposes an enumerable model catalog API
+    when:
+    - The catalog-sync worker runs (default 24h)
+    then:
+    - New models appear on FEAT-046 with reconciliation=new
+    - Upstream-retired models are flagged for auto-deprecation and routed through FEAT-055
+    - An AuditLog entry records the reconciliation diff
+  data_models:
+  - Model
+  - ModelDeprecationNotice
+  - AuditLog
+- id: STORY-453
+  feature: FEAT-191
+  title: Declare canonical pipeline stage order
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Documented ordering
+    given:
+    - The gateway is operating normally
+    when:
+    - A request arrives
+    then:
+    - Stages execute in this order ingress dialect → edge auth → size limit → rate-limit → idempotency lookup → input safety → cache lookup → budget admission → routing → translation → outbound auth → outbound limiter → upstream → output safety → cache write → cost attribution → telemetry
+    - Every downstream feature that asserts a pipeline position cites this story
+- id: STORY-454
+  feature: FEAT-197
+  title: Enforce per-tenant concurrency
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Tenant exceeds concurrency cap
+    given:
+    - ApiAccessConfig.org_concurrency_limit = 100
+    - 100 concurrent requests for the Org are in flight
+    when:
+    - A 101st request arrives
+    then:
+    - The request is rejected with 429 Too Many Requests and error_code "tenant_concurrency_exceeded"
+    - Streaming connections count against the cap
+  data_models:
+  - ApiAccessConfig
+- id: STORY-455
+  feature: FEAT-192
+  title: Configure operator paging integration
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Configure and verify
+    given:
+    - I am the platform operator
+    when:
+    - I configure a PagerDuty/Opsgenie routing key and trigger a test page
+    then:
+    - A test event is sent and the acknowledgement webhook is received and verified
+    - An AuditLog entry records action "operator.paging.configured"
+  data_models:
+  - AuditLog
+- id: STORY-456
+  feature: FEAT-193
+  title: Mint and rotate install identity key
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Initial mint at install
+    given:
+    - The FEAT-177 install wizard completes
+    when:
+    - The install transitions to state="complete"
+    then:
+    - An InstallIdentityKey row is created for this install with issued_at=now, expires_at=now+365d
+    - Subsequent FEAT-179 phone-home payloads are signed with this key
+  - id: AC-002
+    scenario: Scheduled rotation
+    given:
+    - An InstallIdentityKey.expires_at is within 30d
+    when:
+    - The rotation worker runs
+    then:
+    - A new InstallIdentityKey is minted with rotated_from_key_id pointing to the predecessor
+    - The predecessor is accepted on verify for a 7d overlap window, then revoked
+  data_models:
+  - InstallIdentityKey
+- id: STORY-457
+  feature: FEAT-194
+  title: Manage license tier catalog
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Edit a tier
+    given:
+    - I am Antirion staff on the tier catalog surface
+    when:
+    - I edit seats_limit, rps_limit, retention_days_limit, features[] or grace_window_days on a LicenseTier row
+    then:
+    - The LicenseTier row updates and default_phone_home_channels propagates to new License issuances
+    - An AuditLog entry records the before/after
+  data_models:
+  - LicenseTier
+  - AuditLog
+- id: STORY-458
+  feature: FEAT-195
+  title: Capture NPS and CSAT
+  priority: P2
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Saas in-product survey
+    given:
+    - The install mode is saas and the user has met a sampling criterion (post-onboarding or quarterly)
+    when:
+    - The user submits an NPS or CSAT response
+    then:
+    - A TenantSurveyResponse row is written
+    - Org.nps_latest or Org.csat_latest is updated to the most-recent score for the Org
+  - id: AC-002
+    scenario: Self_hosted survey phone-home
+    given:
+    - The install mode is self_hosted and the tenant has opted in to the "survey" phone-home channel under FEAT-179
+    when:
+    - A survey response is captured locally
+    then:
+    - The response is sent to Antirion via FEAT-179 with install identity signature; Antirion writes a TenantSurveyResponse on the receiving side; the tenant's Org.nps_latest / csat_latest is updated locally
+  data_models:
+  - TenantSurveyResponse
+  - Org
+- id: STORY-459
+  feature: FEAT-196
+  title: Aggregate cross-tenant abuse signals
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Rolling-window threshold breach
+    given:
+    - SafetyEvent rates in a 5-minute window exceed the threshold for a configured abuse class (jailbreak mill, credential stuffing, scrape pattern, prompt injection mill, csam-like)
+    when:
+    - The aggregator worker runs
+    then:
+    - An AbuseFlag row is written for the tenant with severity and sample_count
+    - In saas the event routes to Antirion trust_and_safety; in self_hosted it is silently dropped because the tenant set is 1
+  data_models:
+  - SafetyEvent
+  - AbuseFlag
+- id: STORY-460
+  feature: FEAT-198
+  title: Rotate and escrow the audit signing key
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Scheduled rotation
+    given:
+    - The current audit signing key is within 30d of its 90d rotation schedule
+    when:
+    - The rotation worker runs
+    then:
+    - A new signing key is minted and wrapped under FEAT-133 CMK
+    - New AuditLog rows reference the new signing_key_id; previous rows remain verifiable via the escrowed key
+  - id: AC-002
+    scenario: Break-glass chain verification
+    given:
+    - A compliance request demands full hash-chain verification
+    when:
+    - An operator invokes the break-glass verification export
+    then:
+    - The export re-validates every AuditLog row against the escrowed signing keys and reports any break
+  data_models:
+  - AuditLog
+- id: STORY-461
+  feature: FEAT-199
+  title: Provision Budget AlertRules
+  priority: P0
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Budget create/edit provisions an AlertRule
+    given:
+    - A Budget is created or its BudgetPolicy changes
+    when:
+    - The provisioner observes the change
+    then:
+    - A system-managed AlertRule exists for each of (budget.utilisation_pct, budget.overage) with the configured thresholds
+    - Additional platform-scope AlertRules exist for budget.forecast.mape, budget.fx.staleness_hours and budget.counter.drift
+    - STORY-189 AC-001 soft-threshold signals fire through the AlertRule lifecycle (ack, snooze, resolve) rather than writing bare AlertEvents
+    - BudgetEvent rows still record the event as an audit trail
+  data_models:
+  - Budget
+  - BudgetPolicy
+  - AlertRule
+  - AlertEvent
+- id: STORY-462
+  feature: FEAT-200
+  title: Local pricing catalog with observed variance
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Catalog refresh
+    given:
+    - Provider pricing is cached locally
+    when:
+    - The daily refresh worker runs
+    then:
+    - Provider unit prices are updated in the local cache
+    - In saas, Antirion plan fees and commitment offsets are read from the local Billing catalog
+    - No third-party outbound call is made from the forecast path
+  - id: AC-002
+    scenario: Observed variance
+    given:
+    - MetricSeries carries 30d of scope-level spend
+    when:
+    - The variance job runs
+    then:
+    - A rolling observed-variance series is available to STORY-401 AC-001's confidence band
+  data_models:
+  - MetricSeries
 models:
 - name: Org
   description: The workspace (organization) that owns everything.
