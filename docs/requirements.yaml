@@ -17,7 +17,7 @@ project:
     horizontal_scaling: Each fleet auto-scales on CPU, request rate and queue depth. Capacity plans hold the performance SLO under load with headroom for a 3x traffic burst without shedding. A node-loss event never loses more than that node's in-flight requests.
     workers: Background work — metric aggregation, request-log ingestion, webhook delivery, cache eviction, retention sweeps, export generation, anomaly scoring, fine-tune job polling, SCIM sync, audit sink fan-out, notification delivery — runs in a dedicated worker fleet that consumes durable queues with visibility timeouts, exponential-backoff retry, poison-message dead-letter queues and at-least-once semantics. Handlers must be idempotent. Worker fleet health is surfaced by FEAT-167.
     concurrency_and_backpressure: Each node enforces a max concurrent request cap and returns 429 or 503 with Retry-After when saturated; streaming connections count against the cap. Upstream provider pools, database connection pools and queue consumer pools are bounded with explicit acquire timeouts. Saturation on any tier surfaces as its own alert signal rather than bleeding into latency.
-    shared_limiters: Edge rate limits (FEAT-139), budget counters (EPIC-008) and provider outbound limiters (FEAT-161) use a shared-store sliding-window implementation so horizontal scaling does not multiply a tenant's effective limit. Idempotency-Key lookup (FEAT-142) is cluster-wide and survives node loss.
+    shared_limiters: Edge rate limits (FEAT-138), budget counters (EPIC-008) and provider outbound limiters (FEAT-161) use a shared-store sliding-window implementation so horizontal scaling does not multiply a tenant's effective limit. Idempotency-Key lookup (FEAT-142) is cluster-wide and survives node loss.
     config_hot_reload: Routing rules, model catalog, safety and budget policies, rate limits, alert rules and feature flags propagate to every node within 30 seconds without restart and without dropping in-flight requests.
     graceful_shutdown: On SIGTERM a node deregisters from the load balancer, stops accepting new work, drains in-flight requests up to a configurable timeout (default 60 seconds for API, 10 minutes for workers), flushes buffered telemetry and exits zero. Streaming connections receive a terminal event and close cleanly.
     health_checks: Every service exposes a liveness probe (process up) and a readiness probe (dependencies reachable, config loaded, migrations applied, circuit-breaker state hydrated). Not-ready nodes are excluded from load-balancer routing and from queue consumption.
@@ -10661,7 +10661,7 @@ stories:
     given:
     - I am on /budgets and click "New budget"
     when:
-    - I pick scope "team", scope_id "copilot", amount 120000, cycle "monthly"
+    - I pick scope "team", scope_id the UUID of team "copilot" (slugs are resolved to Team.id before write), amount 120000, cycle "monthly"
     - I click Create
     then:
     - A Budget is created for the current cycle
@@ -10716,7 +10716,7 @@ stories:
   title: Reconcile direct-waiver and Approval-based budget paths
   narrative:
     as_a: finance operations lead
-    i_want: the behavior of direct-waiver (STORY-088) and Approval-based waivers (STORY-091) to be clearly separated by threshold
+    i_want: the behavior of direct-waiver (STORY-193) and Approval-based waivers (STORY-196) to be clearly separated by threshold
     so_that: small waivers are fast and big waivers are governed
   priority: P1
   acceptance_criteria:
@@ -10766,7 +10766,7 @@ stories:
     when:
     - I assign shares 50/30/20 and save
     then:
-    - Each Project.budget is 60000 / 36000 / 24000
+    - A Budget row is created (or updated) per Project with scope="project" and amount 60000 / 36000 / 24000 respectively; Project.budget_id is set to the created Budget
     - The sum matches the team budget
   - id: AC-002
     scenario: Over-allocation warning
@@ -10827,7 +10827,7 @@ stories:
     when:
     - A new request arrives for that team
     then:
-    - The gateway returns 429 with "budget exhausted"
+    - The gateway returns 402 Payment Required with error code "budget_exhausted" (aligned with FEAT-180 license hard-close); Retry-After is set only when the cycle boundary is within the retry horizon
     - A BudgetEvent of type "enforce" is recorded
   api:
   - method: PATCH
@@ -10867,7 +10867,7 @@ stories:
   - id: AC-001
     scenario: Downgrade applied
     given:
-    - A BudgetPolicy with hard-cap 100% and action "downgrade-model" to "claude-haiku-4-5"
+    - A BudgetPolicy with hard-cap 100% and action "downgrade-model" to "claude-haiku-4-5-20251001"
     - Team is at 102% of budget
     when:
     - A request to "claude-sonnet-4-5" arrives for the team
@@ -11157,7 +11157,7 @@ stories:
     when:
     - I change amount from 5000 to 10000
     then:
-    - An Approval is created with kind "budget-overage"
+    - An Approval is created with kind "budget-change"
     - Budget.amount remains 5000 until the Approval is approved
   ui:
     screens:
@@ -11322,9 +11322,8 @@ stories:
     - The metering pipeline writes the latest bucket
     then:
     - A BudgetEvent of type "overage" is written
-    - Notifications are sent to Budget.owner and Org.billing_contact via the configured channels in saas mode
-    - In self_hosted mode Org.billing_contact has no meaning against Antirion billing, so the same notification falls back to Org.finance_contact if set else platform admin
-    - Sustained overage across the tenant roster in saas mode additionally fans out to Antirion trust_and_safety as an abuse-correlation signal; this branch is silently skipped in self_hosted because the tenant set is 1
+    - Notifications are delivered to Budget.owner_user_id and Org.billing_contact via the configured channels in both deployment modes (tenant-scoped roles behave identically per project.notifications_model)
+    - If Org.finance_contact is set, it is added to the audience; otherwise the billing_contact audience stands
     - The notification is deduped for 1 hour on the same Budget
   ui:
     screens:
@@ -11591,7 +11590,7 @@ stories:
     when:
     - I edit thresholds
     then:
-    - All attached Budgets immediately see the new policy
+    - All attached Budgets see the new policy within the config-reload SLA (per project.non_functional_baseline.config_hot_reload)
   - id: AC-004
     scenario: Delete blocked when in use
     given:
@@ -22553,15 +22552,22 @@ models:
     nullable: true
   - name: created_at
     type: timestamp
+  - name: deleted_at
+    type: timestamp
+    nullable: true
+    description: Soft-delete timestamp; Projects remain visible in audit history after delete
   relations:
   - type: belongs_to
     model: Team
 - name: UserBudget
-  description: A per-user allocation of a project or team budget.
+  description: A per-user allocation of a parent Budget; team_id and project_id are derived from the parent Budget scope.
   fields:
   - name: id
     type: uuid
     pk: true
+  - name: budget_id
+    type: FK:Budget
+    description: Canonical parent Budget; enables cycle rollover to reset spent correctly
   - name: user_id
     type: FK:User
   - name: project_id
@@ -22584,11 +22590,29 @@ models:
   - name: id
     type: uuid
     pk: true
+  - name: budget_id
+    type: FK:Budget
+    nullable: true
+  - name: approval_id
+    type: FK:Approval
+    nullable: true
+    description: Linked Approval when the event originates from an approval decision (waiver, edit)
   - name: t
     type: timestamp
   - name: type
     type: string
     description: overage|forecast|threshold|waiver|change|enforce
+  - name: amount
+    type: number
+    nullable: true
+    description: Waiver magnitude (type=waiver) or enforcement blocked-request cost (type=enforce); null for informational events
+  - name: reason
+    type: string
+    nullable: true
+  - name: valid_until
+    type: timestamp
+    nullable: true
+    description: For type=waiver, the cycle end after which the waiver no longer applies
   - name: severity
     type: string
   - name: scope
@@ -23090,7 +23114,7 @@ models:
     type: FK:Org
   - name: kind
     type: string
-    description: budget-overage|policy-change|key-elevated-scope|routing-rule-change|data-reveal
+    description: budget-overage|budget-change|policy-change|key-elevated-scope|routing-rule-change|data-reveal
   - name: status
     type: string
     description: pending|approved|rejected|expired

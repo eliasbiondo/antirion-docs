@@ -198,3 +198,25 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-007 | m1..m9 minors | deferred | Batch editorial pass |
 | EPIC-007 | X-1..X-6 cross-epic | deferred | Cross-epic interactions need product input |
 | EPIC-007 | MR-1/MR-2/MR-3 missing features | deferred | Need new features/models |
+| EPIC-008 | C1 BudgetEvent.amount | applied | Added amount, reason, valid_until fields |
+| EPIC-008 | C2 BudgetEvent.approval_id | applied | Added approval_id + budget_id FKs |
+| EPIC-008 | C3 Project.budget | applied | STORY-188 AC clarifies Budget-per-project model |
+| EPIC-008 | C4 UserBudget.budget_id | applied | Added FK:Budget parent column |
+| EPIC-008 | C5 shared_limiters FEAT id | applied | Baseline citation FEAT-139 → FEAT-138 |
+| EPIC-008 | C6 STORY-187 refs | applied | STORY-088 → STORY-193, STORY-091 → STORY-196 |
+| EPIC-008 | C7 Org contact fields | applied | Already added in EPIC-001 pass |
+| EPIC-008 | M1 BudgetPolicy threshold overload | deferred | Needs product input |
+| EPIC-008 | M2 429 → 402 | applied | STORY-189 AC-002 aligned with FEAT-180 |
+| EPIC-008 | M3 AlertEvent vs AlertRule | deferred | Needs product input |
+| EPIC-008 | M4 FEAT-091 overlap | deferred | Needs product input |
+| EPIC-008 | M5 STORY-200 self_hosted billing | applied | Dropped mode-specific fallback (baseline says tenant-scoped roles behave identically) |
+| EPIC-008 | M6 STORY-200 trust_and_safety | applied | Removed misplaced T&S fanout |
+| EPIC-008 | M7 Budget.scope_id slug vs uuid | applied | STORY-186 example clarifies slug resolution |
+| EPIC-008 | M8 API path split | deferred | Structural API change |
+| EPIC-008 | M9 Approval.kind budget-change | applied | Added kind; STORY-197 uses it |
+| EPIC-008 | M10 STORY-190 model IDs | applied | Replaced example with canonical claude-haiku-4-5-20251001 |
+| EPIC-008 | M11 spent reconciliation | deferred | Needs new story |
+| EPIC-008 | M12 BudgetForecast model | deferred | Structural change; needs product input |
+| EPIC-008 | M13 STORY-208 immediate → SLA | applied | Rewritten to cite config-reload SLA |
+| EPIC-008 | m6 Project.deleted_at | applied | Added soft-delete column |
+| EPIC-008 | minor m1/m3/m4/m5/m7/m8/m9/m10/m11 | deferred | Editorial/product-input |

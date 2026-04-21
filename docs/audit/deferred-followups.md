@@ -70,3 +70,13 @@ Each entry: brief description, source audit citation, reason deferred.
 - **X-1..X-6 cross-epic interactions** — safety-rule-driven cache invalidation, semantic-cache coherence, pipeline ordering, residency × unredact — all need product input. (docs/audit/epic-007-review.md §X-1..X-6)
 - **MR-1..MR-3 missing features/models** — pipeline ordering feature, cross-tenant abuse correlation, approver delegation. (docs/audit/epic-007-review.md §MR-1..MR-3)
 
+### EPIC-008
+
+- **M1 BudgetPolicy threshold overload** — split `approval_threshold_pct` into edit/waiver variants. Needs product input. (docs/audit/epic-008-review.md §M1)
+- **M3 budget signals via AlertRule** — route soft-threshold alerts through managed AlertRule instead of direct AlertEvent writes. Needs product input. (docs/audit/epic-008-review.md §M3)
+- **M4 FEAT-091 overage vs soft-alert surfaces** — pick one canonical emitter; reduces duplicate notifications. (docs/audit/epic-008-review.md §M4)
+- **M8 budgets API path canonicalisation** — `/api/budgets/:id` vs `/api/budgets/teams/:id/...`. Structural API decision. (docs/audit/epic-008-review.md §M8)
+- **M11 Budget.spent pipeline story** — specify Request→Budget counter reconciliation. Needs new story under FEAT-086. (docs/audit/epic-008-review.md §M11)
+- **M12 BudgetForecast model** — move projected/runs_out_on off Budget; define trend and worker cadence. Needs product input. (docs/audit/epic-008-review.md §M12)
+- **minor drift items (m1, m3, m4, m5, m7, m8, m9, m10, m11)** — boilerplate NFRs, typed-confirmation policy, audit of FX override magnitude, UserBudget.outlier definition, project owner join table, STORY-208 asymmetry, FEAT-097 mode branching, waiver cycle expiry, approval queue cleanup worker. (docs/audit/epic-008-review.md §m1..m11)
+
