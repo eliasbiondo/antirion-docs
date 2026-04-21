@@ -220,3 +220,26 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-008 | M13 STORY-208 immediate → SLA | applied | Rewritten to cite config-reload SLA |
 | EPIC-008 | m6 Project.deleted_at | applied | Added soft-delete column |
 | EPIC-008 | minor m1/m3/m4/m5/m7/m8/m9/m10/m11 | deferred | Editorial/product-input |
+| EPIC-009 | C1 audience-driven notifications | deferred | Structural refactor; needs product input |
+| EPIC-009 | C2 STORY-232 mode collapse | deferred | Ties to C1 refactor |
+| EPIC-009 | C3 platform-scope AlertRule | applied | AlertRule.org_id nullable; added scope_kind |
+| EPIC-009 | C4 FEAT-101 misdirection | applied | STORY-386 cross-ref changed to FEAT-102 |
+| EPIC-009 | C5 StatusPageIncident fields | applied | Added Incident model (tenant-internal) with severity/participants/alert_event_id/org_id |
+| EPIC-009 | C6 PostMortem structure | applied | Replaced content with structured fields; added ActionItem model |
+| EPIC-009 | C7 AlertSnooze.fingerprint | applied | Added nullable fingerprint field |
+| EPIC-009 | M1 StatusPageIncident vs Incident | applied | Resolved by C5 model split |
+| EPIC-009 | M2 FEAT-100/103 overlap | deferred | Needs product decision |
+| EPIC-009 | M3 severity high → crit | applied | STORY-236/237 use enum |
+| EPIC-009 | M4 STORY-244 SLO target | applied | Example 99.9% → 99.95% |
+| EPIC-009 | M5 error-budget release gate | deferred | New story needed |
+| EPIC-009 | M6 STORY-223 AC-001 window | applied | Added window "30m" |
+| EPIC-009 | M7 STORY-223 preview | applied | Preview now includes window |
+| EPIC-009 | M8 in-app inbox channel | deferred | FEAT-102 description update |
+| EPIC-009 | M9 Team.owner naming | applied | Baseline notifications_model now cites Team.lead_user_id |
+| EPIC-009 | M10 PagerDuty gating | deferred | Needs product input |
+| EPIC-009 | M11 AlertRule.scope_kind | applied | Covered by C3 fix |
+| EPIC-009 | X1/X4 AlertEvent.rule_id nullable | applied | Added source field; rule_id nullable |
+| EPIC-009 | X2 AlertRule.owner_user_id | applied | Added owner_user_id (nullable FK:User) |
+| EPIC-009 | X3 audit-sink-degraded template | skipped-as-non-actionable | Observation only (gold-standard pattern) |
+| EPIC-009 | X5/X6/X7 cross-epic gaps | deferred | Need new stories/product input |
+| EPIC-009 | minors m1..m10 | deferred | Editorial |

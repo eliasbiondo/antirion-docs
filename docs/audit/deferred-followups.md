@@ -80,3 +80,15 @@ Each entry: brief description, source audit citation, reason deferred.
 - **M12 BudgetForecast model** — move projected/runs_out_on off Budget; define trend and worker cadence. Needs product input. (docs/audit/epic-008-review.md §M12)
 - **minor drift items (m1, m3, m4, m5, m7, m8, m9, m10, m11)** — boilerplate NFRs, typed-confirmation policy, audit of FX override magnitude, UserBudget.outlier definition, project owner join table, STORY-208 asymmetry, FEAT-097 mode branching, waiver cycle expiry, approval queue cleanup worker. (docs/audit/epic-008-review.md §m1..m11)
 
+### EPIC-009
+
+- **C1/C2 audience-driven notifications refactor** — structural change to AlertRule.channels and STORY-232 to adopt notifications_model roles. Needs product input. (docs/audit/epic-009-review.md §C1, §C2)
+- **M2 FEAT-100 vs FEAT-103 overlap** — redraw feature boundaries. Needs product decision. (docs/audit/epic-009-review.md §M2)
+- **M5 error-budget release gate** — tie error-budget burn to release promotion. Needs new story. (docs/audit/epic-009-review.md §M5)
+- **M8 in-app inbox channel** — add in-app to FEAT-102 channels. Needs product input. (docs/audit/epic-009-review.md §M8)
+- **M10 PagerDuty availability gating** — fallback when integration unreachable (air-gapped). Needs product input. (docs/audit/epic-009-review.md §M10)
+- **X5 Anomaly → AlertEvent linkage** — connect cross-epic. Needs product input. (docs/audit/epic-009-review.md §X5)
+- **X6 ingestion-health alert** — add concrete story. (docs/audit/epic-009-review.md §X6)
+- **X7 tenant-internal vs public incident publication** — addressed by C5 model split; FEAT-173 publication flow still needs an explicit story. (docs/audit/epic-009-review.md §X7)
+- **minor editorial (m1..m10)** — multiple small issues. (docs/audit/epic-009-review.md §m1..m10)
+
