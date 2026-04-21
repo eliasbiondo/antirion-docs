@@ -19633,6 +19633,7 @@ stories:
     inferred: true
   data_models:
   - FleetReplica
+  - AuditLog
   non_functional:
   - Drain honors the project graceful_shutdown contract — in-flight requests complete and streams receive a terminal event before the process exits
   - Drain and terminate are idempotent — repeat invocation is safe and does not double-count in the audit log
@@ -19797,6 +19798,7 @@ stories:
   data_models:
   - ConfigPropagation
   - FleetReplica
+  - AuditLog
   non_functional:
   - Propagation status is eventually consistent — readers tolerate up to the config-reload SLA of skew
   - A propagation that breaches the 30-second SLA raises its own operational alert per EPIC-009
@@ -19972,8 +19974,8 @@ stories:
   - ResidencyConfig
   non_functional:
   - Roster queries read from pre-aggregated operator rollups computed by the worker fleet — the operator UI never scans tenant request logs
-  - Tenant-level PII is minimized in the roster; drill-in (STORY-413) is the only path to richer detail and is audited
-  - Access is gated by platform admin plus deployment_mode per STORY-411
+  - Tenant-level PII is minimized in the roster; drill-in (STORY-410) is the only path to richer detail and is audited
+  - Access is gated by the operator role plus deployment_mode per FEAT-171 (STORY-407 and STORY-408)
 - id: STORY-410
   feature: FEAT-172
   title: Drill into a tenant from the roster
@@ -20000,7 +20002,7 @@ stories:
     - The view loads
     then:
     - An AuditLog "operator.tenant_view" is written with actor, target Org id and reason field (optional)
-    - The tenant's own audit log records a matching "operator_accessed" entry per FEAT-120
+    - The tenant's own AuditLog (browsable via FEAT-120) records a matching "operator_accessed" entry (ingestion anchor: FEAT-115 audit sinks)
   ui:
     screens:
     - Operator
@@ -20047,7 +20049,7 @@ stories:
     - I click "Suspend", pick a reason from a fixed taxonomy, optionally add a note, and type the Org id to confirm
     then:
     - Org X flips to state "suspended"; its gateway keys return 403 with a suspension body
-    - The tenant owner receives a notification per EPIC-009 with the reason and renewal path
+    - The tenant owner receives a notification via FEAT-102 notification channels (surfaced in the FEAT-169 inbox) with the reason and renewal path
     - An AuditLog "tenant.suspended" is written on both the operator-plane and tenant-plane audit stores
   - id: AC-002
     scenario: Resume a tenant
@@ -20059,7 +20061,7 @@ stories:
     - Org X flips to state "active"; keys start accepting traffic within the config-reload SLA
     - An AuditLog "tenant.resumed" is written on both audit stores
   - id: AC-003
-    scenario: Saas-only
+    scenario: self_hosted hides suspend/resume
     given:
     - The deployment mode is self_hosted
     when:
@@ -20180,6 +20182,7 @@ stories:
     inferred: true
   data_models:
   - PlatformIncident
+  - IncidentTimelineEntry
   - AuditLog
   non_functional:
   - Incident broadcasts reach every affected tenant's in-app widget within 30 seconds via the same propagation path as config hot-reload
@@ -20422,6 +20425,7 @@ stories:
   data_models:
   - FleetDeployment
   - FleetReplica
+  - AuditLog
   non_functional:
   - Canary traffic selection is deterministic per Request-Id so the same trace always hits the same side — comparison is apples-to-apples
   - SLO deltas are computed on the same 1-minute rollups the workspace dashboards use, so operator and tenant see the same numbers
@@ -20480,9 +20484,11 @@ stories:
     inferred: true
   data_models:
   - FleetDeployment
+  - AuditLog
   non_functional:
   - Auto-rollback decisions run in the worker fleet on the SLO rollup stream — not in the request path
   - Rollback drains honor the project graceful_shutdown contract so in-flight requests are not dropped
+  - The auto-rollback AuditLog uses actor_type="system" and actor_user_id=null; the metric sample is recorded under context
 - id: STORY-418
   feature: FEAT-175
   title: Install and verify a self_hosted license
@@ -20810,7 +20816,7 @@ stories:
     then:
     - Step 1 uploads and validates TLS certificates for the control-plane and gateway hostnames
     - Step 2 captures external dependency connection strings (Postgres, Redis, ClickHouse, object store, queue broker — NATS JetStream) and runs the validator from STORY-424
-    - Step 3 configures SSO identity-provider settings (or opts for local password auth for the platform admin only)
+    - Step 3 configures SSO identity-provider settings by writing the same SsoConfig row consumed by FEAT-108 (the wizard is the first writer; subsequent edits happen via FEAT-108's normal surface once the install completes), or opts for local password auth for the platform admin only
     - Step 4 bootstraps the platform admin account per STORY-425
     - Step 5 pins a residency label that is written into ResidencyConfig and is immutable for the install
     - Step 6 installs the license by handing off to FEAT-175
@@ -21133,6 +21139,7 @@ stories:
     - I see a row per call with timestamp, channel, endpoint, SHA-256 digest of the payload, response code, latency and a "inspect sample" action that renders the payload through the same redaction rules as the original send
   data_models:
   - PhoneHomeCallLog
+  - AuditLog
   non_functional:
   - Call-log writes are append-only and hash-chained like AuditLog
   - The "inspect sample" action never reveals fields above the channel's declared data class
@@ -21492,6 +21499,14 @@ models:
   - name: suspended_by_user_id
     type: FK:User
     nullable: true
+  - name: nps_latest
+    type: int
+    nullable: true
+    description: Latest NPS score collected from this Org; rendered by STORY-439/441
+  - name: csat_latest
+    type: int
+    nullable: true
+    description: Latest CSAT score collected from this Org; rendered by STORY-439
   - name: sso_enforced
     type: bool
     description: When true, password sign-in is blocked for users in require_for_domains
@@ -24585,7 +24600,7 @@ models:
   - name: install_id
     type: string
     nullable: true
-    description: Set on tickets originating from a self_hosted install (FEAT-179 phone-home)
+    description: Opaque install identity as reported by the customer install's FEAT-179 license-channel heartbeat and signed by the customer install's identity key; not an FK into Antirion's InstallState
   - name: triaged_at
     type: timestamp
     nullable: true
@@ -24875,9 +24890,15 @@ models:
     description: Coarse lifecycle status; state carries the finer-grained machine state
   - name: initiated_by_user_id
     type: FK:User
+    nullable: true
+    description: Null for deployments kicked off by the platform (e.g. auto-rollback on SLO breach); pending OperatorPrincipal per EPIC-013 C5
   - name: acting_user_id
     type: FK:User
-    description: Principal whose action drove the most recent stage transition
+    nullable: true
+    description: Principal whose action drove the most recent stage transition; null for system-driven transitions (auto-rollback)
+  - name: actor_type
+    type: string
+    description: user|system — system when the stage transition is driven by worker/SLO/scheduler rather than a human
   - name: started_at
     type: timestamp
   - name: ended_at
@@ -24910,6 +24931,9 @@ models:
   - name: tier
     type: string
     description: enterprise|cloud_assist (drives FEAT-179 phone-home channel defaults and FEAT-180 grace-window default)
+  - name: grace_window_days
+    type: int
+    description: Per-license grace window used by FEAT-180 soft-grace; default 14, overridden at issue time per tier-catalog entry
   - name: features
     type: string[]
   - name: state
@@ -25482,8 +25506,13 @@ models:
     type: string
   - name: last_toggled_by_user_id
     type: FK:User
+    nullable: true
   - name: last_toggled_at
     type: timestamp
+    nullable: true
+  - name: locked_by_mode
+    type: bool
+    description: True when the row is forced-on by deployment_mode=saas (toggle API returns 403)
 - name: PhoneHomeCallLog
   description: Append-only hash-chained record of every outbound phone-home call made by an install.
   fields:
@@ -25571,8 +25600,10 @@ models:
     type: json
   - name: follow_up_at
     type: timestamp
+    nullable: true
   - name: follow_up_assignee_user_id
     type: FK:User
+    nullable: true
   - name: logged_by_user_id
     type: FK:User
   - name: logged_at

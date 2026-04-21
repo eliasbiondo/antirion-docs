@@ -262,6 +262,21 @@ Each entry: brief description, source audit citation, reason deferred.
 - **m1..m8 minor editorial** — various. (docs/audit/epic-012-review.md §m1..m8)
 - **X1..X3 cross-epic** — FEAT-168 vs FEAT-085 forecast scopes, FEAT-164 saas sub-queue routing, invitee first-run boundary. (docs/audit/epic-012-review.md §X1..X3)
 
+### EPIC-013 (2026-04-20 re-audit)
+
+- **C1 operator URL gating** — FEAT-170 stories still live under /settings/fleet with 403-on-deny (leaks existence); STORY-408 only covers /operator/*. (docs/audit/epic-013-review-2026-04-20.md §C1)
+- **C2 STORY-407 saas role** — ties to C5. (docs/audit/epic-013-review-2026-04-20.md §C2)
+- **C3 /antirion/* gating contract** — baseline needs a dimension beyond `mode:`. (docs/audit/epic-013-review-2026-04-20.md §C3)
+- **C4 FEAT-181/182 mode tag** — same baseline change. (docs/audit/epic-013-review-2026-04-20.md §C4)
+- **C5 OperatorPrincipal / Antirion-staff identity** — unblocks C2, M3, m1, D3/D4. (docs/audit/epic-013-review-2026-04-20.md §C5)
+- **M4 PhoneHomeCallLog payload sample** — needs retention-managed payload_sample field. (docs/audit/epic-013-review-2026-04-20.md §M4)
+- **M5 FEAT-167/170 URL collision** — ties to EPIC-012 C5. (docs/audit/epic-013-review-2026-04-20.md §M5)
+- **M10 STORY-425 PlatformAdminClaim persistence** — needs new model. (docs/audit/epic-013-review-2026-04-20.md §M10)
+- **m1 STORY-409 saas role given** — ties to C5. (docs/audit/epic-013-review-2026-04-20.md §m1)
+- **m7/m8 WorkerQueue / ConfigPropagation normalization** — structural. (docs/audit/epic-013-review-2026-04-20.md §m7, §m8)
+- **X1..X8 cross-epic** — operator principal, /antirion/* dimension, FEAT-167 overlap, FEAT-124 outreach export, FEAT-108 SSO wizard cross-link (partial), FEAT-164→FEAT-181 resilience, PhoneHomeCallLog hash-chain divergence, operator paging integration channel. (docs/audit/epic-013-review-2026-04-20.md §X*)
+- **U1..U12 uncited-but-required** — Antirion-staff identity, operator audit viewer, operator paging integration, cross-tenant abuse producer, break-glass operator access, remote-install identity keys, NPS/CSAT survey collection, license tier catalog, operator-rollup pipeline, engineering-tracker integration, rollback-rule config, FleetReplica heartbeat ingestion. (docs/audit/epic-013-review-2026-04-20.md §U*)
+
 ### EPIC-013
 
 - **C4 Antirion staff principal model** — saas needs an OperatorPrincipal concept distinct from tenant User. Structural; needs product input. (docs/audit/epic-013-review.md §C4)

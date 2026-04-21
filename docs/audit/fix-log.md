@@ -618,3 +618,31 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-012 (2026-04-20) | m3..m9 minors | deferred | Editorial / new stories |
 | EPIC-012 (2026-04-20) | X1..X3 cross-epic | deferred | Forecast route / Antirion sub-queue / invitee first-run |
 | EPIC-012 (2026-04-20) | U1..U12 missing features | deferred | Partial via M2/C3/M5; rest need new features |
+| EPIC-013 (2026-04-20) | C1 operator URL gating on /settings/fleet | deferred | Needs structural decision + STORY-408 extension |
+| EPIC-013 (2026-04-20) | C2 STORY-407 saas role | deferred | Ties to C5 OperatorPrincipal |
+| EPIC-013 (2026-04-20) | C3 /antirion/* gating | deferred | Needs baseline `installed_on` dimension |
+| EPIC-013 (2026-04-20) | C4 FEAT-181/182 mode tag | deferred | Same baseline change |
+| EPIC-013 (2026-04-20) | C5 OperatorPrincipal model | deferred | Structural; needs product input |
+| EPIC-013 (2026-04-20) | M1 STORY-409 drill-in ref | applied | STORY-413 → STORY-410 |
+| EPIC-013 (2026-04-20) | M2 STORY-409 gating ref | applied | STORY-411 → FEAT-171 (STORY-407/408) |
+| EPIC-013 (2026-04-20) | M3 FleetDeployment nullability | applied | initiated_by/acting_user_id nullable + actor_type discriminator |
+| EPIC-013 (2026-04-20) | M4 PhoneHomeCallLog inspect sample | deferred | Needs payload retention field + product input |
+| EPIC-013 (2026-04-20) | M5 FEAT-170 vs FEAT-167 | deferred | Ties to C1 / EPIC-012 C5 |
+| EPIC-013 (2026-04-20) | M6 STORY-412 data_models | applied | Added IncidentTimelineEntry |
+| EPIC-013 (2026-04-20) | M7 AuditLog data_models gaps | applied | STORY-404/406/416/417 now list AuditLog |
+| EPIC-013 (2026-04-20) | M8 PhoneHomeChannel.locked_by_mode | applied | Added field |
+| EPIC-013 (2026-04-20) | M9 Org NPS/CSAT fields | applied | Added nps_latest, csat_latest |
+| EPIC-013 (2026-04-20) | M10 STORY-425 claimed identifier | deferred | Needs PlatformAdminClaim model |
+| EPIC-013 (2026-04-20) | M11 License.grace_window_days | applied | Added field |
+| EPIC-013 (2026-04-20) | M12 STORY-423 SSO cross-ref | applied | Step 3 cross-refs FEAT-108 SsoConfig |
+| EPIC-013 (2026-04-20) | m1 STORY-409 saas role | deferred | Ties to C5 |
+| EPIC-013 (2026-04-20) | m2 STORY-411 EPIC-009 ref | applied | Changed to FEAT-102/FEAT-169 |
+| EPIC-013 (2026-04-20) | m3 STORY-411 AC-003 name | applied | Renamed to "self_hosted hides suspend/resume" |
+| EPIC-013 (2026-04-20) | m4 CrmOutreach nullability | applied | follow_up_at + follow_up_assignee_user_id nullable |
+| EPIC-013 (2026-04-20) | m5 SupportTicket.install_id description | applied | Describes signed customer-install identity |
+| EPIC-013 (2026-04-20) | m6 STORY-410 FEAT-120 ref | applied | Changed to AuditLog/FEAT-115 ingestion anchor |
+| EPIC-013 (2026-04-20) | m7/m8 model gaps | deferred | Structural (ConfigPropagationNode, WorkerQueue extensions) |
+| EPIC-013 (2026-04-20) | m9 STORY-432 AuditLog ref | applied | Added to data_models |
+| EPIC-013 (2026-04-20) | m10 STORY-417 actor_type=system | applied | Added NFR to STORY-417 |
+| EPIC-013 (2026-04-20) | X1..X8 cross-epic | deferred | Most tie to C5/C3 structural decisions |
+| EPIC-013 (2026-04-20) | U1..U12 uncited-but-required | deferred | New features / models; product input |
