@@ -26,6 +26,21 @@ Each entry: brief description, source audit citation, reason deferred.
 - **X-2 STORY-020 cross-epic reference to FEAT-015** — audit suggests adding a `related_features` list; no such field in the current schema. Needs cross-epic linkage convention. (docs/audit/epic-001-review.md §X-2)
 - **X-3 STORY-018/019 cross-epic references to EPIC-003** — same issue as X-2. (docs/audit/epic-001-review.md §X-3)
 
+### EPIC-002 (2026-04-20 re-audit)
+
+- **C-3 FEAT-021 collapse into FEAT-003** — still open. Re-audit restates the collapse proposal; partial fix (depends_on) already landed. (docs/audit/epic-002-review-2026-04-20.md §C-3)
+- **M-7 STORY-043 quiet-hours semantics** — global vs per-event row shape contradiction unchanged. (docs/audit/epic-002-review-2026-04-20.md §M-7)
+- **M-8 FEAT-015 trusted-browser list/revoke** — still no list/revoke-by-id story under FEAT-015. (docs/audit/epic-002-review-2026-04-20.md §M-8)
+- **X-3 STORY-044 FEAT-167 / FEAT-179 dependencies** — needs canonical cross-epic reference convention. (docs/audit/epic-002-review-2026-04-20.md §X-3)
+- **U-1 Account-deletion cutover worker** — no feature transitions AccountDeletionRequest pending → completed at scheduled_for. (docs/audit/epic-002-review-2026-04-20.md §U-1)
+- **U-2 Recovery-code consumption at sign-in** — no story consumes RecoveryCode.consumed_at on sign-in; codes are write-only. (docs/audit/epic-002-review-2026-04-20.md §U-2)
+- **U-3 PersonalToken.last_used_at write path** — display-only; no auth-pipeline writer specified. (docs/audit/epic-002-review-2026-04-20.md §U-3)
+- **U-4 MFA primary-factor toggle** — no story toggles MfaFactor.is_primary or enforces the "exactly one primary" invariant. (docs/audit/epic-002-review-2026-04-20.md §U-4)
+- **U-5 Avatar image lifecycle** — bytes/content-type limits, replace-cleanup and removal path unspecified; 413 error code has no policy. (docs/audit/epic-002-review-2026-04-20.md §U-5)
+- **U-6 UserPrefs row seeding** — no feature or AC creates UserPrefs with defaults; UI baseline reads may NPE. (docs/audit/epic-002-review-2026-04-20.md §U-6)
+- **U-7 Account-deletion cascade for user-owned resources** — ApiKey/Team.lead/AlertRule/Webhook/PromptTemplate cascade/reassignment rules at cutover unspecified. (docs/audit/epic-002-review-2026-04-20.md §U-7)
+- **U-8 LoginAttempt retention policy** — RetentionConfig class missing; worker feature needed. (docs/audit/epic-002-review-2026-04-20.md §U-8)
+
 ### EPIC-002
 
 - **C-4 FEAT-021/STORY-048 duplication of FEAT-003/STORY-006** — audit recommends collapsing FEAT-021 into FEAT-003 and moving STORY-048 list AC into STORY-006. Partial fix applied (depends_on added); full collapse requires product decision on feature ownership. (docs/audit/epic-002-review.md §C-4)

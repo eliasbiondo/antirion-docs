@@ -2,7 +2,7 @@ project:
   name: Antirion
   description: 'LLM control plane and AI gateway: route requests across providers, enforce budgets, safety and residency policies, and get a single audit trail without changing application code.'
   destructive_action_confirmation_policy:
-    description: High-impact destructive actions (delete project, delete org, delete alert rule with active fires, delete model with live traffic, delete team, purge cache, rotate org secret) require the user to type the target's name or slug to confirm. Low-impact reversible deletions (alias, saved view, draft rule, personal token) require a single click-confirm.
+    description: High-impact destructive actions (delete project, delete org, delete alert rule with active fires, delete model with live traffic, delete team, delete personal account, purge cache, rotate org secret) require the user to type the target's name or slug to confirm. Low-impact reversible deletions (alias, saved view, draft rule, personal token) require a single click-confirm.
   ui_baseline:
     description: Cross-cutting UI standards every screen inherits. Individual stories only restate these when they deviate.
     accessibility: Meet WCAG 2.1 AA for color contrast, focus order, visible focus and keyboard operability. Every interactive element has an accessible name. Respect prefers-reduced-motion from the OS and from UserPrefs.reduced_motion.
@@ -3757,8 +3757,18 @@ stories:
     - I change my email to "new.email@acme.example"
     - I click "Verify"
     then:
+    - An EmailVerificationToken is created with email="new.email@acme.example" and purpose="email_change"
     - A verification email is sent to the new address
-    - The email field stays unchanged until I click the verification link
+    - The email field stays unchanged until the token is consumed
+  - id: AC-005
+    scenario: Email collision on verify
+    given:
+    - Another User already has email "new.email@acme.example"
+    when:
+    - I POST /api/users/me/email/verify with that email
+    then:
+    - The response is 409
+    - No verification email is sent and My User.email remains unchanged
   - id: AC-003
     scenario: Upload profile photo
     given:
@@ -3777,6 +3787,15 @@ stories:
     - The PATCH returns 409
     - I see "Handle already in use" inline
     - My User record is unchanged
+  - id: AC-006
+    scenario: Timezone and language round-trip
+    given:
+    - I am on Account -> Profile
+    when:
+    - I change timezone to "Europe/Paris" and language to "fr-FR" and click "Save changes"
+    then:
+    - User.timezone is "Europe/Paris" and User.language is "fr-FR"
+    - Subsequent date/time rendering uses the new values
   ui:
     screens:
     - Account
@@ -3830,6 +3849,7 @@ stories:
     inferred: true
   data_models:
   - User
+  - EmailVerificationToken
   non_functional:
   - Profile and preference fields treated as PII — redacted from telemetry and error payloads
   - Changes apply on the next request without requiring a full page reload
@@ -3927,7 +3947,7 @@ stories:
   - UserPrefs
   non_functional:
   - Profile and preference fields treated as PII — redacted from telemetry and error payloads
-  - Changes apply on the next request without requiring a full page reload
+  - Theme and density changes apply immediately client-side; other preference fields apply on the next request without requiring a full page reload
 - id: STORY-038
   feature: FEAT-015
   title: Change my password
@@ -4013,6 +4033,8 @@ stories:
     then:
     - All TrustedBrowser records for me are deleted
     - Next sign-in from those browsers requires MFA again
+    - An AuditLog entry with action "user.trusted_browsers.cleared" is written recording count and actor and records the resolved audience list
+    - A Notification of kind "security" ("account.trusted_browsers_cleared") is delivered to the acting principal via FEAT-102
   api:
   - method: POST
     path: /api/users/me/recovery-codes/regenerate
@@ -4034,10 +4056,13 @@ stories:
   - MfaFactor
   - RecoveryCode
   - TrustedBrowser
+  - AuditLog
+  - Notification
   non_functional:
   - Profile and preference fields treated as PII — redacted from telemetry and error payloads
   - Changes apply on the next request without requiring a full page reload
   - TOTP is RFC 6238 compliant with a 30-second step; recovery codes stored hashed and single-use
+  - Channel delivery is via FEAT-102 notification-channels routing
 - id: STORY-040
   feature: FEAT-015
   title: Enroll a new MFA factor
@@ -4055,6 +4080,7 @@ stories:
     - I click "Add factor", scan the QR and submit a valid code
     then:
     - A new MfaFactor row is created
+    - If this is the user's first MfaFactor, the row is created with is_primary=true; subsequent factors are created with is_primary=false and the existing primary assignment is unchanged
     - The list shows the new factor with a "primary" toggle
   - id: AC-002
     scenario: Add a WebAuthn factor
@@ -4090,7 +4116,8 @@ stories:
     - I click "Remove" on the non-primary factor
     then:
     - The MfaFactor row is deleted
-    - An email notifies me the factor was removed
+    - A Notification of kind "security" ("account.mfa_factor_removed") is delivered to the acting principal via FEAT-102 channel routing; the notification is treated as urgent-paging and is not suppressed by STORY-043 quiet hours
+    - An AuditLog entry records action "user.mfa_factor.removed"
   - id: AC-002
     scenario: Cannot remove last factor when MFA is enforced
     given:
@@ -4103,10 +4130,12 @@ stories:
   - MfaFactor
   - User
   - AuditLog
+  - Notification
   non_functional:
   - Profile and preference fields treated as PII — redacted from telemetry and error payloads
   - Changes apply on the next request without requiring a full page reload
   - TOTP is RFC 6238 compliant with a 30-second step; recovery codes stored hashed and single-use
+  - Channel delivery is via FEAT-102 notification-channels routing
 - id: STORY-042
   feature: FEAT-016
   title: Manage personal access tokens
@@ -4135,7 +4164,7 @@ stories:
     when:
     - I click "Revoke" on its row and confirm
     then:
-    - The PersonalToken is deleted server-side
+    - The PersonalToken.status is set to "revoked", PersonalToken.revoked_at is set to now and PersonalToken.token_hash is nulled
     - Requests using that token now return 401
   - id: AC-003
     scenario: Scope inheritance enforced
@@ -4154,6 +4183,15 @@ stories:
     - I open Account -> Personal tokens
     then:
     - I see each token with name, masked prefix, scopes, created_at and last_used_at (rendered as "never" when null)
+  - id: AC-005
+    scenario: Scope narrowing after role change
+    given:
+    - I hold a PersonalToken with scopes ["read","write"] and my role is later narrowed so I no longer hold "write"
+    when:
+    - The token is used on a subsequent request
+    then:
+    - Scopes the new role does not grant are stripped at authorization time; the request proceeds with the remaining scopes or is rejected with 403 if no scopes remain
+    - An AuditLog entry records the narrowing with target_type="personal_token"
   api:
   - method: POST
     path: /api/users/me/tokens
@@ -4198,6 +4236,8 @@ stories:
     i_want: to set email/push preferences per event, digest frequency and quiet hours
     so_that: I am pinged on what matters without noise
   priority: P1
+  depends_on:
+  - STORY-232
   acceptance_criteria:
   - id: AC-001
     scenario: Toggle email for an event
@@ -4244,6 +4284,8 @@ stories:
     i_want: to download an archive of my profile, sessions, tokens and audit trail
     so_that: I have a portable copy for compliance or personal record
   priority: P1
+  depends_on:
+  - STORY-232
   acceptance_criteria:
   - id: AC-001
     scenario: Request an export
@@ -4272,7 +4314,16 @@ stories:
     when:
     - The worker fans out the completion event
     then:
-    - An AuditLog entry records the resolved audience list - acting principal in both modes, with the Antirion dpo sub-queue added in saas and suppressed in self_hosted per project.notifications_model
+    - An AuditLog entry records the resolved audience list and the channel attempt (email; optionally in-app Notification) - acting principal in both modes, with the Antirion dpo sub-queue added in saas and suppressed in self_hosted per project.notifications_model
+  - id: AC-004
+    scenario: Failed export after 24h SLO
+    given:
+    - A DataExportJob has status "queued" or "running" 24 hours after requested_at
+    when:
+    - The worker evaluates the SLO timer
+    then:
+    - DataExportJob.status transitions to "failed" and an error message is recorded
+    - A failure email is delivered via FEAT-102 to the acting principal
   ui:
     screens:
     - Account
@@ -4327,7 +4378,7 @@ stories:
     when:
     - The page loads
     then:
-    - I see the last 30 LoginAttempt rows for my user with time, IP, user_agent, device, location and outcome
+    - I see the last 30 LoginAttempt rows whose user_id matches my id OR whose email_attempted matches my current or previously verified User.email, ordered by at DESC, with time, IP, user_agent, device, location and outcome
     - Failed attempts are visually distinct
     - A "Something unfamiliar? Reset password" shortcut is visible
   - id: AC-002
@@ -4363,7 +4414,7 @@ stories:
   data_models:
   - LoginAttempt
   non_functional:
-  - Only the authenticated user's own attempts are returned
+  - Only rows where LoginAttempt.user_id = me OR LoginAttempt.email_attempted matches my current or previously verified User.email are returned
 - id: STORY-046
   feature: FEAT-020
   title: Request personal account deletion
@@ -4385,7 +4436,8 @@ stories:
     - An AccountDeletionRequest is created with status "pending" and scheduled_for now + 30 days
     - User.status remains "active" until cutover - pending-deletion state is tracked via AccountDeletionRequest.status
     - My PersonalToken rows have status set to "rotating" (to be revoked at cutover)
-    - A confirmation email is sent to me and to each workspace owner
+    - A Notification of kind "security" ("account.deletion_requested") is delivered via FEAT-102 to (a) the acting principal and (c) Org.owner_user_id; if Org.owner_user_id is null, fall back to every User with role="owner" in the Org per project.notifications_model fallback chain
+    - An AuditLog entry with action "user.deletion.requested" is written and records the resolved audience list and the channel attempt per project.notifications_model
   - id: AC-002
     scenario: Owner cannot self-delete while sole owner
     given:
@@ -4393,7 +4445,7 @@ stories:
     when:
     - I click "Delete my account"
     then:
-    - I see "Assign another owner before deleting your account"
+    - I see "Assign another owner before deleting your account - open /users to assign another owner (STORY-012) before retrying"
     - No AccountDeletionRequest is created
   ui:
     screens:
@@ -4426,8 +4478,10 @@ stories:
   - User
   - PersonalToken
   - AuditLog
+  - Notification
   non_functional:
   - Sole-owner check runs in the same transaction as the deletion-request insert
+  - Channel delivery is via FEAT-102 notification-channels routing
 - id: STORY-047
   feature: FEAT-020
   title: Cancel pending account deletion
@@ -4449,7 +4503,8 @@ stories:
     then:
     - The AccountDeletionRequest.status becomes "cancelled"
     - My PersonalToken rows with status "rotating" are restored to status "active"
-    - An AuditLog entry with action "user.deletion.cancelled" is written
+    - A Notification of kind "security" ("account.deletion_cancelled") is delivered via FEAT-102 to (a) the acting principal and (c) Org.owner_user_id with the same fallback chain as STORY-046 AC-001
+    - An AuditLog entry with action "user.deletion.cancelled" is written and records the resolved audience list and the channel attempt per project.notifications_model
   ui:
     screens:
     - Account
@@ -4472,8 +4527,10 @@ stories:
   - AccountDeletionRequest
   - User
   - AuditLog
+  - Notification
   non_functional:
   - After scheduled_for elapses, cancellation is rejected and must go through support
+  - Channel delivery is via FEAT-102 notification-channels routing
 - id: STORY-048
   feature: FEAT-021
   title: Browse and revoke my active sessions
@@ -21356,14 +21413,19 @@ models:
   - name: token_hash
     type: string
     unique: true
+    nullable: true
+    description: Nulled on revoke to prevent re-use even if the row is still present for audit.
   - name: scopes
     type: json
   - name: status
     type: string
-    description: active|rotating|revoked
+    description: active|rotating|revoked (hard-delete is not a valid state; revoke is soft via status=revoked + revoked_at)
   - name: created_at
     type: timestamp
   - name: last_used_at
+    type: timestamp
+    nullable: true
+  - name: revoked_at
     type: timestamp
     nullable: true
   relations:

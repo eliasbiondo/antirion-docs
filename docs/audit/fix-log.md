@@ -353,3 +353,37 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-001 (2026-04-20) | U-6 service-account rotation/delete notification | applied | Added Notification AC + data_models + FEAT-102 non_functional on STORY-028 and STORY-029 |
 | EPIC-001 (2026-04-20) | U-7 LoginAttempt retention | deferred | Needs RetentionConfig.login_attempts_days + sweep worker (EPIC-010); product input |
 | EPIC-001 (2026-04-20) | U-8 User.status=inactive lifecycle | deferred | Either extend FEAT-008 with dormancy sweep or remove enum value; product input |
+| EPIC-002 (2026-04-20) | C-1 STORY-046 AuditLog | applied | AC-001 now writes user.deletion.requested AuditLog with audience + channel per notifications_model |
+| EPIC-002 (2026-04-20) | C-2 PersonalToken revoke | applied | STORY-042 AC-002 soft-deletes via status=revoked + revoked_at; token_hash nulled. PersonalToken.revoked_at added; token_hash nullable. |
+| EPIC-002 (2026-04-20) | C-3 FEAT-021 collapse into FEAT-003 | deferred | Structural collapse still requires product decision on feature ownership (partial fix already landed) |
+| EPIC-002 (2026-04-20) | M-1 STORY-045 filter | applied | AC-001 + non_functional now include user_id match OR email_attempted match |
+| EPIC-002 (2026-04-20) | M-2 STORY-046 canonical roles | applied | AC-001 uses canonical audience (a) + (c) Org.owner_user_id with fallback chain |
+| EPIC-002 (2026-04-20) | M-3 STORY-039 trusted-browser clear audit | applied | AC-002 now writes user.trusted_browsers.cleared AuditLog + Notification; data_models extended |
+| EPIC-002 (2026-04-20) | M-4 EPIC-002 notification consistency | applied | STORY-041/046/047 standardized on Notification + FEAT-102 pattern |
+| EPIC-002 (2026-04-20) | M-5 STORY-047 cancellation notification | applied | AC-001 now emits account.deletion_cancelled Notification with same audience as STORY-046 |
+| EPIC-002 (2026-04-20) | M-6 STORY-035 EmailVerificationToken | applied | AC-002 names EmailVerificationToken with purpose=email_change; data_models includes it |
+| EPIC-002 (2026-04-20) | M-7 STORY-043 quiet-hours row shape | deferred | Global-vs-per-event still requires product input |
+| EPIC-002 (2026-04-20) | M-8 FEAT-015 trusted-browser list/revoke | deferred | New story/ACs needed — product input |
+| EPIC-002 (2026-04-20) | M-9 STORY-041 MFA factor Notification | applied | AC-001 uses Notification kind=security (account.mfa_factor_removed) via FEAT-102; Notification added to data_models |
+| EPIC-002 (2026-04-20) | M-10 destructive_action_confirmation_policy | applied | Policy extended to include "delete personal account" |
+| EPIC-002 (2026-04-20) | m-1 STORY-035 email collision AC | applied | Added AC-005 covering 409 path |
+| EPIC-002 (2026-04-20) | m-2 STORY-035 timezone/language AC | applied | Added AC-006 asserting round-trip of timezone/language |
+| EPIC-002 (2026-04-20) | m-3 STORY-037 theme switch NFR | applied | Split the shared line into theme/density-immediate vs other-fields-next-request |
+| EPIC-002 (2026-04-20) | m-4 STORY-042 scope narrowing | applied | Added AC-005 re-evaluating scopes on use + AuditLog narrowing |
+| EPIC-002 (2026-04-20) | m-5 STORY-044 failure state AC | applied | Added AC-004 covering DataExportJob.status transition to "failed" after 24h |
+| EPIC-002 (2026-04-20) | m-6 STORY-044 channel attempt | applied | AC-003 now records audience list AND channel attempt |
+| EPIC-002 (2026-04-20) | m-7 FEAT-021 priority alignment | deferred | Ties to C-3 structural collapse |
+| EPIC-002 (2026-04-20) | m-8 STORY-048/006 audit parity | deferred | Ties to C-3 |
+| EPIC-002 (2026-04-20) | m-9 STORY-040 first-factor primary | applied | AC-001 states first factor gets is_primary=true; subsequent factors default false |
+| EPIC-002 (2026-04-20) | X-1 FEAT-021 ↔ FEAT-003 | deferred | Ties to C-3 |
+| EPIC-002 (2026-04-20) | X-2 STORY-043/044 FEAT-102 depends_on | applied | Added depends_on STORY-232 to both stories |
+| EPIC-002 (2026-04-20) | X-3 STORY-044 FEAT-167/FEAT-179 | deferred | Needs canonical cross-epic reference convention |
+| EPIC-002 (2026-04-20) | X-4 STORY-046 owner-handoff cross-ref | applied | AC-002 error message now references STORY-012 in-line |
+| EPIC-002 (2026-04-20) | U-1 account-deletion cutover worker | deferred | Needs new feature under FEAT-020; worker spec + notifications/audit paths |
+| EPIC-002 (2026-04-20) | U-2 recovery-code consume path | deferred | Needs new story under FEAT-001 or FEAT-015; product input |
+| EPIC-002 (2026-04-20) | U-3 PersonalToken.last_used_at write path | deferred | Auth pipeline concern; needs cross-epic home |
+| EPIC-002 (2026-04-20) | U-4 MFA primary toggle | deferred | Needs new story under FEAT-015; product input on transaction/UX |
+| EPIC-002 (2026-04-20) | U-5 avatar image lifecycle | deferred | Size/content-type/remove ACs + storage policy needed; product input |
+| EPIC-002 (2026-04-20) | U-6 UserPrefs row seeding | deferred | Needs new AC/story covering defaults and seeding event |
+| EPIC-002 (2026-04-20) | U-7 account-deletion cascade for user-owned resources | deferred | Needs product policy on ApiKey/Team.lead/AlertRule/Webhook/PromptTemplate cascade |
+| EPIC-002 (2026-04-20) | U-8 LoginAttempt retention | deferred | Needs RetentionConfig class + sweep worker (EPIC-010); product input |
