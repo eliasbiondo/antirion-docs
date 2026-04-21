@@ -646,3 +646,23 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-013 (2026-04-20) | m10 STORY-417 actor_type=system | applied | Added NFR to STORY-417 |
 | EPIC-013 (2026-04-20) | X1..X8 cross-epic | deferred | Most tie to C5/C3 structural decisions |
 | EPIC-013 (2026-04-20) | U1..U12 uncited-but-required | deferred | New features / models; product input |
+| Cross-cutting (2026-04-20 answers) | Q1 STORY-018 typed-email confirm | applied | Added AC-003; confirm_email on API body; policy line updated |
+| Cross-cutting (2026-04-20 answers) | Q2 STORY-012 role-change notification | applied | Notification + resolved audience list; Notification added to data_models |
+| Cross-cutting (2026-04-20 answers) | Q6 FEAT-008 dormancy sweep | applied | Description extended to own the User.status=inactive sweep |
+| Cross-cutting (2026-04-20 answers) | Q7 FEAT-021 collapse into FEAT-003 | applied | FEAT-021/STORY-048 deleted; STORY-006 absorbs list + revoke audit |
+| Cross-cutting (2026-04-20 answers) | Q11 STORY-035 avatar lifecycle | applied | Size/type/dimension caps, replace-cleanup, DELETE endpoint |
+| Cross-cutting (2026-04-20 answers) | Q13 ApiKey.scopes derived | applied | Model column removed; STORY-066 / STORY-323 now compute at auth time |
+| Cross-cutting (2026-04-20 answers) | Q13 ApiKey.type=break_glass | applied | Added to enum in ApiKey.type description |
+| Cross-cutting (2026-04-20 answers) | Q16 BYOKCredential rate_limit removal | applied | Fields removed; STORY-383 AC-001 uses ProviderRateLimit |
+| Cross-cutting (2026-04-20 answers) | Q29 EPIC-014 split | applied | New EPIC-014 "Prompts and model evaluation"; FEAT-058/059 retagged |
+| Cross-cutting (2026-04-20 answers) | Q48 AlertRule.channels → audience | applied | Model column renamed; PATCH/POST bodies updated; STORY-223 AC-001 uses canonical roles |
+| Cross-cutting (2026-04-20 answers) | Q51 FEAT-107 split-by-mode | applied | Description documents identity (both modes) vs billing (saas-only, 404 in self_hosted) |
+| Cross-cutting (2026-04-20 answers) | Q52 FEAT-127 DR role split | applied | STORY-294 split into self_hosted execute + saas request-ticket |
+| Cross-cutting (2026-04-20 answers) | Q53 FEAT-131 fail-closed default | applied | STORY-306 AC-002 now rejects on geoip unavailability |
+| Cross-cutting (2026-04-20 answers) | Q58 FEAT-160 move to EPIC-003 | applied | epic tag changed; EPIC-011/EPIC-003 features lists updated |
+| Cross-cutting (2026-04-20 answers) | Q59 EPIC-015 split | applied | New EPIC-015 "Provider API surface"; FEAT-150..157 retagged |
+| Cross-cutting (2026-04-20 answers) | Q71 installed_on baseline dimension | applied | deployment_modes baseline describes the new dimension; FEAT-181/182 use it |
+| Cross-cutting (2026-04-20 answers) | Q79 destructive policy additions | applied | Policy line enumerates offboard user, waiver>50%, cycle force-reset |
+| Cross-cutting (2026-04-20 answers) | Q80 audience+channel audit sweep | applied | STORY-232 expanded to 7 ACs including audit-of-audience and mode collapse |
+| Cross-cutting (2026-04-20 new features) | FEAT-183..200 | applied | 19 new features (see wave 4 commit) with stub stories STORY-442..462 |
+| Cross-cutting (2026-04-20 new models) | OperatorPrincipal, PiiPolicy, SafetyAllowanceGrant, AlertRuleSubscription, Invoice, InvoiceLine, InvoiceContest, CreditRequest, HelpArticleView, StatusPageSubscriber, InstallBootstrapIntent, AbuseFlag, AccessLog, OrgSigningSecret, LicenseTier, InstallIdentityKey, TenantSurveyResponse | applied | 17 new models added per wave 3 |
