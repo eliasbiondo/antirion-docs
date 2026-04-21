@@ -92,3 +92,13 @@ Each entry: brief description, source audit citation, reason deferred.
 - **X7 tenant-internal vs public incident publication** — addressed by C5 model split; FEAT-173 publication flow still needs an explicit story. (docs/audit/epic-009-review.md §X7)
 - **minor editorial (m1..m10)** — multiple small issues. (docs/audit/epic-009-review.md §m1..m10)
 
+### EPIC-010
+
+- **C-4 FEAT-133 revocation semantics** — reconcile saas fallback vs self_hosted fail-closed across the feature description and STORY-308/309/310 NFRs. Needs product input. (docs/audit/epic-010-review.md §C-4)
+- **M-1 FEAT-107 identity vs billing mode split** — split into an identity feature (both modes) and a saas-only billing half. Needs product decision. (docs/audit/epic-010-review.md §M-1)
+- **M-3 dual IP allowlist storage** — consolidate onto OrgIpAllowlist + /api/org/ip-allowlist. Structural. (docs/audit/epic-010-review.md §M-3)
+- **M-4 FEAT-127 DR role gating** — saas vs self_hosted execute-restore vs request-restore. Needs product input. (docs/audit/epic-010-review.md §M-4)
+- **M-7 GeoIP default behavior** — flip default to fail-closed. Needs product input. (docs/audit/epic-010-review.md §M-7)
+- **Minor m-1..m-9 editorial** — SCIM NFR misapplication, FEAT-131 GeoPolicy model, FEAT-132 DlpExportConfig, ResidencyConfig.dpo_contact consolidation, SsoConfig.signed_users, /api/v1 versioning consistency, SSO-enforced invite race, AuditSink.credentials encryption, webhook signature replay-window wording. (docs/audit/epic-010-review.md §m-1..m-9)
+- **X-1..X-7 cross-epic** — FEAT-107 vs FEAT-095/096/098, FEAT-127 vs FEAT-170, delete-org vs install lifecycle, FEAT-133 CMK data classes for BYOK, FEAT-113 PII toggle vs FEAT-070, STORY-280 audit-sink audience. Mostly product input. (docs/audit/epic-010-review.md §X-1..X-7)
+

@@ -243,3 +243,22 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-009 | X3 audit-sink-degraded template | skipped-as-non-actionable | Observation only (gold-standard pattern) |
 | EPIC-009 | X5/X6/X7 cross-epic gaps | deferred | Need new stories/product input |
 | EPIC-009 | minors m1..m10 | deferred | Editorial |
+| EPIC-010 | C-1 FEAT-112 ref | applied | Fixed to FEAT-162/STORY-387 and FEAT-177/STORY-423 |
+| EPIC-010 | C-2 Org contacts | applied | Already added in EPIC-001 / EPIC-003 passes |
+| EPIC-010 | C-3 AlertRule.owner_user_id | applied | Added in EPIC-009 pass |
+| EPIC-010 | C-3 Webhook.owner_user_id | applied | Added field |
+| EPIC-010 | C-3 Model.paused | applied | Added "paused" to Model.status enum; STORY-276 uses status |
+| EPIC-010 | C-3 ResidencyConfig pin fields | applied | Added pinned_at, pinned_by_user_id, source |
+| EPIC-010 | C-3 AuditLog hash chain | applied | Added prev_hash, hash, signing_key_id |
+| EPIC-010 | C-4 FEAT-133 revocation | deferred | Needs product input on saas/self_hosted split |
+| EPIC-010 | C-5 SCIM cascade | applied | STORY-252 revokes Session/TrustedBrowser/Invite + fallback chain for reassignment |
+| EPIC-010 | M-1 FEAT-107 billing mode split | deferred | Structural feature split needed |
+| EPIC-010 | M-2 ResidencyConfig.migration_ends_at | applied | Removed field |
+| EPIC-010 | M-3 dual IP allowlist | deferred | Structural; needs product input |
+| EPIC-010 | M-4 FEAT-127 DR role split | deferred | Needs product input |
+| EPIC-010 | M-5 AuditLog hash chain | applied | Covered by C-3 |
+| EPIC-010 | M-6 STORY-275 typed confirm | applied | AC-003 and API body now require confirm_slug |
+| EPIC-010 | M-7 GeoIP fail-open default | deferred | Needs product input |
+| EPIC-010 | M-8 team-lead fallback chain | applied | Covered by C-5 |
+| EPIC-010 | m-1..m-9 minors | deferred | Editorial |
+| EPIC-010 | X-1..X-7 cross-epic | deferred | Mostly need product input |

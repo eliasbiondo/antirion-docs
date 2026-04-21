@@ -1470,7 +1470,7 @@ features:
 - id: FEAT-112
   epic: EPIC-010
   title: Data residency (view-only)
-  description: Display the workspace's pinned data residency region and the date it was pinned. The region is set once at first-run (FEAT-163/STORY-409) and is immutable for the life of the workspace — there is no migration, rotation or change path. Enforcement at the edge is FEAT-130; customer-managed key rotation is FEAT-133. In saas mode the region is selected from Antirion's published region catalog and bound to the tenant Org. In self_hosted mode the region is a free-form label set in install config by the platform admin and stamped onto every Org created on that install; runtime enforcement under FEAT-130 still applies unchanged.
+  description: Display the workspace's pinned data residency region and the date it was pinned. The region is set once at first-run (FEAT-162/STORY-387 in saas; FEAT-177/STORY-423 in self_hosted) and is immutable for the life of the workspace — there is no migration, rotation or change path. Enforcement at the edge is FEAT-130; customer-managed key rotation is FEAT-133. In saas mode the region is selected from Antirion's published region catalog and bound to the tenant Org. In self_hosted mode the region is a free-form label set in install config by the platform admin and stamped onto every Org created on that install; runtime enforcement under FEAT-130 still applies unchanged.
   priority: P1
   stories:
   - STORY-256
@@ -13357,19 +13357,26 @@ stories:
     then:
     - All ApiKey rows owned by the user are revoked
     - PersonalToken rows are revoked
-    - Pending Approval rows assigned to the user are reassigned to the team lead
+    - All Session rows for the user are revoked (FEAT-003)
+    - All TrustedBrowser rows for the user are deleted (FEAT-015)
+    - Pending Invite rows addressed to the user's email are marked revoked (FEAT-004)
+    - Pending Approval rows assigned to the user are reassigned via the fallback chain Team.lead_user_id -> Org.owner_user_id -> platform admin (self_hosted) / Antirion trust_and_safety (saas)
     - Active PiiUnredactRequest reveals are expired immediately
     - UserBudget rows are closed
-    - AlertRule.owner_user_id is reassigned to the team lead
-    - An AuditLog entry summarises every cascade step
+    - AlertRule.owner_user_id and Webhook.owner_user_id are reassigned using the same fallback chain
+    - An AuditLog entry summarises every cascade step and records the resolved fallback target for each reassignment
   data_models:
   - User
   - ApiKey
   - PersonalToken
+  - Session
+  - TrustedBrowser
+  - Invite
   - Approval
   - PiiUnredactRequest
   - UserBudget
   - AlertRule
+  - Webhook
   - AuditLog
   non_functional:
   - Cascade runs in a single transactional job and is retried on partial failure
@@ -14445,7 +14452,7 @@ stories:
     given:
     - An org signing secret exists (used for webhook HMAC defaults)
     when:
-    - I click "Rotate signing secret" and confirm
+    - I click "Rotate signing secret" and type the workspace slug to confirm per project.destructive_action_confirmation_policy
     then:
     - A new signing secret is generated and shown once
     - The previous secret continues to validate for a 5-minute replay window
@@ -14473,10 +14480,14 @@ stories:
     inferred: true
   - method: POST
     path: /api/danger/secret/rotate
+    request:
+      body:
+        confirm_slug: string
     response:
       secret: string
       rotated_at: timestamp
     errors:
+    - 400
     - 401
     - 403
     inferred: true
@@ -14502,7 +14513,7 @@ stories:
     when:
     - I click "Pause" and type the model slug to confirm
     then:
-    - Model.paused becomes true
+    - Model.status becomes "paused"
     - Subsequent requests targeting the model get a 503 with structured reason
     - An AuditLog entry records "model.pause"
   data_models:
@@ -21518,7 +21529,7 @@ models:
     nullable: true
   - name: status
     type: string
-    description: enabled|disabled|preview|deprecated|restricted
+    description: enabled|disabled|preview|deprecated|restricted|paused
   - name: default
     type: bool
   - name: ctx
@@ -22932,12 +22943,18 @@ models:
   - name: cmk_rotated_at
     type: timestamp
     nullable: true
-  - name: dpo_contact
-    type: string
-    nullable: true
-  - name: migration_ends_at
+  - name: pinned_at
     type: timestamp
     nullable: true
+    description: When the residency region was pinned at first-run (immutable after set)
+  - name: pinned_by_user_id
+    type: FK:User
+    nullable: true
+    description: Principal who confirmed the pin at first-run
+  - name: source
+    type: string
+    nullable: true
+    description: first_run|install_config (how the region was pinned - see FEAT-162 saas / FEAT-177 self_hosted)
 - name: RetentionConfig
   description: Retention and redaction policy for stored request data.
   fields:
@@ -22965,6 +22982,10 @@ models:
     pk: true
   - name: org_id
     type: FK:Org
+  - name: owner_user_id
+    type: FK:User
+    nullable: true
+    description: Webhook owner; used by deprovisioning cascade and by notifications_model resource-owner resolution
   - name: name
     type: string
   - name: url
@@ -23043,6 +23064,17 @@ models:
   - name: user_agent
     type: string
     nullable: true
+  - name: prev_hash
+    type: string
+    nullable: true
+    description: Hash of the prior AuditLog row in the per-org chain; null on the genesis row
+  - name: hash
+    type: string
+    description: Hash over (prev_hash, payload, signing_key_id); enables tamper-evident verification per project.non_functional_baseline.security
+  - name: signing_key_id
+    type: string
+    nullable: true
+    description: KMS key id used to seal this row; null on genesis rows prior to signing-key issuance
 - name: Integration
   description: A third-party integration available or connected for the workspace.
   fields:
