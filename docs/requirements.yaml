@@ -172,7 +172,7 @@ epics:
   - FEAT-068
 - id: EPIC-007
   title: Safety and guardrails
-  description: PII detection and redaction, prompt-injection and jailbreak detection, classification, rule management.
+  description: PII detection and redaction (FEAT-070), prompt-injection and jailbreak detection (FEAT-071), toxicity / classification (FEAT-072), DetectionRule management and lifecycle (FEAT-073), action overrides (FEAT-074), rule versioning and rollback (FEAT-075), dry-run and backtest (FEAT-076), template packs and installation (FEAT-077), per-team safety policy (FEAT-078), approvals for policy/rule changes (FEAT-079), one-time unredact (FEAT-080), live flow visualization (FEAT-081). Every feature runs in both saas and self_hosted modes; per-feature descriptions state the mode-specific behavior.
   priority: P0
   features:
   - FEAT-069
@@ -1046,6 +1046,7 @@ features:
   epic: EPIC-007
   title: Safety event log
   description: Filterable log of blocked, redacted, flagged and allowed safety events.
+  mode: both
   priority: P0
   stories:
   - STORY-157
@@ -1058,6 +1059,7 @@ features:
   epic: EPIC-007
   title: PII detection and redaction
   description: Twelve PII categories with strictness control and inline redaction.
+  mode: both
   priority: P0
   stories:
   - STORY-159
@@ -1069,6 +1071,7 @@ features:
   epic: EPIC-007
   title: Prompt injection and jailbreak detection
   description: Detect and block prompt-injection and jailbreak attempts in inputs.
+  mode: both
   priority: P0
   stories:
   - STORY-161
@@ -1078,6 +1081,7 @@ features:
   epic: EPIC-007
   title: Content classification
   description: Classify prompts and responses into safety categories with confidence scores.
+  mode: both
   priority: P1
   stories:
   - STORY-162
@@ -1088,7 +1092,8 @@ features:
 - id: FEAT-073
   epic: EPIC-007
   title: Detection rule management
-  description: Create, edit, toggle, save-as-draft and publish rules of regex, regex+checksum (e.g. Luhn for credit cards), NER, classifier, prefix+entropy (secret-token detection), allowlist, n-gram (fuzzy fingerprinting) and fingerprint types.
+  description: 'Create, edit, toggle, save-as-draft and publish rules of regex, regex+checksum (e.g. Luhn for credit cards), NER, classifier, prefix+entropy (secret-token detection), allowlist, n-gram (fuzzy fingerprinting) and fingerprint types. Rule precedence on simultaneous matches: allow > block > redact > flag, ties resolved by SafetyEvent.severity then DetectionRule.id.'
+  mode: both
   priority: P0
   stories:
   - STORY-165
@@ -1100,7 +1105,8 @@ features:
 - id: FEAT-074
   epic: EPIC-007
   title: Safety action overrides
-  description: Override a single event action (block -> allow, flag -> block) and mark reviewed.
+  description: Override a single event action (any transition among allow, block, redact, flag subject to an audit reason, including redact -> allow and allow -> flag) and mark reviewed.
+  mode: both
   priority: P1
   stories:
   - STORY-169
@@ -1110,6 +1116,7 @@ features:
   epic: EPIC-007
   title: Safety rule versioning and rollback
   description: Track every edit to a detection rule, diff versions, and roll back to a previous version.
+  mode: both
   priority: P1
   stories:
   - STORY-170
@@ -1120,6 +1127,7 @@ features:
   epic: EPIC-007
   title: Safety rule dry-run, backtest and accuracy
   description: Evaluate a proposed rule against recent traffic or a paste-in sample before activating it; backtest an active rule over a longer window and report false-positive/false-negative rates.
+  mode: both
   priority: P1
   stories:
   - STORY-171
@@ -1129,7 +1137,8 @@ features:
 - id: FEAT-077
   epic: EPIC-007
   title: Safety rule templates
-  description: Library of prebuilt rule packs (GDPR PII, PCI, HIPAA, corporate secrets) that can be installed with one click.
+  description: Library of prebuilt rule packs (GDPR PII, PCI, HIPAA, corporate secrets) that can be installed with one click. In saas mode the template catalog is hosted by Antirion; in self_hosted the catalog is bundled with the install and refreshed via FEAT-179 phone-home when enabled.
+  mode: both
   priority: P2
   stories:
   - STORY-173
@@ -1139,6 +1148,7 @@ features:
   epic: EPIC-007
   title: Per-team safety policy override
   description: Allow a team to tighten (never loosen) the org-wide safety policy for its own traffic.
+  mode: both
   priority: P1
   stories:
   - STORY-174
@@ -1150,6 +1160,7 @@ features:
   epic: EPIC-007
   title: Policy change approvals
   description: Request, review and decide changes to safety, retention or detection policies via Approval of kind "policy-change"; enforce an SLA on pending approvals with delegation and bulk actions.
+  mode: both
   priority: P1
   stories:
   - STORY-176
@@ -1158,7 +1169,8 @@ features:
 - id: FEAT-080
   epic: EPIC-007
   title: PII unredact/reversal flow
-  description: Let authorized reviewers request temporary reveal of a redacted PII span with reason and approval; auto-expire the reveal and audit.
+  description: Let authorized reviewers request temporary reveal of a redacted PII span with reason and approval; auto-expire the reveal and audit. In saas the privacy_officer role is the default approver; in self_hosted the approver path falls through to the platform admin.
+  mode: both
   priority: P1
   stories:
   - STORY-179
@@ -1169,6 +1181,7 @@ features:
   epic: EPIC-007
   title: Live safety traffic-flow visualization
   description: A "what leaves your walls" live flow diagram on /safety showing inbound requests from apps, the redactor stage and outbound calls to providers, with real-time req/min, redacted/min, blocked/min and a readiness score.
+  mode: both
   priority: P1
   stories:
   - STORY-183
@@ -9756,6 +9769,7 @@ stories:
     errors:
     - 401
     inferred: true
+    note: severity values follow the SafetyEvent.severity enum (crit|high|med|low); action values follow SafetyEvent.action (block|redact|flag|allow); category values are canonicalized per FEAT-070/071/072 descriptions.
   data_models:
   - SafetyEvent
   non_functional:
@@ -9876,8 +9890,7 @@ stories:
   - PiiCategory
   - AuditLog
   non_functional:
-  - Detectors run in-process with an explicit per-request latency budget; budget breach fails open or closed per policy
-  - Detector model versions are pinned per rule and recorded on every decision for auditability
+  - Strictness writes propagate to every node within the config_hot_reload SLA (30s)
 - id: STORY-161
   feature: FEAT-071
   title: Detect and block prompt injections and jailbreaks
@@ -9895,7 +9908,7 @@ stories:
     when:
     - The request is processed
     then:
-    - The request is rejected with 451
+    - The request is rejected with 451 and Request.status_label = "safety_blocked"
     - A SafetyEvent of action "block" and category "jailbreak" is recorded with confidence score
   - id: AC-002
     scenario: Allowlist exception
@@ -9952,12 +9965,15 @@ stories:
     scenario: CSV export
     given:
     - I have filtered SafetyEvents
+    - The caller holds the "safety.export" scope
     when:
     - I click "Export CSV"
     then:
-    - A CSV with event id, time, category, rule, action, redacted content and request id is produced
+    - A CSV with event id, time, category, rule, action, SafetyEvent.prompt_redacted (never joined with RedactionVaultEntry.ciphertext) and request id is produced
+    - An AuditLog entry records actor, filter set, row count and action "safety.export"
   data_models:
   - SafetyEvent
+  - AuditLog
   non_functional:
   - Detectors run in-process with an explicit per-request latency budget; budget breach fails open or closed per policy
   - Detector model versions are pinned per rule and recorded on every decision for auditability
@@ -9977,7 +9993,7 @@ stories:
     when:
     - I click "Mark reviewed"
     then:
-    - All 50 SafetyEvent.reviewed_at is set
+    - All 50 SafetyEvent rows have review_status set to "reviewed", reviewed_at set to now and reviewed_by_user_id set to the acting principal
     - A single AuditLog entry records the bulk action with count
   data_models:
   - SafetyEvent
@@ -10043,6 +10059,22 @@ stories:
     - 403
     - 404
     inferred: true
+  - method: GET
+    path: /api/detection-rules
+    request:
+      query:
+        status: string
+        enabled: bool
+        cursor: string
+        limit: int
+    response:
+      rules:
+      - DetectionRule
+      next_cursor: string
+    errors:
+    - 401
+    inferred: true
+    note: Rows with deleted_at IS NOT NULL are excluded unless explicitly requested.
   data_models:
   - DetectionRule
   - AuditLog
@@ -10077,7 +10109,8 @@ stories:
     when:
     - I click Delete and confirm
     then:
-    - The rule is removed
+    - DetectionRule.deleted_at is set (soft-delete; rule row is retained)
+    - Subsequent evaluations do not fire on the rule and rule-list pickers filter rows with deleted_at IS NOT NULL
     - Open SafetyEvents linked to the rule retain their rule_id for history
   api:
   - method: PATCH
@@ -10131,7 +10164,7 @@ stories:
     when:
     - I click "False positive"
     then:
-    - The event is tagged false_positive
+    - SafetyEvent.review_status becomes "false_positive" (reviewed_by_user_id and reviewed_at are set); DetectionRule.fp_count increments exactly once per event on the transition
     - DetectionRule.fp_count is incremented; DetectionRule.fp_rate = fp_count / fire_count is recomputed (both fields on the DetectionRule model)
   data_models:
   - SafetyEvent
@@ -10241,6 +10274,15 @@ stories:
     - 404
     - 409
     inferred: true
+  ui:
+    screens:
+    - Safety
+    components:
+    - DetectionRuleList
+    - DraftsFilter
+    states:
+    - default
+    - drafts
   data_models:
   - DetectionRule
   - SafetyRuleVersion
@@ -10414,6 +10456,7 @@ stories:
     errors:
     - 400
     inferred: true
+    note: scope is one of (last_24h|last_7d|sample); samples is required iff scope = "sample".
   data_models:
   - DetectionRule
   - Request
@@ -10470,7 +10513,8 @@ stories:
     - I click "Install" and pick action "redact" and severity "medium"
     then:
     - N DetectionRule rows are created with the pack's patterns and metadata
-    - Installed rules are tagged with template_pack_id = "gdpr_pii"
+    - Installed rules are tagged with DetectionRule.installed_template_id = "gdpr_pii"
+    - One SafetyRuleVersion of type "template_install" is written per installed rule
     - A notice appears if any installed rule duplicates an existing one
   - id: AC-002
     scenario: Uninstall a pack
@@ -10479,7 +10523,7 @@ stories:
     when:
     - I click "Uninstall"
     then:
-    - All DetectionRule rows tagged with that template_pack_id are disabled (not deleted)
+    - All DetectionRule rows matching installed_template_id are disabled (not deleted)
     - An AuditLog entry with action "safety_template.uninstall" is written
   ui:
     screens:
@@ -10566,7 +10610,7 @@ stories:
   - PiiCategory
   - AuditLog
   non_functional:
-  - Policy evaluation is cached for 60s keyed by (team_id, category)
+  - Policy evaluation is cached for up to 15s keyed by (team_id, category); explicit invalidation on TeamSafetyPolicy writes and on policy.change.apply AuditLog events to stay within the 30s config_hot_reload SLA
 - id: STORY-175
   feature: FEAT-078
   title: List team safety policy overrides and resolve effective policy
@@ -10641,7 +10685,8 @@ stories:
     - I approve
     then:
     - The proposed change is applied
-    - An AuditLog entry records "policy.change.apply"
+    - An AuditLog entry records "policy.change.apply" and the resolved audience list
+    - A Notification is delivered to the requester (acting principal) per project.notifications_model
   - id: AC-002
     scenario: Reject leaves policy intact
     given:
@@ -10675,7 +10720,7 @@ stories:
     when:
     - The SLA is at 80%
     then:
-    - The approver is reminded; on breach, the Approval is marked "sla_breached" and an AlertEvent fires, with audience routed to Org.security_contact (and Antirion trust_and_safety sub-queue in saas; collapsed to platform admin in self_hosted) per project.notifications_model
+    - The approver is reminded; on breach, the Approval is marked "sla_breached" and an AlertEvent fires, with audience routed to Org.security_contact (with the notifications_model fallback chain to Org.owner_user_id in saas or platform admin in self_hosted if security_contact is unset) per project.notifications_model - no trust_and_safety fanout (this is an intra-tenant workflow signal, not a cross-tenant abuse heuristic)
   - id: AC-002
     scenario: Delegate while OOO
     given:
@@ -22132,6 +22177,7 @@ models:
   - name: prompt
     type: string
     nullable: true
+    description: Raw prompt; populated only when prompt_redacted IS NULL AND no DetectionRule or PiiCategory with action != "allow" fired on this request. Any detector firing at all forces prompt_redacted and leaves this column null per STORY-159 AC-002.
   - name: prompt_redacted
     type: string
     nullable: true
@@ -22730,6 +22776,7 @@ models:
   - name: review_status
     type: string
     nullable: true
+    description: unreviewed|reviewed|false_positive|escalated (null means unreviewed). Incrementing DetectionRule.fp_count happens at most once per event on the transition to "false_positive".
   - name: reviewed_by_user_id
     type: FK:User
     nullable: true
@@ -22843,6 +22890,23 @@ models:
     description: ResidencyConfig-pinned region; the vault entry never leaves this region
   - name: created_at
     type: timestamp
+  - name: expires_at
+    type: timestamp
+    nullable: true
+    description: Retention-driven expiry; reached rows are purged by the lifecycle sweep
+  - name: retention_days
+    type: int
+    nullable: true
+  - name: rotated_at
+    type: timestamp
+    nullable: true
+    description: Set when ciphertext is re-wrapped under a new CMK
+  - name: cmk_binding_id
+    type: FK:CmkBinding
+    nullable: true
+  - name: deleted_at
+    type: timestamp
+    nullable: true
 - name: PiiCategory
   description: A named PII detector category with strictness and per-category action.
   fields:

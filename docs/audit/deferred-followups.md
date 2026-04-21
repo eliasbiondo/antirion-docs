@@ -136,6 +136,15 @@ Each entry: brief description, source audit citation, reason deferred.
 - **R-1/R-2/R-5/R-7 missing cache stories** — template-update/nightly-refresh/break-glass/prompt-segment-CRUD/STORY-145 savings report/per-team purge. Needs product input. (docs/audit/epic-006-review.md §R-1..R-7)
 - **R-6 invalidation event catalog** — InvalidationRule.match has no authoritative event list. Needs product input. (docs/audit/epic-006-review.md §R-6)
 
+### EPIC-007 (2026-04-20 re-audit)
+
+- **C-2 PiiCategory org-less** — needs structural decision on PiiCategory.org_id vs new PiiPolicy model. (docs/audit/epic-007-review-2026-04-20.md §C-2)
+- **C-4 SafetyAllowanceGrant** — STORY-169 one-time allow has no backing model. (docs/audit/epic-007-review-2026-04-20.md §C-4)
+- **m-1, m-3, m-4, m-5 minors** — PII category seeding, FEAT-102 audience resolution, SafetyPosture derivation, STORY-183 RBAC. (docs/audit/epic-007-review-2026-04-20.md §m-*)
+- **X-1..X-7 cross-epic** — cache invalidation on safety publish, semantic-cache coherence, RetentionConfig coverage, pipeline ordering, residency vs unredact, AlertRule template for approval SLA, Request.pii_flag/safety_flag ownership. (docs/audit/epic-007-review-2026-04-20.md §X-*)
+- **MR-1..MR-5 missing models** — ApproverDelegation, pipeline ordering feature, cross-tenant abuse correlation feature, SafetyAllowanceGrant, false_positive (now partial via review_status enum). (docs/audit/epic-007-review-2026-04-20.md §MR-*)
+- **U-1..U-8 uncited-but-required** — pipeline ordering, SafetyPosture aggregator, vault lifecycle worker, cross-tenant abuse correlator, PII seeding, allowance grant feature, AlertRule template, hot-reload propagation. (docs/audit/epic-007-review-2026-04-20.md §U-*)
+
 ### EPIC-007
 
 - **M-2/M-3 action precedence and override matrix** — need product decision on block/redact/flag/allow ordering and override transitions. (docs/audit/epic-007-review.md §M-2, §M-3)

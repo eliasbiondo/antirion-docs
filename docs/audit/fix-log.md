@@ -487,3 +487,33 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-006 (2026-04-20) | X-1/X-3/X-4/X-5/X-6/X-7 cross-epic | deferred | Need new stories / cross-epic coordination |
 | EPIC-006 (2026-04-20) | R-1/R-2/R-5/R-6/R-7/R-10 missing refs | deferred | New stories / event catalog work |
 | EPIC-006 (2026-04-20) | U-1..U-9 missing features | deferred | Each requires net-new feature; product input |
+| EPIC-007 (2026-04-20) | C-1 STORY-173 template field | applied | Now writes DetectionRule.installed_template_id and SafetyRuleVersion.type=template_install |
+| EPIC-007 (2026-04-20) | C-2 PiiCategory org-less | deferred | Needs structural choice between PiiCategory.org_id vs new PiiPolicy model |
+| EPIC-007 (2026-04-20) | C-3 Request.prompt cleartext | applied | Field now describes the conditional-nullability invariant |
+| EPIC-007 (2026-04-20) | C-4 SafetyAllowanceGrant model | deferred | Needs new model; product input |
+| EPIC-007 (2026-04-20) | C-5 false_positive field | applied | SafetyEvent.review_status enum now includes false_positive; STORY-167 AC-001 uses it |
+| EPIC-007 (2026-04-20) | C-6 STORY-161 status_label | applied | AC-001 now sets Request.status_label = "safety_blocked" |
+| EPIC-007 (2026-04-20) | M-1 RedactionVaultEntry lifecycle | applied | Added expires_at, retention_days, rotated_at, cmk_binding_id, deleted_at |
+| EPIC-007 (2026-04-20) | M-2 EPIC-007 description | applied | Expanded to enumerate all 13 features + mode statement |
+| EPIC-007 (2026-04-20) | M-3 review_status enum | applied | Added description covering unreviewed\|reviewed\|false_positive\|escalated |
+| EPIC-007 (2026-04-20) | M-4 mode declarations | applied | Added mode: both to FEAT-069..FEAT-081 |
+| EPIC-007 (2026-04-20) | M-5 STORY-164 reviewed_by_user_id | applied | AC-001 now sets review_status, reviewed_at, reviewed_by_user_id |
+| EPIC-007 (2026-04-20) | M-6 STORY-174 cache TTL | applied | 60s → 15s + explicit invalidation hooks |
+| EPIC-007 (2026-04-20) | M-7 action precedence | applied | FEAT-073 description now declares allow > block > redact > flag |
+| EPIC-007 (2026-04-20) | M-8 override matrix | applied | FEAT-074 description now covers any transition with audit reason |
+| EPIC-007 (2026-04-20) | M-9 STORY-178 trust_and_safety | applied | Dropped T&S fanout; uses canonical fallback chain |
+| EPIC-007 (2026-04-20) | M-10 STORY-157 filter enums | applied | API note pins enum sources |
+| EPIC-007 (2026-04-20) | M-11 STORY-166 soft-delete | applied | AC-002 now sets deleted_at and filters from active pickers |
+| EPIC-007 (2026-04-20) | M-12 STORY-168 Drafts filter | applied | STORY-165 gains GET endpoint; STORY-168 gains ui block with DraftsFilter |
+| EPIC-007 (2026-04-20) | M-13 STORY-171 scope enum | applied | API note pins last_24h\|last_7d\|sample |
+| EPIC-007 (2026-04-20) | M-14 STORY-163 CSV guards | applied | AC-001 requires safety.export scope + AuditLog + prompt_redacted-only |
+| EPIC-007 (2026-04-20) | m-1 FEAT-070 12 categories | deferred | Needs PII seeding feature (ties to U-5) |
+| EPIC-007 (2026-04-20) | m-2 STORY-160 NFRs | applied | Replaced detector boilerplate with config_hot_reload SLA line |
+| EPIC-007 (2026-04-20) | m-3 STORY-159 audience resolution | deferred | FEAT-102 dispatch already implicit |
+| EPIC-007 (2026-04-20) | m-4 SafetyPosture descriptions | deferred | Ties to U-2 (aggregator spec) |
+| EPIC-007 (2026-04-20) | m-5 STORY-183 RBAC | deferred | Needs product input on operator visibility |
+| EPIC-007 (2026-04-20) | m-6 template_install enum | applied | STORY-173 AC-001 writes SafetyRuleVersion |
+| EPIC-007 (2026-04-20) | m-7 STORY-177 approve Notification | applied | AC-001 now emits Notification to requester |
+| EPIC-007 (2026-04-20) | X-1..X-7 cross-epic | deferred | Need coordination |
+| EPIC-007 (2026-04-20) | MR-1..MR-5 missing models | deferred | New models needed |
+| EPIC-007 (2026-04-20) | U-1..U-8 missing features | deferred | Need new features; product input |
