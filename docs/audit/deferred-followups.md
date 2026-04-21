@@ -218,6 +218,18 @@ Each entry: brief description, source audit citation, reason deferred.
 - **Minor m-1..m-9 editorial** — SCIM NFR misapplication, FEAT-131 GeoPolicy model, FEAT-132 DlpExportConfig, ResidencyConfig.dpo_contact consolidation, SsoConfig.signed_users, /api/v1 versioning consistency, SSO-enforced invite race, AuditSink.credentials encryption, webhook signature replay-window wording. (docs/audit/epic-010-review.md §m-1..m-9)
 - **X-1..X-7 cross-epic** — FEAT-107 vs FEAT-095/096/098, FEAT-127 vs FEAT-170, delete-org vs install lifecycle, FEAT-133 CMK data classes for BYOK, FEAT-113 PII toggle vs FEAT-070, STORY-280 audit-sink audience. Mostly product input. (docs/audit/epic-010-review.md §X-1..X-7)
 
+### EPIC-011 (2026-04-20 re-audit)
+
+- **C1 / U1 pipeline-stage ordering feature** — Critical. No FEAT declares the canonical ordering of cache/safety/budget/idempotency. (docs/audit/epic-011-review-2026-04-20.md §C1, §U1)
+- **M2 FEAT-160 belongs in EPIC-003** — structural feature move. (docs/audit/epic-011-review-2026-04-20.md §M2)
+- **M3 FEAT-150..FEAT-157 provider API surface** — epic split. (docs/audit/epic-011-review-2026-04-20.md §M3)
+- **M4 FEAT-149 vs FEAT-143 telemetry overlap** — dual writer on TelemetryConfig. (docs/audit/epic-011-review-2026-04-20.md §M4)
+- **M5 STORY-323 rejection metadata** — AccessLog model decision. (docs/audit/epic-011-review-2026-04-20.md §M5)
+- **M9 STORY-348..STORY-371 skeletal stories** — needs expansion to match EPIC-011 depth. (docs/audit/epic-011-review-2026-04-20.md §M9)
+- **m1..m8 minors** — boilerplate, shared-credentials toggle, break-glass dedupe window, per-phase timeouts, P1/P0 alignment, fallback_attempts field, pipeline cross-refs. (docs/audit/epic-011-review-2026-04-20.md §m*)
+- **X1..X7 cross-epic** — retry/circuit ownership, cache placement, safety pipeline position, budget admission, OTel trace-id mapping, per-tenant concurrency, readiness hydration. (docs/audit/epic-011-review-2026-04-20.md §X*)
+- **U1..U9 uncited-but-required** — pipeline ordering, AccessLog, per-tenant concurrency, readiness hydration, residency-aware cache lookup, ApiKey.kind/Request.break_glass, pipeline-stage timeouts, IngressEndpointState, IdempotencyKey. (docs/audit/epic-011-review-2026-04-20.md §U*)
+
 ### EPIC-011
 
 - **M1 failover/circuit-breaker ownership split between EPIC-005 and EPIC-011** — declare which feature owns config vs runtime vs state machine. Needs product decision. (docs/audit/epic-011-review.md §M1)

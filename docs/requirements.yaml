@@ -16513,7 +16513,7 @@ stories:
   - Request
   - Model
   non_functional:
-  - Large images may be streamed from object storage to upstream without buffering in memory
+  - Attachments are streamed to upstream per FEAT-145 STORY-342; not persisted beyond retention policy
 - id: STORY-323
   feature: FEAT-138
   title: Authenticate API key and resolve scopes
@@ -16819,8 +16819,9 @@ stories:
     when:
     - The gateway exhausts the chain
     then:
-    - The client receives 502 with error code "all_targets_failed"
-    - A Request is recorded with fallback_attempts equal to chain length
+    - The client receives 502 with error code "all_targets_failed", shaped per the inbound dialect (OpenAI, Anthropic or Antirion-native) per STORY-346
+    - The failure is routed through FEAT-148 graceful-degradation path so dialect shaping applies even when no cached response is configured
+    - A Request is recorded with RoutingDecision.outcome="all_targets_failed" and RoutingDecision rows equal to chain length
   data_models:
   - RoutingRule
   - RoutingDecision
@@ -17224,11 +17225,11 @@ stories:
   - id: AC-002
     scenario: Internal port not publicly exposed
     given:
-    - /metrics is bound to an internal listener
+    - /metrics is bound to an internal listener only (not registered on the public listener)
     when:
-    - A request from the public ingress hits /metrics
+    - A request arrives on the public ingress with path /metrics
     then:
-    - The response is 404
+    - The public listener returns 401 with no body (the path is not bound on the public listener and the request never reaches the metrics exporter)
   data_models: []
   non_functional:
   - Histogram buckets cover 5 ms to 60 s
@@ -18582,7 +18583,7 @@ stories:
     - I view the overview dashboard
     then:
     - A card shows "anthropic: 70% rpm, 70% tpm" with colour bands (green <70, amber 70-90, red >90)
-    - Hovering reveals the binding layer (provider|byok|model) and which credential is hottest
+    - Hovering reveals the binding layer (provider|byok|model) and which credential is hottest; binding layer is recomputed at most once per bucket and the UI reflects it within 5s of the underlying change (bounded by project.non_functional_baseline.config_hot_reload)
   - id: AC-002
     scenario: Empty state when limits not configured
     given:
@@ -23803,7 +23804,7 @@ models:
     type: timestamp
     nullable: true
 - name: ProviderHealth
-  description: Health state of a (provider, region) pair, driven by probes and runtime error rate.
+  description: Health state keyed by (provider_id, region, model_id); model_id null holds provider-scope circuit state, non-null holds per-model breaker state per STORY-336 AC-003.
   fields:
   - name: id
     type: uuid
@@ -23813,6 +23814,10 @@ models:
     nullable: true
   - name: provider_id
     type: FK:Provider
+  - name: model_id
+    type: FK:Model
+    nullable: true
+    description: Null for provider-scope breakers; set for per-model scope (STORY-336 AC-003)
   - name: region
     type: string
     nullable: true

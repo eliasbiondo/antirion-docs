@@ -579,3 +579,18 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-010 (2026-04-20) | m-1..m-9 minors | deferred | Editorial / scope decisions |
 | EPIC-010 (2026-04-20) | X-1..X-7 cross-epic | deferred | Need coordination |
 | EPIC-010 (2026-04-20) | U-1..U-11 missing features | deferred | Signing-key lifecycle, restore ticket, cancel-delete, break-glass state, etc.; product input |
+| EPIC-011 (2026-04-20) | C1 pipeline ordering | deferred | Needs new feature; product input |
+| EPIC-011 (2026-04-20) | C2 ProviderHealth per-model | applied | Added nullable model_id; description clarifies scope |
+| EPIC-011 (2026-04-20) | C3 STORY-329 dialect shape | applied | AC-002 now routes through FEAT-148 + shapes per STORY-346 |
+| EPIC-011 (2026-04-20) | M1 FEAT-051 config-only | applied | STORY-121 AC-002 rewritten in EPIC-005 pass |
+| EPIC-011 (2026-04-20) | M2 FEAT-160 move to EPIC-003 | deferred | Structural; product input |
+| EPIC-011 (2026-04-20) | M3 FEAT-150..157 split | deferred | Structural epic decision |
+| EPIC-011 (2026-04-20) | M4 FEAT-149 vs FEAT-143 overlap | deferred | Needs collapse decision |
+| EPIC-011 (2026-04-20) | M5 STORY-323 rejection metadata | deferred | Needs product decision (Request row vs AccessLog) |
+| EPIC-011 (2026-04-20) | M6 STORY-322 staged blob | applied | Replaced with FEAT-145 reference |
+| EPIC-011 (2026-04-20) | M7 STORY-385 freshness | applied | Added "at most once per bucket" + 5s freshness |
+| EPIC-011 (2026-04-20) | M8 STORY-339 /metrics | applied | Public listener now returns 401 without binding the path |
+| EPIC-011 (2026-04-20) | M9 STORY-348..371 skeletal | deferred | Needs per-story expansion |
+| EPIC-011 (2026-04-20) | m1..m8 minors | deferred | Editorial boilerplate, plus a couple of model-field extensions |
+| EPIC-011 (2026-04-20) | X1..X7 cross-epic | deferred | Tied to pipeline ordering / structural items |
+| EPIC-011 (2026-04-20) | U1..U9 missing features | deferred | Pipeline ordering, AccessLog, concurrency cap, readiness hydration, etc. |
