@@ -91,7 +91,7 @@ epics:
   - FEAT-012
 - id: EPIC-002
   title: Personal account
-  description: Per-user profile, preferences, security, tokens, and notification settings.
+  description: Per-user profile, preferences, security, tokens, and notification settings. Active-session browse/revoke was collapsed into FEAT-003 (STORY-006); FEAT-021 is retired.
   priority: P0
   features:
   - FEAT-013
@@ -102,7 +102,7 @@ epics:
   - FEAT-018
   - FEAT-019
   - FEAT-020
-  - FEAT-021
+  - FEAT-185
 - id: EPIC-003
   title: API keys and provider credentials
   description: Gateway key lifecycle with scopes, limits, rotation, audit; BYOK for upstream providers; emergency break-glass elevated-scope keys.
@@ -421,7 +421,7 @@ features:
 - id: FEAT-008
   epic: EPIC-001
   title: User activity and flagging
-  description: View per-user activity timeline and flag or unflag suspicious users.
+  description: View per-user activity timeline and flag or unflag suspicious users. Also owns the dormancy sweep that transitions User.status to "inactive" after the configured idle window (default 90d of no last_active_at) and flips back to "active" on next successful sign-in.
   priority: P1
   stories:
   - STORY-021
@@ -545,13 +545,6 @@ features:
   - STORY-047
   ui_references:
   - proto/account.jsx
-- id: FEAT-021
-  epic: EPIC-002
-  title: Active sessions browser
-  description: Let a user browse their own active browser sessions with device, location and last-active, and revoke any of them.
-  priority: P1
-  stories:
-  - STORY-048
 - id: FEAT-022
   epic: EPIC-003
   title: API key lifecycle
@@ -1476,7 +1469,8 @@ features:
 - id: FEAT-107
   epic: EPIC-010
   title: Workspace identity and billing
-  description: Org name, slug, logo, contacts, timezone; plan, commitment, invoices, payment method.
+  description: Identity half (Org name, slug, logo, contacts, timezone) is `mode: both`. Billing half (plan, commitment, invoices, payment method) is saas-only and inherits the FEAT-095/096/098 404-in-self_hosted rule — the PATCH and GET endpoints under /api/billing return 404 and are hidden from navigation on self_hosted installs.
+  mode: both
   priority: P0
   stories:
   - STORY-247
@@ -2665,6 +2659,7 @@ stories:
     - That Session is deleted server-side
     - The row is removed from the list
     - The other Sessions remain unaffected
+    - An AuditLog entry records action "session.revoke"
   - id: AC-003
     scenario: Sign out everywhere else
     given:
@@ -2674,6 +2669,14 @@ stories:
     then:
     - All non-current Sessions are revoked
     - Only the current session remains in the list
+  - id: AC-004
+    scenario: List active sessions
+    given:
+    - I have 3 active Sessions
+    when:
+    - I open Account -> Active sessions
+    then:
+    - I see each Session with device, location, last-active and a badge marking the current session
   ui:
     screens:
     - Account
@@ -2684,6 +2687,14 @@ stories:
     - default
     - confirming
   api:
+  - method: GET
+    path: /api/sessions
+    response:
+      sessions:
+      - Session
+    errors:
+    - 401
+    inferred: true
   - method: DELETE
     path: /api/sessions/:id
     response:
@@ -2702,6 +2713,7 @@ stories:
   data_models:
   - User
   - Session
+  - AuditLog
   non_functional:
   - Membership and role changes are audited with actor, subject, timestamp and before/after
   - Revocations and role changes propagate to every node within the config-reload SLA
@@ -2962,7 +2974,8 @@ stories:
     - I click "Save"
     then:
     - The User.role becomes "admin"
-    - An AuditLog entry records actor, target user, old role and new role
+    - An AuditLog entry records actor, target user, old role and new role and records the resolved audience list
+    - A Notification of kind "security" ("user.role_changed") is delivered via FEAT-102 to the canonical audience (actor, target user, Org.security_contact) with the notifications_model fallback chain
     - The new admin can immediately call admin-only endpoints
   - id: AC-002
     scenario: Owner cannot be demoted by non-owner
@@ -3011,9 +3024,11 @@ stories:
   - User
   - Role
   - AuditLog
+  - Notification
   non_functional:
   - Membership and role changes are audited with actor, subject, timestamp and before/after
   - Revocations and role changes propagate to every node within the config-reload SLA
+  - Channel delivery is via FEAT-102 notification-channels routing
 - id: STORY-013
   feature: FEAT-006
   title: Create a team
@@ -3996,9 +4011,20 @@ stories:
     given:
     - I am on Account -> Profile
     when:
-    - I pick a PNG file and click "Save changes"
+    - I pick a PNG / JPEG / WEBP file (content_type in {image/png, image/jpeg, image/webp}) at most 2 MB and at most 2048x2048 pixels, then click "Save changes"
     then:
     - The image is uploaded and my avatar shows the new photo
+    - Any previously uploaded avatar object is deleted from object storage on successful replace
+    - Files exceeding the size/dimension/type constraints are rejected with 413 or 415
+  - id: AC-007
+    scenario: Remove profile photo
+    given:
+    - I have a profile photo set
+    when:
+    - I click "Remove photo"
+    then:
+    - DELETE /api/users/me/photo returns 204
+    - User.avatar_url becomes null and the object-store record is deleted
   - id: AC-004
     scenario: Handle collision blocks save
     given:
@@ -4057,6 +4083,15 @@ stories:
     - 400
     - 401
     - 413
+    - 415
+    inferred: true
+  - method: DELETE
+    path: /api/users/me/photo
+    response:
+      ok: bool
+    errors:
+    - 401
+    - 404
     inferred: true
   - method: POST
     path: /api/users/me/email/verify
@@ -4753,40 +4788,6 @@ stories:
   non_functional:
   - After scheduled_for elapses, cancellation is rejected and must go through support
   - Channel delivery is via FEAT-102 notification-channels routing
-- id: STORY-048
-  feature: FEAT-021
-  title: Browse and revoke my active sessions
-  narrative:
-    as_a: signed-in user
-    i_want: to see my active sessions with device, location and last-active
-    so_that: I can kick a lost device
-  priority: P1
-  depends_on:
-  - STORY-006
-  acceptance_criteria:
-  - id: AC-001
-    scenario: List sessions
-    given:
-    - I have 3 active Sessions
-    when:
-    - I open Account -> Sessions
-    then:
-    - I see each with device, location, last-active, and a badge marking the current session
-  - id: AC-002
-    scenario: Revoke individual
-    given:
-    - A non-current Session is listed
-    when:
-    - I click "Revoke"
-    then:
-    - The session is revoked and disappears from the list
-    - An AuditLog entry records the revocation
-  data_models:
-  - Session
-  - AuditLog
-  non_functional:
-  - Profile and preference fields treated as PII — redacted from telemetry and error payloads
-  - Changes apply on the next request without requiring a full page reload
 - id: STORY-049
   feature: FEAT-022
   title: Create an API key
@@ -5556,7 +5557,7 @@ stories:
     - I approve with the requested duration
     then:
     - ApiKey.elevated_scopes is set to the requested scopes and ApiKey.elevated_until is set to now + duration
-    - ApiKey.scopes (effective) becomes base_scopes unioned with elevated_scopes
+    - Edge auth (STORY-323) computes the effective scope at each request as base_scopes ∪ elevated_scopes while elevated_until > now; no materialized ApiKey.scopes column is written
     - A Notification of kind "security" is emitted to ApiKey.owner_user_id and Org.security_contact per project.notifications_model
     - An AuditLog entry records "key.scope.elevate" with the resolved audience list
   - id: AC-002
@@ -5567,7 +5568,7 @@ stories:
     - The scheduled job runs
     then:
     - ApiKey.elevated_scopes is cleared and elevated_until is set to null
-    - ApiKey.scopes (effective) reverts to ApiKey.base_scopes
+    - Edge auth (STORY-323) now computes the effective scope as base_scopes only; there is no tail-latency window because the effective scope is re-derived each request
   data_models:
   - Approval
   - ApiKey
@@ -15731,24 +15732,35 @@ stories:
   feature: FEAT-127
   title: Trigger production restore
   narrative:
-    as_a: workspace owner
+    as_a: platform operator in self_hosted (platform admin), or workspace owner in saas (who files a request ticket)
     i_want: to trigger a production restore in an emergency
     so_that: we can recover from catastrophic data loss
   priority: P1
   acceptance_criteria:
   - id: AC-001
-    scenario: Trigger restore with typed confirmation
+    scenario: Self_hosted platform admin executes restore
     given:
-    - I am the workspace owner
+    - The deployment mode is self_hosted and I hold the platform admin role
     when:
     - I click "Restore" and type the org slug and a reason
     then:
     - The restore begins with progress, and an AuditLog entry records the action
+  - id: AC-002
+    scenario: Saas tenant files restore request
+    given:
+    - The deployment mode is saas and I am the workspace owner
+    when:
+    - I click "Request restore"
+    then:
+    - A SupportTicket is created with destination=antirion_support_queue, kind=restore_request, SLA=4h, severity=crit
+    - An AuditLog entry records action "dr.restore.request"
+    - The execute-restore button is not rendered for tenant users in saas
   data_models:
   - Backup
+  - SupportTicket
   - AuditLog
   non_functional:
-  - SCIM and provisioning operations are idempotent and safe to replay
+  - Execute-restore is gated by mode+role (self_hosted platform admin only); saas tenants see the request-ticket path
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
 - id: STORY-295
   feature: FEAT-127
@@ -16039,7 +16051,7 @@ stories:
     when:
     - A request arrives
     then:
-    - The request is allowed and a warning is logged (configurable to fail-closed)
+    - The request is rejected with 403 and Request.status_label="geoip_unavailable" (default fail-closed); an operational alert is raised and fail-open can be opted into via explicit CatalogPolicy override
   data_models:
   - Request
   non_functional:
@@ -16719,16 +16731,17 @@ stories:
   - id: AC-002
     scenario: Valid key, scope OK
     given:
-    - A valid ApiKey with scopes ["chat.completions"]
+    - A valid ApiKey whose effective scope (ApiKey.base_scopes ∪ ApiKey.elevated_scopes if ApiKey.elevated_until > now) includes "chat.completions"
     when:
     - The client calls POST /v1/chat/completions
     then:
     - The request is authorized and proceeds
     - The resolved ApiKey, team, user and org are attached to the request context
+    - The effective scope is re-derived on every request; no stored scopes column is consulted
   - id: AC-003
     scenario: Valid key, wrong scope
     given:
-    - An ApiKey without scope "embeddings"
+    - An ApiKey whose effective scope does not include "embeddings" (neither base_scopes nor any unexpired elevated_scopes)
     when:
     - The client calls POST /v1/embeddings
     then:
@@ -18619,9 +18632,9 @@ stories:
     given:
     - A BYOKCredential for anthropic has a negotiated 5000 rpm tier
     when:
-    - I set rate_limit_rpm=5000 and rate_limit_tpm=1500000 on the credential
+    - I POST a ProviderRateLimit with scope="byok", target_id=credential.id, rate_limit_rpm=5000, rate_limit_tpm=1500000
     then:
-    - A ProviderRateLimit row with scope "byok" and target_id=credential.id is persisted
+    - The ProviderRateLimit row with scope "byok" and target_id=credential.id is persisted (this is the canonical storage; BYOKCredential no longer carries rate_limit_rpm/tpm fields)
     - The outbound limiter uses this override instead of the provider default when this credential is selected
   - id: AC-002
     scenario: Override at model level
@@ -22545,21 +22558,18 @@ models:
     type: string
   - name: type
     type: string
-    description: service|user|ephemeral
-  - name: scopes
-    type: json
-    description: Effective scopes at authorization time (base_scopes unioned with elevated_scopes while elevated_until is in the future)
+    description: service|user|ephemeral|break_glass (break_glass marks FEAT-160-issued keys; STORY-378 tags every request made with one via Request.break_glass=true)
   - name: base_scopes
     type: json
-    description: Scopes granted at creation; restored when elevated_until expires
+    description: Scopes granted at creation; effective scope is computed at auth time as base_scopes ∪ (elevated_scopes while elevated_until is in the future)
   - name: elevated_scopes
     type: json
     nullable: true
-    description: Time-bounded elevated scopes granted via FEAT-027 approvals
+    description: Time-bounded elevated scopes granted via FEAT-027 approvals; consulted at auth time only (no materialized column)
   - name: elevated_until
     type: timestamp
     nullable: true
-    description: When set in the future, elevated_scopes are additive to base_scopes
+    description: When set in the future, elevated_scopes are additive to base_scopes at auth time
   - name: models
     type: json
   - name: rate_limit_rpm
@@ -22665,14 +22675,6 @@ models:
     type: timestamp
     nullable: true
     description: When set, both this credential and successor_id are valid for outbound calls until this time
-  - name: rate_limit_rpm
-    type: int
-    nullable: true
-    description: Override for this credential's negotiated rpm tier. Null means inherit the Provider default.
-  - name: rate_limit_tpm
-    type: int
-    nullable: true
-    description: Override for this credential's negotiated tpm tier. Null means inherit the Provider default.
   - name: created_at
     type: timestamp
   relations:
