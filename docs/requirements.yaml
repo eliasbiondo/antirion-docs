@@ -971,10 +971,13 @@ features:
 - id: FEAT-060
   epic: EPIC-006
   title: Per-model cache configuration
-  description: Configure cache backend, TTL, key strategy and size limits per model.
+  description: Configure cache backend, TTL, key strategy and size limits per model. Streaming requests have a defined cache contract — writes happen worker-side after the stream completes (never on the forward path); hits replay as SSE with a cached=true comment and honour the streaming baseline's keep-alive cadence (STORY-482).
+  mode: both
   priority: P0
   stories:
   - STORY-142
+  - STORY-472
+  - STORY-482
   ui_references:
   - proto/Cache.html
   - proto/cache.jsx
@@ -22964,6 +22967,82 @@ stories:
   - RoutingRule
   - ProviderRateLimitWindow
   - RoutingDecision
+- id: STORY-482
+  feature: FEAT-060
+  title: Streaming cache contract - write and replay
+  narrative:
+    as_a: platform engineer
+    i_want: a defined cache contract for streamed requests
+    so_that: streaming hits replay correctly as SSE and writes never block the forward path
+  priority: P0
+  depends_on:
+  - STORY-142
+  - STORY-341
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Write path buffers only on the worker side
+    given:
+    - A streaming Request (Request.streamed=true) finishes successfully with SafetyEvent.action != "block"
+    when:
+    - The gateway completes the forward response to the client
+    then:
+    - The forward path does not buffer the stream; frames flow directly to the client (per project.non_functional_baseline.streaming)
+    - A post-hoc cache-write worker consumes the completed stream's recorded frames and writes a CacheEntry with streamed=true, key_hash matching STORY-142 AC-001 (per backend) and the assembled body
+    - The write never blocks the originating request
+  - id: AC-002
+    scenario: Streaming request hits a streamed CacheEntry
+    given:
+    - A client issues a streaming request that matches a CacheEntry with streamed=true
+    when:
+    - The gateway serves the hit
+    then:
+    - The response is framed as SSE with a leading `:cached=true` SSE comment
+    - The FEAT-144 keep-alive cadence (15 s) is applied on the replay
+    - Request.ttft_ms is recorded as the cache-lookup latency (not the original upstream TTFT)
+    - Request.cached=true and Request.cache_cost is populated per Model.cache_price
+  - id: AC-003
+    scenario: Streaming request hits a non-streamed CacheEntry
+    given:
+    - A streaming client request matches a CacheEntry with streamed=false (the hit was recorded from a non-streaming request)
+    when:
+    - The gateway serves the hit
+    then:
+    - The stored body is re-framed into SSE chunks; a leading `:cached=true` comment precedes the content
+    - Request.ttft_ms is the cache-lookup latency; Request.cached=true
+  - id: AC-004
+    scenario: Non-streaming request hits a streamed CacheEntry
+    given:
+    - A non-streaming client request matches a CacheEntry with streamed=true
+    when:
+    - The gateway serves the hit
+    then:
+    - The recorded frames are assembled server-side and returned as a single non-streaming body; no SSE framing is sent
+  - id: AC-005
+    scenario: FEAT-148 graceful degradation serves a streamed CacheEntry
+    given:
+    - project.non_functional_baseline.graceful_shutdown or FEAT-148 has triggered cached-response serving (STORY-345 AC-001)
+    when:
+    - A streaming request matches a streamed CacheEntry in the caller's residency region
+    then:
+    - The entry is replayed as SSE per AC-002; a `:cached=true,degraded=true` SSE comment precedes the content
+    - Residency partitioning from STORY-472 still applies - cross-region entries are never served
+  - id: AC-006
+    scenario: Streaming request aborted mid-stream does not write cache
+    given:
+    - A streaming Request is aborted (client_cancelled=true or mid_stream_dropped=true)
+    when:
+    - The cache-write worker evaluates eligibility
+    then:
+    - No CacheEntry is written for this Request
+  data_models:
+  - CacheEntry
+  - Request
+  - Model
+  - ResidencyConfig
+  non_functional:
+  - Cache-write for streamed requests runs post-hoc on the worker fleet and never touches the forward path
+  - SSE re-framing on a hit preserves chunk boundaries as stored; a provider that changed frame boundaries between write and hit is not required to re-match framing exactly
+  - The cache-write worker is idempotent on Request.id
 models:
 - name: Org
   description: The workspace (organization) that owns everything.
