@@ -11256,9 +11256,13 @@ stories:
     - I see projects and users sorted by spend
   api:
   - method: GET
-    path: /api/budgets/teams/:id
+    path: /api/budgets
+    request:
+      query:
+        scope: string
+        scope_id: uuid
     response:
-      team: Budget
+      budget: Budget
       projects:
       - Project
       users:
@@ -11409,7 +11413,7 @@ stories:
     - The allocations are still saved with `over_allocated: true`
   api:
   - method: PATCH
-    path: /api/budgets/teams/:id/allocations
+    path: /api/budgets/:id/allocations
     request:
       body:
         projects: json
@@ -11463,7 +11467,7 @@ stories:
     - A BudgetEvent of type "enforce" is recorded
   api:
   - method: PATCH
-    path: /api/budgets/teams/:id/policy
+    path: /api/budgets/:id/policy
     request:
       body:
         soft_alert_pct: int
@@ -12259,31 +12263,65 @@ stories:
   narrative:
     as_a: finance operations lead
     i_want: to contest a line item on an invoice
-    so_that: billing errors are corrected
+    so_that: billing errors are corrected via a distinct status machine, not a generic support ticket
   priority: P1
   acceptance_criteria:
   - id: AC-001
-    scenario: Submit contest
+    scenario: Submit contest against a specific InvoiceLine
     given:
-    - An invoice is issued
+    - An Invoice is issued and I select a specific InvoiceLine
     when:
-    - I click "Contest" on a line and submit with reason
+    - I click "Contest" on the line and submit with reason
     then:
-    - A contest case is created with status "open"
-    - Support is notified
+    - An InvoiceContest row is created with (invoice_line_id, org_id, reason, status="open", opened_by_user_id=me)
+    - A Notification of kind "billing" is delivered via FEAT-102 to Org.billing_contact and to Antirion-staff renewals sub-queue (saas); in self_hosted the renewals fan-out is suppressed
+    - An AuditLog entry records action "invoice.contest.open"
+  - id: AC-002
+    scenario: Resolution terminal states
+    given:
+    - An InvoiceContest is in status "open" or "under_review"
+    when:
+    - The resolver moves it to accepted, rejected or resolved
+    then:
+    - resolved_at is stamped; a Notification is delivered to opened_by_user_id and Org.billing_contact
+  ui:
+    screens:
+    - Billing
+    components:
+    - InvoiceList
+    - ContestModal
+    states:
+    - default
+    - submitting
+  api:
+  - method: POST
+    path: /api/billing/invoice-lines/:id/contest
+    request:
+      body:
+        reason: string
+    response:
+      contest: InvoiceContest
+    errors:
+    - 400
+    - 401
+    - 403
+    - 404
+    inferred: true
   data_models:
-  - Billing
-  - SupportTicket
+  - Invoice
+  - InvoiceLine
+  - InvoiceContest
+  - Notification
+  - AuditLog
   non_functional:
-  - Budget counters live in the shared limiter store; enforcement decisions complete in under 5 ms p95
-  - Counter reconciliation runs on a worker cadence; drift between live counters and ledger alerts
+  - Contest creation is atomic; duplicate contests against the same invoice_line_id while a contest is "open" return 409
 - id: STORY-210
   feature: FEAT-095
   title: Request a credit
   narrative:
     as_a: finance operations lead
-    i_want: to request a credit
-    so_that: downtime or errors can be compensated
+    i_want: to request a credit with a distinct status machine from contests and support tickets
+    so_that: downtime or errors can be compensated auditably
   priority: P1
   acceptance_criteria:
   - id: AC-001
@@ -12291,14 +12329,39 @@ stories:
     given:
     - I am on billing
     when:
-    - I submit amount and reason
+    - I POST /api/billing/credit-requests with amount, currency and reason
     then:
-    - A credit request is created and support is notified
+    - A CreditRequest row is created with status="open", opened_by_user_id=me
+    - A Notification of kind "billing" is delivered to Org.billing_contact and Antirion-staff renewals sub-queue (saas)
+    - An AuditLog entry records action "billing.credit.request"
+  - id: AC-002
+    scenario: Approval applies credit to an InvoiceLine
+    given:
+    - A CreditRequest is approved by Antirion finance
+    when:
+    - The approver records the applied InvoiceLine
+    then:
+    - CreditRequest.status becomes "applied"; applied_invoice_line_id is set; a Notification fires to opened_by_user_id
+  api:
+  - method: POST
+    path: /api/billing/credit-requests
+    request:
+      body:
+        amount: number
+        currency: string
+        reason: string
+    response:
+      credit_request: CreditRequest
+    errors:
+    - 400
+    - 401
+    - 403
+    inferred: true
   data_models:
-  - Billing
-  non_functional:
-  - Budget counters live in the shared limiter store; enforcement decisions complete in under 5 ms p95
-  - Counter reconciliation runs on a worker cadence; drift between live counters and ledger alerts
+  - CreditRequest
+  - InvoiceLine
+  - Notification
+  - AuditLog
 - id: STORY-211
   feature: FEAT-095
   title: Update payment method
@@ -12372,23 +12435,52 @@ stories:
   title: View invoice history
   narrative:
     as_a: finance operations lead
-    i_want: to browse past invoices
+    i_want: to browse past invoices backed by persistent Invoice/InvoiceLine rows
     so_that: I can download and reconcile
   priority: P1
   acceptance_criteria:
   - id: AC-001
     scenario: List invoices
     given:
-    - The workspace has monthly invoices
+    - The workspace has monthly invoices as Invoice rows
     when:
-    - I open "Invoices"
+    - I GET /api/billing/invoices
     then:
-    - I see a list with period, total, status and a download link
+    - I see each Invoice with period_start, period_end, total, currency, status and download_url; clicking opens the InvoiceLine breakdown
+  - id: AC-002
+    scenario: Invoice detail
+    given:
+    - I open a specific Invoice
+    when:
+    - The detail renders
+    then:
+    - Each InvoiceLine is shown (kind, description, amount, cost_center); an active InvoiceContest or CreditRequest against a line shows as a badge
+  api:
+  - method: GET
+    path: /api/billing/invoices
+    response:
+      invoices:
+      - Invoice
+    errors:
+    - 401
+    - 403
+    inferred: true
+  - method: GET
+    path: /api/billing/invoices/:id
+    response:
+      invoice: Invoice
+      lines:
+      - InvoiceLine
+    errors:
+    - 401
+    - 403
+    - 404
+    inferred: true
   data_models:
-  - Billing
-  non_functional:
-  - Budget counters live in the shared limiter store; enforcement decisions complete in under 5 ms p95
-  - Counter reconciliation runs on a worker cadence; drift between live counters and ledger alerts
+  - Invoice
+  - InvoiceLine
+  - InvoiceContest
+  - CreditRequest
 - id: STORY-215
   feature: FEAT-096
   title: Start a trial
