@@ -8,7 +8,7 @@ projects:
   antirion:
     name: antirion
     sessionPrefix: ant
-    repo: owner/repo
+    repo: eliasbiondo/antirion-docs
     path: /home/biondoel/repos/bus/antirion
     defaultBranch: main
     agentRules: |-
