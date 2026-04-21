@@ -21820,97 +21820,234 @@ stories:
 - id: STORY-447
   feature: FEAT-186
   title: Ingest Request rows into the durable store
+  narrative:
+    as_a: platform engineer
+    i_want: gateway request events to land in the durable request store with at-least-once semantics
+    so_that: observability, billing and anomaly detection all read the same canonical rows
   priority: P0
   acceptance_criteria:
   - id: AC-001
-    scenario: Request row persisted with at-least-once
+    scenario: Request row persisted with at-least-once semantics
     given:
-    - A gateway node finishes a Request
+    - A gateway node emits a completion event carrying Request.id, org_id, team_id, user_id, api_key_id, model_id, provider_id, cost, input_tokens, output_tokens, latency_ms, ttft_ms, status and tag
     when:
-    - The ingestion pipeline consumes the event
+    - The ingestion worker consumes the event from the durable queue
     then:
-    - A Request row is written with org_id, provider_id, model_id, cost, tokens, latency_ms and status
-    - Handlers are idempotent on Request.id so replays do not duplicate rows
-    - Backlog or missed ingests raise their own operational alert
+    - A Request row is written with every field from the event
+    - Handlers are idempotent on Request.id - replays do not duplicate rows
+    - The event's delivery attempt counter is reset and the ack is committed only after the row is durable
+  - id: AC-002
+    scenario: Dead-letter on poison event
+    given:
+    - An event repeatedly fails validation beyond the retry budget
+    when:
+    - Retries are exhausted
+    then:
+    - The event moves to the dead-letter queue with the last error and attempt count
+    - A platform-scope ingestion AlertRule category="ingestion" fires when DLQ depth exceeds the threshold (paged via FEAT-192 operator paging)
+  - id: AC-003
+    scenario: Backfill on ClickHouse recovery
+    given:
+    - ClickHouse had an ingestion gap for 10 minutes and a queue buffer absorbed the events
+    when:
+    - ClickHouse recovers
+    then:
+    - The worker replays buffered events in Request.id order without violating idempotency
+    - An AuditLog entry records action "ingestion.backfill" with the recovered row count and window
+  api:
+  - method: GET
+    path: /api/operator/ingestion/health
+    response:
+      durability_5m: number
+      dlq_depth: int
+      oldest_event_age_sec: int
+      last_ingest_at: timestamp
+    errors:
+    - 401
+    - 403
+    inferred: true
   data_models:
   - Request
+  - AuditLog
   non_functional:
-  - The ingest queue uses durable delivery with exponential backoff and a dead-letter queue per baseline workers
+  - Ingestion consumes the durable queue with exponential backoff and a dead-letter queue per baseline workers
+  - Handlers are idempotent on Request.id and safe to replay
+  - Ingestion lag rolling p95 over 5 minutes is under 5 seconds; otherwise the ingestion AlertRule raises
 - id: STORY-448
   feature: FEAT-186
   title: Alert on ingestion gap
+  narrative:
+    as_a: platform operator
+    i_want: automatic alerting when ClickHouse row durability falls below baseline
+    so_that: I see ingestion health as a signal, not as missing dashboards hours later
   priority: P0
+  depends_on:
+  - STORY-447
   acceptance_criteria:
   - id: AC-001
-    scenario: ClickHouse durability below baseline
+    scenario: Durability below baseline
     given:
-    - project.non_functional_baseline.data_durability requires ClickHouse row durability >= 99.99%
+    - project.non_functional_baseline.data_durability requires >= 99.99% row durability for the request log
     when:
-    - Rolling 5-minute row durability drops below the threshold
+    - Rolling 5-minute row durability drops below 99.99%
     then:
-    - An ingestion-health AlertRule fires (platform-scope, category="ingestion") and pages the platform-operator audience
+    - A system-managed AlertRule with scope_kind="platform", category="ingestion", metric="ingestion.row_durability_5m" fires at severity="warn"
+    - Paging goes through FEAT-192 (operator paging) to the platform-operator audience
+    - An AuditLog entry records the fire with the durability sample, starting gap minute and recovery minute if known
+  - id: AC-002
+    scenario: DLQ depth
+    given:
+    - STORY-447 AC-002 has moved events to the DLQ
+    when:
+    - DLQ depth exceeds 100 rows sustained for 5 minutes
+    then:
+    - The same AlertRule family fires on metric="ingestion.dlq_depth" at severity="crit"
   data_models:
   - AlertRule
   - AlertEvent
+  - AuditLog
+  non_functional:
+  - The platform AlertRule is seeded at install time by FEAT-199-style system provisioning; scope_kind and org_id=null are enforced
 - id: STORY-449
   feature: FEAT-187
   title: Pre-aggregate MetricSeries
+  narrative:
+    as_a: platform engineer
+    i_want: request metrics pre-aggregated at multiple cadences
+    so_that: dashboards read bounded rows instead of scanning the raw request log
   priority: P0
+  depends_on:
+  - STORY-447
   acceptance_criteria:
   - id: AC-001
     scenario: Rollups at defined cadences
     given:
     - Request rows arrive in the durable store
     when:
-    - The rollup worker runs
+    - The rollup worker runs on its schedule
     then:
-    - MetricSeries rows exist at 1m (live), 5m (24h retention), 1h (30d), 1d (90d+) cadences per scope
-    - Late-arriving rows within the cadence window are backfilled and the counters are recomputed idempotently
+    - MetricSeries rows exist at 1m (live), 5m (24h retention), 1h (30d retention), 1d (90d+ retention) cadences
+    - Each row is partitioned by scope in {org, team, provider, model, project, api_key, env}
+    - Counters cover count, spend (input/output/cache split), errors, p50/p95/p99 latency, cache_hit_rate, input/output tokens, client_cancelled_count, mid_stream_dropped_count, ttft_p50/p95_ms
+  - id: AC-002
+    scenario: Late-arriving backfill
+    given:
+    - A Request row for bucket B arrives after the rollup worker has finalised bucket B at the 1m cadence
+    when:
+    - The next 1m-cadence run starts within the idempotency window (15 minutes)
+    then:
+    - The affected bucket is recomputed idempotently; counters are not double-incremented
+    - Beyond the idempotency window, the row is attributed to the worker's current bucket and an AuditLog row records the late-arrival offset
+  - id: AC-003
+    scenario: Retention sweep
+    given:
+    - A MetricSeries row is older than its cadence's retention
+    when:
+    - The retention sweep runs
+    then:
+    - The row is deleted; retention aligns with RetentionConfig.metadata_days for 1m/5m rows and extends per cadence otherwise
   data_models:
   - Request
   - MetricSeries
+  - RetentionConfig
+  - AuditLog
+  non_functional:
+  - Rollup writes are idempotent per (scope, scope_id, bucket_start, cadence)
+  - The 1m cadence lags the raw stream by at most 90 seconds under nominal load
 - id: STORY-450
   feature: FEAT-188
   title: Write back Request.cost into Budget.spent
+  narrative:
+    as_a: finance operations lead
+    i_want: every finalised Request to increment the right Budget counter deterministically
+    so_that: enforcement decisions and invoices stay in sync with observed traffic
   priority: P0
+  depends_on:
+  - STORY-447
   acceptance_criteria:
   - id: AC-001
-    scenario: Budget counter moves with each Request
+    scenario: Counter moves with each Request
     given:
-    - A Request is finalised with cost set
+    - A Request is finalised with cost, cache_cost, input_cost and output_cost set
     when:
     - The metering pipeline consumes the event
     then:
-    - The shared-store budget counter increments for every applicable Budget scope
+    - The shared-store budget counter increments for every applicable Budget scope (org, team, project, user_budget)
     - Cache-hit cost (Request.cache_cost) contributes to the counter
-    - Downgrade-served cost counts against the served model's Budget (not the requested one)
-    - A periodic reconciliation reads the ledger and raises budget.counter.drift if live-counter vs ledger diverges by > 1%
+    - Downgrade-served cost counts against the served model's Budget (Request.model_id), not against Request.original_model_id
+    - The ledger table writes an append-only BudgetEvent of type="spend" carrying (budget_id, amount, request_id)
+  - id: AC-002
+    scenario: Reconciliation against live counter
+    given:
+    - The reconciliation worker scans the ledger for the last N minutes
+    when:
+    - Aggregated ledger spend diverges from the live shared-store counter by more than 1%
+    then:
+    - An AlertEvent with source="budget", title="budget.counter.drift" fires (provisioned by FEAT-199)
+    - An AuditLog entry records the divergence magnitude and the affected budget_ids
+  - id: AC-003
+    scenario: Idempotent replay
+    given:
+    - The metering worker receives the same Request.id twice (at-least-once delivery)
+    when:
+    - The second event is processed
+    then:
+    - BudgetEvent rows are not duplicated; the counter is not double-incremented (dedup key is (budget_id, request_id))
   data_models:
   - Request
   - Budget
   - UserBudget
   - BudgetEvent
+  - AlertEvent
+  - AuditLog
+  non_functional:
+  - Counter updates are atomic per budget scope; a partial failure leaves no counter in a skewed state
+  - Reconciliation lag rolling p95 under 60 seconds
 - id: STORY-451
   feature: FEAT-189
   title: Reject over-budget requests at the gateway
+  narrative:
+    as_a: platform engineer
+    i_want: requests that would exceed a Budget with action="block" to fail fast with a defined error shape
+    so_that: tenants get a predictable 402 rather than opaque upstream failures
   priority: P0
   depends_on:
   - STORY-453
+  - STORY-450
   acceptance_criteria:
   - id: AC-001
     scenario: Hard cap reached
     given:
     - A Budget for the caller has BudgetPolicy.action="block" and spent >= amount
     when:
-    - A request arrives on the gateway
+    - A request arrives on the gateway admission stage
     then:
     - The admission stage returns 402 Payment Required with error_code "budget_exhausted"
-    - Retry-After is set when the cycle boundary is within a reasonable retry horizon
-    - A BudgetEvent.type="enforce" row is written
+    - Retry-After is set when the cycle boundary is within 24 hours; otherwise the header is omitted
+    - A BudgetEvent of type="enforce" and severity="block" is written with the affected budget_id and scope
+    - Request.status_label is set to "budget_exhausted" on the recorded Request row (if the row is written at all per STORY-453 pipeline order)
+  - id: AC-002
+    scenario: Waiver raises effective cap
+    given:
+    - The Budget has an active BudgetEvent of type="waiver" with amount adding to the effective cap
+    when:
+    - A request arrives
+    then:
+    - Admission uses the effective cap (Budget.amount + active waivers) for the block decision
+  - id: AC-003
+    scenario: Downgrade policy diverts instead of blocking
+    given:
+    - A Budget has BudgetPolicy.action="downgrade-model" and BudgetPolicy.downgrade_target_model_id set
+    when:
+    - A request arrives that would exceed the cap for the requested model
+    then:
+    - Admission allows the request but FEAT-139 routing rewrites Request.model_id to the downgrade target; Request.downgraded=true and Request.original_model_id records the requested model
+    - No 402 is returned
   data_models:
   - Budget
   - BudgetPolicy
   - BudgetEvent
+  - Request
   non_functional:
   - The admission stage sits between idempotency lookup and cache lookup per FEAT-191
 - id: STORY-452
@@ -22090,27 +22227,75 @@ stories:
 - id: STORY-461
   feature: FEAT-199
   title: Provision Budget AlertRules
+  narrative:
+    as_a: platform engineer
+    i_want: every Budget to get a matching system-managed AlertRule the moment it is created or edited
+    so_that: budget signals flow through the same ack/snooze/resolve lifecycle as every other alert
   priority: P0
+  depends_on:
+  - STORY-223
+  - STORY-450
   acceptance_criteria:
   - id: AC-001
-    scenario: Budget create/edit provisions an AlertRule
+    scenario: Create Budget provisions AlertRule
     given:
-    - A Budget is created or its BudgetPolicy changes
+    - I create a Budget with BudgetPolicy.soft_alert_pct=80 and action="alert-only"
     when:
-    - The provisioner observes the change
+    - The provisioner reacts
     then:
-    - A system-managed AlertRule exists for each of (budget.utilisation_pct, budget.overage) with the configured thresholds
-    - Additional platform-scope AlertRules exist for budget.forecast.mape, budget.fx.staleness_hours and budget.counter.drift
-    - STORY-189 AC-001 soft-threshold signals fire through the AlertRule lifecycle (ack, snooze, resolve) rather than writing bare AlertEvents
-    - BudgetEvent rows still record the event as an audit trail
+    - A system-managed AlertRule is created with category="budget", metric="budget.utilisation_pct", scope_kind="tenant", threshold=80, owner_user_id=Budget.owner_user_id, system_managed=true
+    - The AlertRule's audience is the Budget owner plus Org.finance_contact per project.notifications_model
+    - An AuditLog entry records action "budget.alert_rule.provisioned" with the resolved audience
+  - id: AC-002
+    scenario: Edit BudgetPolicy re-syncs AlertRule
+    given:
+    - A Budget's BudgetPolicy.soft_alert_pct changes from 80 to 90
+    when:
+    - The provisioner reacts
+    then:
+    - The existing AlertRule's threshold is updated in place; AlertRule.updated_at is set
+  - id: AC-003
+    scenario: Delete Budget retires the AlertRule
+    given:
+    - A Budget is soft-deleted (Budget.deleted_at set)
+    when:
+    - The provisioner reacts
+    then:
+    - The system-managed AlertRule is disabled (enabled=false) and a 30-day retention sweep removes it
+  - id: AC-004
+    scenario: Platform-scope system rules exist
+    given:
+    - The control plane is installed
+    when:
+    - The install completes
+    then:
+    - Platform-scope AlertRules exist for metric=budget.forecast.mape, budget.fx.staleness_hours, budget.counter.drift - each with scope_kind="platform", org_id=null and paged via FEAT-192
+  - id: AC-005
+    scenario: STORY-189 fires through the AlertRule
+    given:
+    - A Budget with utilisation >= 80% fires the soft threshold
+    when:
+    - The metering pipeline (STORY-450) signals the utilisation update
+    then:
+    - The system-managed AlertRule fires a regular AlertEvent (not a bare non-rule AlertEvent); ack/snooze/resolve flow as usual
+    - BudgetEvent of type="threshold" is written as an audit trail
   data_models:
   - Budget
   - BudgetPolicy
   - AlertRule
   - AlertEvent
+  - BudgetEvent
+  - AuditLog
+  non_functional:
+  - The provisioner consumes the Budget/BudgetPolicy change stream; handlers are idempotent on (budget_id, metric)
+  - system_managed=true AlertRules cannot be edited via the UI - changes must go through BudgetPolicy; STORY-224 enforces this
 - id: STORY-462
   feature: FEAT-200
   title: Local pricing catalog with observed variance
+  narrative:
+    as_a: finance operations lead
+    i_want: the pricing calculator to read a local catalog and observed variance
+    so_that: forecasts are fast and never leak forecast inputs to a third party
   priority: P1
   acceptance_criteria:
   - id: AC-001
@@ -22118,21 +22303,36 @@ stories:
     given:
     - Provider pricing is cached locally
     when:
-    - The daily refresh worker runs
+    - The daily refresh worker runs at its scheduled time
     then:
-    - Provider unit prices are updated in the local cache
-    - In saas, Antirion plan fees and commitment offsets are read from the local Billing catalog
-    - No third-party outbound call is made from the forecast path
+    - Provider unit prices (input/output/cache) are updated in the local cache keyed by (provider_id, model_id, effective_at)
+    - In saas, Antirion plan fees and commitment offsets are read from the local Billing catalog (not from a third-party service)
+    - The refresh operation writes an AuditLog entry "pricing.catalog.refresh" with the row count and source
+    - No third-party outbound call is made from the forecast path under any code branch
   - id: AC-002
     scenario: Observed variance
     given:
-    - MetricSeries carries 30d of scope-level spend
+    - MetricSeries carries at least 30d of scope-level spend
     when:
     - The variance job runs
     then:
-    - A rolling observed-variance series is available to STORY-401 AC-001's confidence band
+    - A rolling 30d variance series is persisted per (scope, scope_id) and exposed to STORY-401 AC-001
+    - STORY-401's confidence band reads this series rather than computing variance at render time
+  - id: AC-003
+    scenario: Stale catalog alert
+    given:
+    - The last successful refresh was more than 48h ago
+    when:
+    - The readiness probe evaluates the catalog's freshness
+    then:
+    - A platform-scope AlertRule category="pricing" metric="pricing.catalog.staleness_hours" fires at severity="warn"
   data_models:
   - MetricSeries
+  - AuditLog
+  - AlertRule
+  non_functional:
+  - Catalog reads are served from local cache; the forecast path never blocks on refresh
+  - The refresh worker is idempotent on (provider_id, model_id, effective_at)
 models:
 - name: Org
   description: The workspace (organization) that owns everything.
@@ -24017,6 +24217,9 @@ models:
     description: Canonical-role audience spec consumed by FEAT-102; items are of shape {role, contact?, user_id?, sub_queue?} where role is one of (acting_principal|resource_owner|org_contact|platform_operator|antirion_staff_subqueue|user_subscription) per project.notifications_model
   - name: enabled
     type: bool
+  - name: system_managed
+    type: bool
+    description: True when the rule is owned by a system provisioner (e.g. FEAT-199 for budgets, FEAT-186 for ingestion health); user UI blocks direct edits so config flows through the owning feature
   - name: runbook_id
     type: FK:Runbook
     nullable: true
