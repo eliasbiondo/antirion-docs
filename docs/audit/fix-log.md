@@ -285,3 +285,22 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-011 | m9 STORY-340 60s → 30s | applied | References config_hot_reload |
 | EPIC-011 | m1..m12 other minors | deferred | Editorial |
 | EPIC-011 | X1..X7 cross-epic | deferred | Need coordination/product input |
+| EPIC-012 | C1 SupportTicket fields | applied | Added destination, redaction_profile, antirion_ticket_id |
+| EPIC-012 | C2 ResidencyConfig.mode/source | applied | Added mode field (source added previously) |
+| EPIC-012 | C3 HelpArticle fields | applied | Added view_count, local_anchor; added HelpArticlePin model |
+| EPIC-012 | C4 Notification.kind | applied | Extended enum with maintenance/incident/license/license_violation/platform_notice |
+| EPIC-012 | C5 FEAT-167 vs FEAT-170 overlap | deferred | Structural; needs product decision |
+| EPIC-012 | C6 FEAT-112 wrong cross-ref | applied | Already fixed in EPIC-010 pass |
+| EPIC-012 | M1 FEAT-173 widget ref | applied | FEAT-164 → FEAT-163 |
+| EPIC-012 | M2 StatusPageIncident ↔ PlatformIncident | applied | Added platform_incident_id FK |
+| EPIC-012 | M3 STORY-388 residency dep | applied | depends_on STORY-387 + AC guard |
+| EPIC-012 | M4 WorkerJob.owner_org_id | applied | Added nullable FK:Org |
+| EPIC-012 | M5 mode:both on FEAT-162..169 | applied (ex. 167) | Added mode:both to FEAT-162/163/164/165/166/168/169 |
+| EPIC-012 | M6 STORY-391/392 mode ACs | deferred | Needs product input |
+| EPIC-012 | M7 STORY-396 mode split | deferred | Needs product decision |
+| EPIC-012 | M8 LegalDocument | applied | Added LegalDocument model |
+| EPIC-012 | M9 FEAT-166 air-gapped AC | deferred | New stories needed |
+| EPIC-012 | M10/M11 STORY-401 pricing ACs | deferred | Needs product input |
+| EPIC-012 | m5 STORY-392 5min → 30s | applied | Aligned with FEAT-173 / hot-reload SLA |
+| EPIC-012 | m1..m8 other minors | deferred | Editorial |
+| EPIC-012 | X1..X3 cross-epic | deferred | Needs coordination |

@@ -1933,6 +1933,7 @@ features:
   epic: EPIC-012
   title: First-run onboarding checklist
   description: Guide a new workspace owner through pinning data residency, inviting teammates, connecting a provider, creating a key and issuing a test request. Residency must be pinned before any tenant data can be written. In saas mode the signed-up workspace owner walks the full checklist. In self_hosted mode the install wizard (FEAT-177) has already completed — residency is read-only from install config, the license is assumed valid (FEAT-175), and the checklist collapses to "invite, connect provider, create key, issue test request" for the first Org created on the install.
+  mode: both
   priority: P0
   stories:
   - STORY-387
@@ -1946,6 +1947,7 @@ features:
   epic: EPIC-012
   title: Public status page
   description: Publish gateway availability, component status and incident history on a public URL and embed a widget in-app. In saas mode the page is operated by Antirion at status.antirion.example and covers the saas fleet across regions. In self_hosted mode the page is operated by the local install at a platform admin-configured host (for example status.gateway.acme.example), covers only the local install, and does not surface or link to Antirion's saas status; the in-app widget always points at the mode-correct page, never the other mode's page.
+  mode: both
   priority: P1
   stories:
   - STORY-391
@@ -1956,6 +1958,7 @@ features:
   epic: EPIC-012
   title: In-product support contact
   description: Let a signed-in user open a support ticket or chat from the shell with session, org and request context attached. In saas mode tickets land in Antirion's inbound support queue (FEAT-181) and the submitter receives acknowledgement from Antirion support. In self_hosted mode tickets land in the platform admin-configured local support queue (default — email to a configurable support_contact address, webhook to a configurable integration); a secondary escalation to Antirion is available only when the install has enabled the phone-home "support" channel under FEAT-179 and is blocked entirely on air-gapped installs. Every submitted ticket records the resolved destination (local queue, Antirion queue or both) on the SupportTicket and in AuditLog.
+  mode: both
   priority: P2
   stories:
   - STORY-393
@@ -1966,6 +1969,7 @@ features:
   epic: EPIC-012
   title: Terms of Service and legal acceptance
   description: Capture ToS, DPA and privacy policy acceptance on sign-up and re-prompt on material changes. In saas mode the surfaced documents are Antirion's published ToS, DPA and privacy policy; versioning is driven by Antirion legal. In self_hosted mode the ToS and DPA governing the Antirion software are folded into the license agreement (FEAT-175) and are not re-prompted per user; the ToS/DPA surface in this feature is instead populated with the customer's own end-user legal texts uploaded by the platform admin (typical contents — acceptable-use policy, internal privacy notice). The data model and re-prompt flow are identical; only the source and legal counterparty differ.
+  mode: both
   priority: P1
   stories:
   - STORY-395
@@ -1977,6 +1981,7 @@ features:
   epic: EPIC-012
   title: In-app help and documentation
   description: Contextual doc links, tooltips and a global "/" quick-help palette across screens. In saas mode articles are served from Antirion's docs CDN and stay current with each release. In self_hosted mode the article catalog is bundled with the install image so help works fully offline and on air-gapped networks; the platform admin can opt in to periodic catalog refresh only when the "docs" phone-home channel (FEAT-179) is enabled. Deep-link URLs to external docs degrade to bundled anchors when air-gapped.
+  mode: both
   priority: P2
   stories:
   - STORY-397
@@ -1997,6 +2002,7 @@ features:
   epic: EPIC-012
   title: Pricing calculator and cost forecast
   description: Let finance model monthly spend by mix of models, volume and caching before committing to a budget. In saas mode projected monthly cost sums provider passthrough plus Antirion plan fees and commitments (FEAT-096/FEAT-098). In self_hosted mode there is no per-request Antirion fee — the license is a flat commercial — so the calculator hides the Antirion subscription component and reports provider passthrough only; the license renewal figure comes from FEAT-175 and is shown as a separate annualized line.
+  mode: both
   priority: P2
   stories:
   - STORY-401
@@ -2006,6 +2012,7 @@ features:
   epic: EPIC-012
   title: In-product notification inbox
   description: Unified bell-icon inbox of user-visible notifications (alert fires, approvals, job completions, deprecations). In saas mode the inbox additionally surfaces Antirion-originated platform notices — maintenance windows, plan-change confirmations, invoice-ready, security advisories — broadcast by Antirion staff through FEAT-173. In self_hosted mode there are no Antirion platform notices; the same slots are filled by local platform admin broadcasts and by FEAT-175 license events (renewal-approaching, entitlement-breach, fail-closed-warning) and by FEAT-180 license-violation incident events.
+  mode: both
   priority: P1
   stories:
   - STORY-402
@@ -2042,7 +2049,7 @@ features:
 - id: FEAT-173
   epic: EPIC-013
   title: Platform-wide incident and maintenance
-  description: Let the operator declare a platform incident, pick affected regions and components and a severity, compute the affected tenants from the routing table, and broadcast in real time to every affected tenant's in-app status widget (FEAT-164). Also lets the operator schedule maintenance windows with advance notice. Available in both saas and self_hosted modes — in saas Antirion staff declare incidents for the fleet, in self_hosted the platform admin declares them for the local install.
+  description: Let the operator declare a platform incident, pick affected regions and components and a severity, compute the affected tenants from the routing table, and broadcast in real time to every affected tenant's in-app status widget (FEAT-163). Also lets the operator schedule maintenance windows with advance notice. Available in both saas and self_hosted modes — in saas Antirion staff declare incidents for the fleet, in self_hosted the platform admin declares them for the local install.
   mode: both
   priority: P0
   stories:
@@ -18298,16 +18305,20 @@ stories:
     i_want: a checklist guiding me through inviting teammates, connecting a provider, creating a key and issuing a test request
     so_that: I see value fast
   priority: P1
+  depends_on:
+  - STORY-387
   acceptance_criteria:
   - id: AC-001
     scenario: Checklist on empty workspace
     given:
     - My Org has only me as a member and no keys or models configured
+    - A ResidencyConfig exists for the Org (STORY-387 has completed)
     when:
     - I land on /gateway
     then:
     - A SetupChecklist card shows 4 items: Invite, Connect provider, Create key, Issue test request
     - Each item links to the corresponding screen
+    - When no ResidencyConfig exists, the checklist does not render and the user is redirected to the residency picker
   - id: AC-002
     scenario: Items tick off automatically
     given:
@@ -18498,7 +18509,7 @@ stories:
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
-  - Status-page updates propagate within 5 minutes of a component state change
+  - Status-page updates propagate within the config-reload SLA (<= 30 s) of a component state change, consistent with the FEAT-173 broadcast path that feeds the in-app widget
 - id: STORY-393
   feature: FEAT-164
   title: Open a support ticket from the shell
@@ -22957,7 +22968,11 @@ models:
   - name: source
     type: string
     nullable: true
-    description: first_run|install_config (how the region was pinned - see FEAT-162 saas / FEAT-177 self_hosted)
+    description: first_run|install_config|user|api (how the region was pinned - see FEAT-162 saas / FEAT-177 self_hosted)
+  - name: mode
+    type: string
+    nullable: true
+    description: initial|migrated (all current installs must be "initial" - migration is not supported)
 - name: RetentionConfig
   description: Retention and redaction policy for stored request data.
   fields:
@@ -23823,11 +23838,15 @@ models:
     type: timestamp
     nullable: true
 - name: StatusPageIncident
-  description: A public incident posted on the status page; platform-wide publication is gated by FEAT-173 (the tenant-internal response-incident lives on the Incident model).
+  description: A public incident posted on the status page; this is the public-facing projection of a PlatformIncident (FEAT-173). The tenant-internal response-incident lives on the Incident model.
   fields:
   - name: id
     type: uuid
     pk: true
+  - name: platform_incident_id
+    type: FK:PlatformIncident
+    nullable: true
+    description: Link to the platform-side incident this post projects from (null for pre-FEAT-173 posts)
   - name: title
     type: string
   - name: impact
@@ -23899,10 +23918,45 @@ models:
   - name: priority
     type: string
     description: low|normal|high|urgent
+  - name: destination
+    type: string
+    description: local_only|antirion_support_queue|local_and_antirion
+  - name: redaction_profile
+    type: string
+    nullable: true
+    description: Profile applied to ticket body before mirroring into the Antirion support queue (see STORY-393)
+  - name: antirion_ticket_id
+    type: string
+    nullable: true
+    description: Opaque id returned by FEAT-181 when the ticket is mirrored
   - name: created_at
     type: timestamp
   - name: resolved_at
     type: timestamp
+    nullable: true
+- name: LegalDocument
+  description: A versioned legal document surfaced via FEAT-165. In saas org_id is null (Antirion-global); in self_hosted org_id is set (customer uploads via platform admin).
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+    nullable: true
+    description: Null for Antirion-global documents (saas); set for customer-uploaded documents (self_hosted)
+  - name: kind
+    type: string
+    description: tos|dpa|privacy|aup
+  - name: version
+    type: string
+  - name: content
+    type: text
+  - name: effective_at
+    type: timestamp
+  - name: published_at
+    type: timestamp
+  - name: published_by_user_id
+    type: FK:User
     nullable: true
 - name: TosAcceptance
   description: Immutable record of ToS/DPA/privacy acceptance by a user at a version.
@@ -23944,7 +23998,28 @@ models:
     description: Screen identifiers this article is contextual to
   - name: tags
     type: json
+  - name: local_anchor
+    type: string
+    nullable: true
+    description: Bundled-with-install anchor used when air-gapped and the external URL is unreachable (self_hosted)
+  - name: view_count
+    type: int
+    description: Denormalized counter of help-palette opens; drives STORY-398 usage stats
   - name: updated_at
+    type: timestamp
+- name: HelpArticlePin
+  description: Per-workspace pin of a HelpArticle at the top of the help palette (STORY-398).
+  fields:
+  - name: org_id
+    type: FK:Org
+    pk: true
+  - name: article_id
+    type: FK:HelpArticle
+    pk: true
+  - name: pinned_by_user_id
+    type: FK:User
+    nullable: true
+  - name: pinned_at
     type: timestamp
 - name: WorkerQueue
   description: An internal background-job queue (aggregation, webhook delivery, retention, etc.).
@@ -23972,13 +24047,17 @@ models:
   - name: last_updated_at
     type: timestamp
 - name: WorkerJob
-  description: A single job scheduled on a WorkerQueue.
+  description: A single job scheduled on a WorkerQueue. owner_org_id is set for tenant-scoped jobs (per-org retention sweep, export generation, etc.) and null for platform-wide jobs; STORY-400 cancel/requeue by tenant admins is restricted to jobs matching the caller's org_id.
   fields:
   - name: id
     type: uuid
     pk: true
   - name: queue_id
     type: FK:WorkerQueue
+  - name: owner_org_id
+    type: FK:Org
+    nullable: true
+    description: Null for platform-wide jobs (metric aggregation, cross-tenant work); set for tenant-scoped jobs
   - name: status
     type: string
     description: queued|running|done|failed|retrying
@@ -24560,7 +24639,7 @@ models:
     type: FK:User
   - name: kind
     type: string
-    description: alert|approval|job|deprecation|billing|security
+    description: alert|approval|job|deprecation|billing|security|maintenance|incident|license|license_violation|platform_notice
   - name: title
     type: string
   - name: body

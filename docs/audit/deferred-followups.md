@@ -113,3 +113,13 @@ Each entry: brief description, source audit citation, reason deferred.
 - **X2..X7** — cross-epic coordination (shared-credentials toggle, cache/safety/budget pipeline positions, telemetry cross-link, per-tenant concurrency cap). (docs/audit/epic-011-review.md §X2..X7)
 - **Minor editorial (m1..m12)** — boilerplate NFRs, skeletal Files/Batches stories, minor wording. (docs/audit/epic-011-review.md §m1..m12)
 
+### EPIC-012
+
+- **C5 FEAT-167 vs FEAT-170 overlap** — worker fleet observability split between EPIC-012 (tenant) and EPIC-013 (platform) needs structural decision. (docs/audit/epic-012-review.md §C5)
+- **M6 STORY-391/392 mode-specific ACs** — self_hosted status page host, widget routing. Needs product input. (docs/audit/epic-012-review.md §M6)
+- **M7 STORY-396 mode split** — ToS versioning saas (Antirion legal) vs self_hosted (platform admin upload). Needs product input. (docs/audit/epic-012-review.md §M7)
+- **M9 FEAT-166 air-gapped ACs** — bundled catalog, docs phone-home, URL degradation. Needs new stories. (docs/audit/epic-012-review.md §M9)
+- **M10/M11 STORY-401 pricing calculator mode branching** — plan-fee / license lines in saas vs self_hosted. Needs product input. (docs/audit/epic-012-review.md §M10/M11)
+- **m1..m8 minor editorial** — various. (docs/audit/epic-012-review.md §m1..m8)
+- **X1..X3 cross-epic** — FEAT-168 vs FEAT-085 forecast scopes, FEAT-164 saas sub-queue routing, invitee first-run boundary. (docs/audit/epic-012-review.md §X1..X3)
+
