@@ -444,7 +444,7 @@ features:
 - id: FEAT-012
   epic: EPIC-001
   title: Role management and custom roles
-  description: List built-in roles, create/edit/delete custom roles scoped to permissions. Built-in tenant roles are owner, admin, developer, analyst, viewer and service in both deployment modes. The platform admin role is a reserved built-in that exists only in self_hosted mode, cannot be granted to an ordinary workspace member, cannot be created as a custom role in either mode, and is rejected by the role API if requested in saas mode. Role assignment attempts that violate these constraints produce an AuditLog "role.assignment_rejected" entry.
+  description: List built-in roles, create/edit/delete custom roles scoped to permissions. Built-in tenant roles are owner, admin, developer, analyst, viewer and service in both deployment modes. The platform admin role is a reserved built-in that exists only in self_hosted mode, cannot be granted to an ordinary workspace member, cannot be created as a custom role in either mode, and is rejected by the role API if requested in saas mode (per project.deployment_modes resolved at install time by EPIC-013). Role assignment attempts that violate these constraints produce an AuditLog "role.assignment_rejected" entry.
   priority: P1
   stories:
   - STORY-031
@@ -2396,6 +2396,7 @@ stories:
   non_functional:
   - State parameter validated to prevent CSRF on OAuth callback
   - SAML assertions validated against signing cert
+  - Password sign-in is blocked iff Org.sso_enforced=true AND the user's email domain is in SsoConfig.require_for_domains
 - id: STORY-005
   feature: FEAT-002
   title: Just-in-time user provisioning on first SSO sign-in
@@ -2422,9 +2423,9 @@ stories:
   - SsoConfig
   - AuditLog
   non_functional:
-  - Membership and role changes are audited with actor, subject, timestamp and before/after
-  - Revocations and role changes propagate to every node within the config-reload SLA
   - SSO assertion signature, audience and NotOnOrAfter validated on every callback
+  - JIT writes are idempotent per SSO subject; repeated callbacks do not create duplicate Users
+  - Default role from SsoConfig is validated against the User.role enum before write
 - id: STORY-006
   feature: FEAT-003
   title: Sign out and revoke other sessions
@@ -2526,6 +2527,15 @@ stories:
     then:
     - I see "This address already has a pending invite"
     - No new Invite is created
+  - id: AC-003
+    scenario: Reject invite with unresolvable role
+    given:
+    - I submit an invite with a role that is not in this Org's resolvable role list (unknown custom role, or "platform_admin" while project.deployment_modes resolves to saas)
+    when:
+    - The POST is submitted
+    then:
+    - The response is 400
+    - No Invite is created
   ui:
     screens:
     - Teams & Users
@@ -2753,7 +2763,7 @@ stories:
     - I try to change the owner's role
     then:
     - The response is 403
-    - The Role is unchanged
+    - User.role is unchanged
   - id: AC-003
     scenario: Last owner cannot be demoted
     given:
@@ -2762,7 +2772,17 @@ stories:
     - I try to change that owner's role
     then:
     - I see "A workspace must have at least one owner"
-    - The role is unchanged
+    - User.role is unchanged
+  - id: AC-004
+    scenario: platform_admin assignment rejected in saas mode
+    given:
+    - project.deployment_modes resolves to "saas" for this install
+    when:
+    - I PATCH /api/users/:id with role "platform_admin"
+    then:
+    - The response is 400
+    - User.role is unchanged
+    - An AuditLog row is written with action "role.assignment_rejected", recording actor, target user, requested role and install mode
   api:
   - method: PATCH
     path: /api/users/:id
@@ -2803,7 +2823,7 @@ stories:
     - I enter name "Platform", color "#64b5f6", lead "priya.okonkwo"
     - I click "Create"
     then:
-    - A Team is created
+    - A Team is created with Team.slug generated from Team.name (URL-safe, unique within (org_id, slug))
     - The team appears in the list with 1 member (the lead)
   api:
   - method: POST
@@ -2894,6 +2914,7 @@ stories:
     - I add 2 existing Users to the team
     then:
     - Both Users' team_id is updated to this team
+    - Users already on another team are moved; the source team is debited accordingly and both source and destination teams record an AuditLog entry with action "team.member.move"
     - The team's member count becomes 5
   - id: AC-003
     scenario: Remove a member
@@ -2966,7 +2987,7 @@ stories:
     when:
     - I click "Leave team"
     then:
-    - I am removed from Team.members
+    - My User.team_id becomes null
     - An AuditLog entry records "team.member.leave" with actor me
   - id: AC-002
     scenario: Last member warning
@@ -3002,7 +3023,7 @@ stories:
     when:
     - I click "Delete team" and type the team slug to confirm
     then:
-    - The Team is soft-deleted
+    - The Team row is retained with Team.deleted_at set (soft-delete)
     - Any Team budgets are released back to the Org
     - An AuditLog entry records actor and action "team.delete"
   - id: AC-002
@@ -3115,6 +3136,7 @@ stories:
   non_functional:
   - Audit log entries are immutable
   - Offboarded users remain visible in the audit log forever
+  - ApiKey revocation semantics are owned by EPIC-003 (FEAT-024); this story triggers the revoke path for user-typed keys
 - id: STORY-019
   feature: FEAT-007
   title: Transfer service-key ownership during offboarding
@@ -3150,6 +3172,7 @@ stories:
   non_functional:
   - Membership and role changes are audited with actor, subject, timestamp and before/after
   - Revocations and role changes propagate to every node within the config-reload SLA
+  - ApiKey ownership and transfer semantics are owned by EPIC-003 (FEAT-022/FEAT-024); this story is the offboarding-initiated transfer path
 - id: STORY-020
   feature: FEAT-007
   title: Admin resets another user's MFA and recovery codes
@@ -3168,14 +3191,18 @@ stories:
     then:
     - All MfaFactor rows for that user are deleted
     - The user's next sign-in prompts to enroll a factor
-    - An AuditLog entry records "mfa.reset" with actor=me and subject=user
+    - An AuditLog entry records "mfa.reset" with actor=me and subject=user, recording the resolved audience list
+    - A Notification of kind "security" ("mfa.reset") is emitted to the target User (owning principal) per project.notifications_model
   data_models:
   - User
   - MfaFactor
   - AuditLog
+  - Notification
   non_functional:
   - Membership and role changes are audited with actor, subject, timestamp and before/after
   - Revocations and role changes propagate to every node within the config-reload SLA
+  - MFA factor lifecycle (self-service enrollment) is owned by FEAT-015 in EPIC-002; this story is the admin-override complement
+  - Channel delivery is via FEAT-102 notification-channels routing
 - id: STORY-021
   feature: FEAT-008
   title: View a user's activity timeline
@@ -3247,7 +3274,7 @@ stories:
     - I click "Flag" and enter a reason "anomalous key use"
     then:
     - The User.status becomes "flagged"
-    - An AuditLog entry records actor, reason and action "user.flag"
+    - An AuditLog entry records actor, reason and action "user.flag" and records the resolved audience list
     - A Notification of kind "security" is emitted to Org.security_contact (falling back to Org.owner in saas and to platform admin in self_hosted) per project.notifications_model
   - id: AC-002
     scenario: Clear the flag
@@ -3257,7 +3284,8 @@ stories:
     - I click "Clear flag" with resolution note "reviewed — false positive"
     then:
     - The User.status returns to "active"
-    - An AuditLog entry records action "user.unflag"
+    - An AuditLog entry records action "user.unflag" and records the resolved audience list
+    - A Notification of kind "security" ("user.flag_cleared") is emitted to the AC-001 audience per project.notifications_model
   api:
   - method: POST
     path: /api/users/:id/flag
@@ -3292,6 +3320,7 @@ stories:
   non_functional:
   - Membership and role changes are audited with actor, subject, timestamp and before/after
   - Revocations and role changes propagate to every node within the config-reload SLA
+  - Channel delivery is via FEAT-102 notification-channels routing
 - id: STORY-023
   feature: FEAT-009
   title: Rate-limit and lock repeated failed sign-ins
@@ -3313,7 +3342,7 @@ stories:
     then:
     - User.locked_until is set to now + SessionPolicy.lockout_duration_minutes
     - Further sign-in attempts return 423 Locked with a generic message
-    - A LoginAttempt is recorded with outcome "locked"
+    - A LoginAttempt is recorded with outcome "locked" and user_id set to the locked user
     - An AuditLog entry is written with action "user.locked" and records the resolved audience list
     - A Notification of kind "security" ("user.locked") is emitted to the target User per project.notifications_model
   - id: AC-002
@@ -3352,6 +3381,7 @@ stories:
   non_functional:
   - Thresholds configurable via org-level SessionPolicy (lockout_threshold, lockout_window_minutes, lockout_duration_minutes) with safe defaults
   - Lock decisions must be race-free under concurrent login attempts
+  - Channel delivery is via FEAT-102 notification-channels routing
 - id: STORY-024
   feature: FEAT-009
   title: Admin unlocks a locked user
@@ -3403,6 +3433,7 @@ stories:
   - Notification
   non_functional:
   - Only roles owner/admin may unlock accounts; developer, analyst, viewer and service are denied
+  - Channel delivery is via FEAT-102 notification-channels routing
 - id: STORY-025
   feature: FEAT-010
   title: Initiate SAML Single Log-Out and accept back-channel logout receipts
@@ -3437,6 +3468,7 @@ stories:
   - Membership and role changes are audited with actor, subject, timestamp and before/after
   - Revocations and role changes propagate to every node within the config-reload SLA
   - SAML LogoutRequest signature validated before session revocation
+  - SsoConfig.slo_url, back_channel_logout_url and signing_cert are maintained via EPIC-010 SSO configuration (FEAT-110 area); this story consumes them
 - id: STORY-026
   feature: FEAT-011
   title: Create a service account
@@ -3454,7 +3486,7 @@ stories:
     - I click "New service account" and enter a name and human owner
     then:
     - A User row with role="service" is created (human_owner_user_id set to the selected human owner, created_by_user_id set to the acting admin)
-    - An initial credential is issued and shown once
+    - An initial ApiKey with type="service" is issued and shown once
   data_models:
   - User
   - ApiKey
@@ -3506,13 +3538,16 @@ stories:
     then:
     - A new credential is minted and shown once
     - The old credential remains valid for 24h then is revoked
+    - A Notification of kind "security" ("service_account.credential_rotated") is emitted to the service account's User.human_owner_user_id per project.notifications_model
   data_models:
   - ApiKey
   - AuditLog
+  - Notification
   non_functional:
   - Membership and role changes are audited with actor, subject, timestamp and before/after
   - Revocations and role changes propagate to every node within the config-reload SLA
   - Plaintext credential shown exactly once at creation; rotation is zero-downtime with grace overlap
+  - Channel delivery is via FEAT-102 notification-channels routing
 - id: STORY-029
   feature: FEAT-011
   title: Delete a service account
@@ -3534,6 +3569,7 @@ stories:
     then:
     - The service account User.status is set to "offboarded"
     - An AuditLog entry records "service_account.delete"
+    - A Notification of kind "security" ("service_account.deleted") is emitted to the service account's User.human_owner_user_id per project.notifications_model
   - id: AC-002
     scenario: Block when credentials active
     given:
@@ -3545,10 +3581,12 @@ stories:
   data_models:
   - User
   - AuditLog
+  - Notification
   non_functional:
   - Membership and role changes are audited with actor, subject, timestamp and before/after
   - Revocations and role changes propagate to every node within the config-reload SLA
   - Plaintext credential shown exactly once at creation; rotation is zero-downtime with grace overlap
+  - Channel delivery is via FEAT-102 notification-channels routing
 - id: STORY-030
   feature: FEAT-011
   title: View service account ownership and usage
@@ -21247,6 +21285,7 @@ models:
     nullable: true
   - name: status
     type: string
+    description: pending|accepted|revoked|expired
   relations:
   - type: belongs_to
     model: Org
@@ -21260,6 +21299,9 @@ models:
     type: FK:Org
   - name: name
     type: string
+  - name: slug
+    type: string
+    description: URL-safe team identifier; unique within (org_id, slug); used for typed-delete confirmation per destructive_action_confirmation_policy.
   - name: color
     type: string
   - name: lead_user_id
@@ -21267,6 +21309,10 @@ models:
     nullable: true
   - name: created_at
     type: timestamp
+  - name: deleted_at
+    type: timestamp
+    nullable: true
+    description: Soft-delete timestamp; Teams remain visible in audit history after delete.
   relations:
   - type: belongs_to
     model: Org

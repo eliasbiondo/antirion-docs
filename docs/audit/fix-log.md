@@ -324,3 +324,32 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-013 | M11 PlatformIncident.created_by | deferred | Ties to C4 |
 | EPIC-013 | minor m1..m9 | deferred | Editorial |
 | EPIC-013 | X1..X8 cross-epic | deferred | Need coordination |
+| EPIC-001 (2026-04-20) | C-1 Team.slug | applied | Added Team.slug (unique within (org_id, slug)); STORY-013 generates it on create |
+| EPIC-001 (2026-04-20) | C-2 Team.deleted_at | applied | Added Team.deleted_at; STORY-017 AC-001 states row is retained with deleted_at set |
+| EPIC-001 (2026-04-20) | M-1 FEAT-012 rejection AC | applied | Added STORY-012 AC-004 for platform_admin saas-mode rejection with AuditLog role.assignment_rejected |
+| EPIC-001 (2026-04-20) | M-2 STORY-015 cross-team move | applied | AC-002 now records team.member.move AuditLog on source and destination teams |
+| EPIC-001 (2026-04-20) | M-3 STORY-020 MFA reset notification | applied | Added Notification kind=security (mfa.reset) to target user; added Notification to data_models; FEAT-102 channel routing non_functional |
+| EPIC-001 (2026-04-20) | M-4 STORY-022 audience recording | applied | AC-001/AC-002 now record resolved audience list |
+| EPIC-001 (2026-04-20) | M-5 STORY-022 unflag notification | applied | AC-002 now emits user.flag_cleared Notification to same audience |
+| EPIC-001 (2026-04-20) | M-6 STORY-018 typed confirmation | deferred | Product policy decision on destructive_action_confirmation_policy scope |
+| EPIC-001 (2026-04-20) | m-1 STORY-012 User.role wording | applied | Replaced "The Role is unchanged"/"the role is unchanged" with "User.role is unchanged" |
+| EPIC-001 (2026-04-20) | m-2 STORY-016 Team.members | applied | Replaced "Team.members" with User.team_id null transition |
+| EPIC-001 (2026-04-20) | m-3 Invite.status enum | applied | Added description pending\|accepted\|revoked\|expired |
+| EPIC-001 (2026-04-20) | m-4 STORY-005 non_functional | applied | Dropped generic audit/reload lines; added JIT-specific guarantees |
+| EPIC-001 (2026-04-20) | m-5 STORY-026 ApiKey.type | applied | AC-001 now issues ApiKey with type="service" |
+| EPIC-001 (2026-04-20) | m-6 STORY-023 LoginAttempt.user_id | applied | AC-001 sets user_id to the locked user |
+| EPIC-001 (2026-04-20) | m-7 STORY-004 SSO precedence | applied | non_functional cites Org.sso_enforced AND SsoConfig.require_for_domains |
+| EPIC-001 (2026-04-20) | m-8 STORY-007 role validation | applied | Added AC-003 rejecting invites with unresolvable role (unknown or saas platform_admin) |
+| EPIC-001 (2026-04-20) | X-1 STORY-018/019 EPIC-003 cross-ref | applied | Added non_functional referencing FEAT-022/FEAT-024 ownership |
+| EPIC-001 (2026-04-20) | X-2 STORY-020 FEAT-015 cross-ref | applied | Added non_functional note citing EPIC-002 FEAT-015 |
+| EPIC-001 (2026-04-20) | X-3 STORY-022/023/024 FEAT-102 cross-ref | applied | Added channel-delivery non_functional line on all three stories |
+| EPIC-001 (2026-04-20) | X-4 STORY-025 SsoConfig cross-ref | applied | Added non_functional citing EPIC-010 FEAT-110 SSO config ownership |
+| EPIC-001 (2026-04-20) | X-5 FEAT-012 install-mode cite | applied | Description cites project.deployment_modes resolved at install time by EPIC-013 |
+| EPIC-001 (2026-04-20) | U-1 SessionPolicy admin-edit surface | deferred | Needs new feature (account-security policy or EPIC-010 admin surface); product input |
+| EPIC-001 (2026-04-20) | U-2 Session idle/absolute enforcement | deferred | Needs new story under FEAT-003; product input on where enforcement lives |
+| EPIC-001 (2026-04-20) | U-3 Transactional email delivery | deferred | New feature needed; provider/templates/bounces/retries unspecified |
+| EPIC-001 (2026-04-20) | U-4 TrustedBrowser list/revoke | deferred | Needs new story under FEAT-015 (EPIC-002) + cascade spec; product input |
+| EPIC-001 (2026-04-20) | U-5 platform_admin seeding path | deferred | Needs new feature in EPIC-013 install wizard (FEAT-177) or FEAT-012; product input |
+| EPIC-001 (2026-04-20) | U-6 service-account rotation/delete notification | applied | Added Notification AC + data_models + FEAT-102 non_functional on STORY-028 and STORY-029 |
+| EPIC-001 (2026-04-20) | U-7 LoginAttempt retention | deferred | Needs RetentionConfig.login_attempts_days + sweep worker (EPIC-010); product input |
+| EPIC-001 (2026-04-20) | U-8 User.status=inactive lifecycle | deferred | Either extend FEAT-008 with dormancy sweep or remove enum value; product input |

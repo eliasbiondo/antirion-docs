@@ -6,6 +6,17 @@ Each entry: brief description, source audit citation, reason deferred.
 
 ## Items
 
+### EPIC-001 (2026-04-20 re-audit)
+
+- **M-6 STORY-018 offboarding typed confirmation** — re-audit still proposes typed-email confirmation on offboard, or a non_functional stating it is intentionally click-confirm. Needs product policy decision. (docs/audit/epic-001-review-2026-04-20.md §M-6)
+- **U-1 SessionPolicy admin-edit surface** — no feature exposes write path for per-Org SessionPolicy (idle/absolute/lockout fields). Warrants a new FEAT in EPIC-001 or EPIC-010. (docs/audit/epic-001-review-2026-04-20.md §U-1)
+- **U-2 Session idle/absolute enforcement** — SessionPolicy.idle_timeout_minutes and absolute_max_hours have no enforcer story. Add under FEAT-003 or sibling feature. (docs/audit/epic-001-review-2026-04-20.md §U-2)
+- **U-3 Transactional email delivery** — invite/reset emails have no owning feature; provider/templates/retry/bounces unspecified. (docs/audit/epic-001-review-2026-04-20.md §U-3)
+- **U-4 TrustedBrowser list/revoke** — no user-facing list/revoke; no cascade from password change / MFA reset / admin session revocation. (docs/audit/epic-001-review-2026-04-20.md §U-4)
+- **U-5 platform_admin seeding path (self_hosted)** — no feature seeds first platform_admin on install or manages subsequent grants. Belongs to FEAT-012 or FEAT-177. (docs/audit/epic-001-review-2026-04-20.md §U-5)
+- **U-7 LoginAttempt retention/sweep** — no retention policy + sweep worker; RetentionConfig.login_attempts_days missing. (docs/audit/epic-001-review-2026-04-20.md §U-7)
+- **U-8 User.status = "inactive" lifecycle** — no writer or reader; either extend FEAT-007/008 with dormancy sweep or drop the enum value. (docs/audit/epic-001-review-2026-04-20.md §U-8)
+
 ### EPIC-001
 
 - **m-4 STORY-003 "Forgot?" component naming** — audit wants a named screen/component for the Forgot-password link on the Login screen. Needs design input to confirm the component tree. (docs/audit/epic-001-review.md §m-4)
