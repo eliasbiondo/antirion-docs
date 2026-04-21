@@ -865,11 +865,16 @@ features:
   epic: EPIC-005
   title: Routing strategies
   description: Single, weighted, failover, least-loaded, canary and shadow routing strategies with an in-product reference drawer.
+  mode: both
   priority: P0
   stories:
   - STORY-118
   - STORY-119
   - STORY-120
+  - STORY-478
+  - STORY-479
+  - STORY-480
+  - STORY-481
   ui_references:
   - proto/routing.jsx
 - id: FEAT-051
@@ -8342,6 +8347,15 @@ stories:
     then:
     - RoutingRule carries the cooldown and scope values
     - Runtime transitions of the breaker state are owned by FEAT-142 (STORY-336)
+  - id: AC-003
+    scenario: Mid-stream fallback reissue opt-in
+    given:
+    - A RoutingRule with fallback.chain=[Y] has reissue_after_bytes=false (default)
+    when:
+    - The primary target fails after the client has received some bytes
+    then:
+    - The stream is closed with an SSE error event and no reissue is attempted (safety default per streaming baseline)
+    - When the operator sets fallback.reissue_after_bytes=true, the fallback target may reissue the full request from scratch; this is opt-in only
   data_models:
   - RoutingRule
   - Provider
@@ -22873,6 +22887,90 @@ stories:
   - Notification
   - License
   - LicenseIncident
+- id: STORY-478
+  feature: FEAT-050
+  title: Single-strategy routing semantics
+  narrative:
+    as_a: platform engineer
+    i_want: the "single" strategy to route every matching request to exactly one target
+    so_that: degenerate routing is fully specified
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Exactly one target
+    given:
+    - A RoutingRule has strategy="single" and targets=[{model_id: "claude-haiku-4-5", weight: 100}]
+    when:
+    - A request matches
+    then:
+    - Every request in the rule's match set routes to "claude-haiku-4-5" while the target is enabled
+    - If the sole target is disabled/deleted, alias-fallback fires (resolve-time); if still unresolved, RoutingRule.fallback fires (runtime)
+    - Configs with strategy="single" and more than one non-zero-weight target are rejected on save
+  data_models:
+  - RoutingRule
+- id: STORY-479
+  feature: FEAT-050
+  title: Weighted-strategy routing semantics
+  narrative:
+    as_a: platform engineer
+    i_want: deterministic weighted routing by hashed request id
+    so_that: the same request always hits the same arm (comparable traces)
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Hash-based split
+    given:
+    - A RoutingRule has strategy="weighted" and targets=[{A,60},{B,40}]
+    when:
+    - The gateway selects an arm
+    then:
+    - Arm selected = A iff hash(request_id) % 100 < 60; else B
+    - Weights summing to anything other than 100 are rejected on save (see STORY-114 AC-002)
+  data_models:
+  - RoutingRule
+- id: STORY-480
+  feature: FEAT-050
+  title: Failover-strategy routing semantics
+  narrative:
+    as_a: platform engineer
+    i_want: failover to try targets in declared order until one succeeds
+    so_that: the primary is deterministic and the chain is inspectable
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: First target by default
+    given:
+    - A RoutingRule has strategy="failover" and targets=[A,B,C]
+    when:
+    - A request arrives
+    then:
+    - A is attempted first; on retry exhaustion per RoutingRule.retry the next target in order is tried
+    - RoutingDecision carries the ordered attempt list
+  data_models:
+  - RoutingRule
+  - RoutingDecision
+- id: STORY-481
+  feature: FEAT-050
+  title: Least-loaded-strategy routing semantics
+  narrative:
+    as_a: platform engineer
+    i_want: least-loaded to pick the target with the lowest binding-layer pressure
+    so_that: traffic spreads away from saturated credentials
+  priority: P1
+  acceptance_criteria:
+  - id: AC-001
+    scenario: Pick by binding-layer pressure
+    given:
+    - A RoutingRule has strategy="least-loaded" and targets=[A,B,C]
+    when:
+    - The gateway selects an arm
+    then:
+    - Pressure is read from ProviderRateLimitWindow.binding_layer for each target's resolved credential; the lowest-pressure target is selected
+    - Ties are broken by random choice; RoutingDecision records the pressure sample at decision time
+  data_models:
+  - RoutingRule
+  - ProviderRateLimitWindow
+  - RoutingDecision
 models:
 - name: Org
   description: The workspace (organization) that owns everything.
@@ -23988,7 +24086,7 @@ models:
   - type: belongs_to
     model: Request
 - name: RoutingRule
-  description: A priority-ordered rule governing routing decisions.
+  description: A priority-ordered rule governing routing decisions. fallback/canary/shadow/retry carry structured sub-objects (below); alias-resolution (ModelAlias.fallback_model_id) fires at resolve-time when primary is disabled/deleted, while RoutingRule.fallback fires at runtime after retries - they compose rather than overlap. Catalog-level precedence when CatalogPolicy.fallback_on_5xx is also set - catalog is default, rule overrides when present, effective max_hops = min(rule.fallback.chain.length, catalog.fallback_on_5xx.max_hops).
   fields:
   - name: id
     type: uuid
@@ -24011,16 +24109,21 @@ models:
   - name: fallback
     type: json
     nullable: true
+    description: '{chain: [target_model_id], reissue_after_bytes: bool (default false - honors streaming safety), max_hops: int}'
   - name: timeout_ms
     type: int
-  - name: retries
-    type: int
+  - name: retry
+    type: json
+    nullable: true
+    description: '{max: int, triggers: [string] (one of 429|5xx|timeout|circuit_open), base_delay_ms: int, backoff: string (linear|exponential|jitter), jitter: number (0..1)}'
   - name: canary
     type: json
     nullable: true
+    description: '{ramp_pct: int, error_budget_pct: number, auto_rollback: bool, auto_rollback_window_s: int (default 300), auto_graduate_window_s: int (default 3600), manual_promote_lookback_s: int (default 900), healthy: bool, current_error_rate: number, p95_latency_factor: number, cost_per_request_factor: number}'
   - name: shadow
     type: json
     nullable: true
+    description: '{sample_rate: number (0..1), target_model_id: string, divergence_metrics_enabled: bool}'
   - name: tags
     type: json
     nullable: true
