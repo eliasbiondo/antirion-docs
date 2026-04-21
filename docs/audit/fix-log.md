@@ -304,3 +304,23 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-012 | m5 STORY-392 5min → 30s | applied | Aligned with FEAT-173 / hot-reload SLA |
 | EPIC-012 | m1..m8 other minors | deferred | Editorial |
 | EPIC-012 | X1..X3 cross-epic | deferred | Needs coordination |
+| EPIC-013 | C1 AuditLog operator-plane | applied | org_id nullable; added actor_plane field |
+| EPIC-013 | C2 Org.state suspension | applied | Added state/suspension_reason/suspended_at/suspended_by_user_id |
+| EPIC-013 | C3 Org contact fields | applied | Done in EPIC-001/EPIC-003 passes |
+| EPIC-013 | C4 Antirion staff principal | deferred | Needs product decision on OperatorPrincipal |
+| EPIC-013 | C5 STORY-422 ref | applied | STORY-414 → STORY-411 |
+| EPIC-013 | C6 /api/bootstrap collision | applied | Install endpoint moved to /api/operator/install/bootstrap |
+| EPIC-013 | C7 security channel tenant-isolation | applied | FEAT-179 description reconciled with notifications_model |
+| EPIC-013 | C8 License.tier | applied | Added enterprise|cloud_assist enum |
+| EPIC-013 | C9 SupportTicket fields | applied | Added severity/assignee_user_id/install_id/triaged_at/sla_due_at; status enum extended |
+| EPIC-013 | M1 FEAT-172 description | applied | "saas mode only" → "both modes" |
+| EPIC-013 | M2 FEAT-181/182 mode tag | deferred | Needs baseline schema upgrade |
+| EPIC-013 | M3 STORY-403 persona | applied | Canonical platform operator wording |
+| EPIC-013 | M4 /antirion/* routes | deferred | Needs gating contract update |
+| EPIC-013 | M5 IncidentTimelineEntry | applied | Added model |
+| EPIC-013 | M6 LicenseIncident.renewal_confirmation_id | applied | Added field |
+| EPIC-013 | M7/M8/M9 cross-epic ACs | deferred | Need coordination |
+| EPIC-013 | M10 STORY-413 title | applied | Dropped "and budgets" |
+| EPIC-013 | M11 PlatformIncident.created_by | deferred | Ties to C4 |
+| EPIC-013 | minor m1..m9 | deferred | Editorial |
+| EPIC-013 | X1..X8 cross-epic | deferred | Need coordination |

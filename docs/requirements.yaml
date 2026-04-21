@@ -2039,7 +2039,7 @@ features:
 - id: FEAT-172
   epic: EPIC-013
   title: Tenant roster
-  description: Operator-wide roster of every Org on the platform with plan, seat count, rolling spend, incident flags, residency region and primary contact, plus the ability to drill into a tenant and to suspend one with audit. Available in saas mode only; in self_hosted the view degenerates to a single-row read-only summary of the local install.
+  description: Operator-wide roster of every Org on the platform with plan, seat count, rolling spend, incident flags, residency region and primary contact, plus the ability to drill into a tenant and to suspend one with audit. Available in both modes; in self_hosted the view degenerates to a single-row read-only summary of the local install.
   mode: both
   priority: P0
   stories:
@@ -2109,7 +2109,7 @@ features:
 - id: FEAT-179
   epic: EPIC-013
   title: Telemetry and phone-home controls
-  description: Govern every outbound call from an Antirion install back to Antirion-operated endpoints. Named channels are license (license heartbeat and entitlement-usage rollup), metrics (anonymous aggregate usage for product analytics), crash (crash reports with symbol frames), security (trust_and_safety signals — key-leak events, tenant-isolation breaches, break-glass usage), support (escalation path for FEAT-164) and docs (catalog refresh for FEAT-166). Each channel has an independent opt-out, a documented payload schema (with per-field data class), a documented retention policy at Antirion and an outbound-request audit in the local AuditLog. An explicit air-gapped pin disables every channel and is enforced at the egress layer — any compiled code that attempts an Antirion-endpoint call when air-gapped is a test-suite failure. Available in both modes — saas forces every channel on (the tenant is by definition talking to Antirion), and self_hosted defaults channels off for the ENTERPRISE
+  description: Govern every outbound call from an Antirion install back to Antirion-operated endpoints. Named channels are license (license heartbeat and entitlement-usage rollup), metrics (anonymous aggregate usage for product analytics), crash (crash reports with symbol frames), security (trust_and_safety signals — key-leak events and break-glass usage; tenant-isolation breaches are silently dropped in self_hosted per project.notifications_model since the tenant set is 1), support (escalation path for FEAT-164) and docs (catalog refresh for FEAT-166). Each channel has an independent opt-out, a documented payload schema (with per-field data class), a documented retention policy at Antirion and an outbound-request audit in the local AuditLog. An explicit air-gapped pin disables every channel and is enforced at the egress layer — any compiled code that attempts an Antirion-endpoint call when air-gapped is a test-suite failure. Available in both modes — saas forces every channel on (the tenant is by definition talking to Antirion), and self_hosted defaults channels off for the ENTERPRISE
     license tier and on for the CLOUD-ASSIST license tier.
   mode: both
   priority: P0
@@ -18990,7 +18990,7 @@ stories:
   title: View fleet roster across gateway, control-plane and workers
   navigation: operator
   narrative:
-    as_a: SRE or workspace owner
+    as_a: platform operator (Antirion SRE in saas, platform admin in self_hosted)
     i_want: a live roster of every replica across the gateway, control-plane API and worker fleets with version, region, AZ, state, CPU, in-flight count and stream count
     so_that: I can spot an unhealthy replica or a stuck rolling deploy before it affects traffic
   priority: P1
@@ -19680,7 +19680,7 @@ stories:
   - An incident in one region must not block writes or reads of incidents in another region — the store is regionally partitioned and globally read-replicated
 - id: STORY-413
   feature: FEAT-173
-  title: Compute affected tenants from routing and budgets
+  title: Compute affected tenants from routing
   navigation: operator
   narrative:
     as_a: Antirion platform operator
@@ -20238,7 +20238,7 @@ stories:
     - For "warn" the affected Org.primary_contact (falling back to Org.owner) receives a warn notification with the rule, evidence summary and cure-by date
     - For "suspend-for-review" and "suspend" the affected Org.owner and Org.primary_contact are notified via email and in-product inbox with the reason and appeal path; in saas mode Antirion legal is additionally notified because platform suspension is a commercial action
     - In self_hosted mode with a single tenant the notifications collapse to Org.owner and platform admin; the "dismiss" action emits no tenant notification
-    - For suspend actions, STORY-414 is invoked inline with the flag id as the reason
+    - For suspend actions, STORY-411 is invoked inline with the flag id as the reason
     - An AuditLog "abuse.triaged" is written with actor, flag id, action and the resolved notification audience
   ui:
     screens:
@@ -20359,7 +20359,7 @@ stories:
     given:
     - A fresh install emits a one-time bootstrap token to the container logs on first start
     when:
-    - I POST the token plus a chosen email and password to /api/bootstrap
+    - I POST the token plus a chosen email and password to /api/operator/install/bootstrap
     then:
     - A User is created with role platform admin
     - The bootstrap token is invalidated and cannot be reused
@@ -20372,7 +20372,7 @@ stories:
     - I submit the SSO IdP metadata and a claimed identifier
     then:
     - The first user matching the claimed identifier on SSO sign-in is granted platform admin
-    - No password is set and /api/bootstrap is disabled
+    - No password is set and /api/operator/install/bootstrap is disabled
   data_models:
   - User
   - AuditLog
@@ -20973,6 +20973,18 @@ models:
     nullable: true
   - name: scheduled_for_deletion
     type: timestamp
+    nullable: true
+  - name: state
+    type: string
+    description: active|suspended|pending_deletion
+  - name: suspension_reason
+    type: string
+    nullable: true
+  - name: suspended_at
+    type: timestamp
+    nullable: true
+  - name: suspended_by_user_id
+    type: FK:User
     nullable: true
   - name: sso_enforced
     type: bool
@@ -23051,13 +23063,18 @@ models:
   - name: status
     type: string
 - name: AuditLog
-  description: Immutable record of security-relevant actions in the workspace.
+  description: Immutable record of security-relevant actions. Tenant-plane rows carry org_id; operator-plane rows (EPIC-013 actions by Antirion staff or platform admin against a non-tenant target) set org_id=null and actor_plane="operator".
   fields:
   - name: id
     type: uuid
     pk: true
   - name: org_id
     type: FK:Org
+    nullable: true
+    description: Null on operator-plane rows
+  - name: actor_plane
+    type: string
+    description: tenant|operator
   - name: t
     type: timestamp
   - name: actor_user_id
@@ -23914,10 +23931,27 @@ models:
     description: Current screen, recent request_ids, browser, app version
   - name: status
     type: string
-    description: open|in_progress|waiting|resolved|closed
+    description: new|triaged|open|in_progress|waiting|awaiting_customer|resolved|closed
   - name: priority
     type: string
     description: low|normal|high|urgent
+  - name: severity
+    type: string
+    nullable: true
+    description: sev1|sev2|sev3 (set by FEAT-181 triage; drives SLA timers)
+  - name: assignee_user_id
+    type: FK:User
+    nullable: true
+  - name: install_id
+    type: string
+    nullable: true
+    description: Set on tickets originating from a self_hosted install (FEAT-179 phone-home)
+  - name: triaged_at
+    type: timestamp
+    nullable: true
+  - name: sla_due_at
+    type: timestamp
+    nullable: true
   - name: destination
     type: string
     description: local_only|antirion_support_queue|local_and_antirion
@@ -24149,6 +24183,27 @@ models:
   - name: affected_org_ids
     type: string[]
     description: Computed from routing rollups at declaration time
+- name: IncidentTimelineEntry
+  description: One mutable timeline update appended to a PlatformIncident (see STORY-412 AC-002).
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: incident_id
+    type: FK:PlatformIncident
+  - name: state
+    type: string
+    description: investigating|identified|mitigated|resolved|cancelled
+  - name: body
+    type: text
+  - name: actor_user_id
+    type: FK:User
+    nullable: true
+  - name: at
+    type: timestamp
+  relations:
+  - type: belongs_to
+    model: PlatformIncident
 - name: FleetDeployment
   description: A single rollout of a ReleaseArtefact across the fleet × region matrix with canary, staged promotion and rollback state. Shared by FEAT-174 (saas) and FEAT-178 (self_hosted).
   fields:
@@ -24208,6 +24263,9 @@ models:
     type: int
   - name: retention_days_limit
     type: int
+  - name: tier
+    type: string
+    description: enterprise|cloud_assist (drives FEAT-179 phone-home channel defaults and FEAT-180 grace-window default)
   - name: features
     type: string[]
   - name: state
@@ -24822,6 +24880,13 @@ models:
     type: timestamp
   - name: resolved_at
     type: timestamp
+  - name: renewal_confirmation_id
+    type: string
+    nullable: true
+    description: Antirion renewals reference; set when STORY-435 shield flow honors an in-flight renewal
+  - name: shielded_by_user_id
+    type: FK:User
+    nullable: true
   - name: last_actor_user_id
     type: FK:User
 - name: EngineeringIssueLink

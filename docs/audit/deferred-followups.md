@@ -123,3 +123,15 @@ Each entry: brief description, source audit citation, reason deferred.
 - **m1..m8 minor editorial** — various. (docs/audit/epic-012-review.md §m1..m8)
 - **X1..X3 cross-epic** — FEAT-168 vs FEAT-085 forecast scopes, FEAT-164 saas sub-queue routing, invitee first-run boundary. (docs/audit/epic-012-review.md §X1..X3)
 
+### EPIC-013
+
+- **C4 Antirion staff principal model** — saas needs an OperatorPrincipal concept distinct from tenant User. Structural; needs product input. (docs/audit/epic-013-review.md §C4)
+- **M2 FEAT-181/182 mode tag expressiveness** — baseline `mode` tag cannot express "Antirion-console-only, both modes". Needs baseline schema decision. (docs/audit/epic-013-review.md §M2)
+- **M4 /antirion/* gating contract** — FEAT-171 must gate both /operator/* and /antirion/*. Needs product input. (docs/audit/epic-013-review.md §M4)
+- **M7 STORY-410 self_hosted branch** — audit visibility rule under 1-tenant install. Needs product input. (docs/audit/epic-013-review.md §M7)
+- **M8 FEAT-112 residency pointer** — already fixed in EPIC-010 pass. (docs/audit/epic-013-review.md §M8)
+- **M9 STORY-423 vs STORY-408 pre-completion carve-out** — bootstrap route must be reachable pre-platform-admin. Needs product input. (docs/audit/epic-013-review.md §M9)
+- **M11 PlatformIncident.created_by in saas** — ties to C4 staff-principal. (docs/audit/epic-013-review.md §M11)
+- **Minor m1..m9** — editorial drift. (docs/audit/epic-013-review.md §m1..m9)
+- **X1..X8 cross-epic** — operator paging integration (FEAT-102 extension), cross-tenant abuse producer (EPIC-007), install_id handoff between FEAT-164 and FEAT-181, baseline mode-tag schema upgrade, notifications_model self_hosted exception, license.revoked story, read-vs-write definition for license enforcement. (docs/audit/epic-013-review.md §X1..X8)
+
