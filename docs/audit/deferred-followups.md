@@ -155,6 +155,17 @@ Each entry: brief description, source audit citation, reason deferred.
 - **X-1..X-6 cross-epic interactions** — safety-rule-driven cache invalidation, semantic-cache coherence, pipeline ordering, residency × unredact — all need product input. (docs/audit/epic-007-review.md §X-1..X-6)
 - **MR-1..MR-3 missing features/models** — pipeline ordering feature, cross-tenant abuse correlation, approver delegation. (docs/audit/epic-007-review.md §MR-1..MR-3)
 
+### EPIC-008 (2026-04-20 re-audit)
+
+- **M1..M8 alert-bridge / paging surfaces / API paths / FEAT-091 overlap** — all tied to U14 system-managed AlertRules. (docs/audit/epic-008-review-2026-04-20.md §M1..M8)
+- **M4 BudgetForecast persistence** — Budget derived fields have no history for backtest (U2 ties). (docs/audit/epic-008-review-2026-04-20.md §M4)
+- **M5 Request.cost → Budget.spent pipeline** — unowned (U1 ties). (docs/audit/epic-008-review-2026-04-20.md §M5)
+- **M7 API path split on /api/budgets/*** — structural canonicalization decision needed. (docs/audit/epic-008-review-2026-04-20.md §M7)
+- **M12 STORY-185 effective_cap** — compute vs persisted decision. (docs/audit/epic-008-review-2026-04-20.md §M12)
+- **m2..m7, m9, m10 minors** — waiver typed-confirmation, non_functional boilerplate, UserBudget.outlier definition, ProjectOwner model, asymmetric edit/delete, FEAT-097 mode split, approval expiry worker, FEAT-095 ui blocks. (docs/audit/epic-008-review-2026-04-20.md §m*)
+- **X1..X7 cross-epic** — FEAT-141 citation, gateway budget gate owner, Budget→AlertRule bridge, routing-engine downgrade hook, cache-hit cost attribution, Billing mode split, self_hosted phone-home. (docs/audit/epic-008-review-2026-04-20.md §X*)
+- **U1..U16 uncited-but-required** — counter pipeline, forecast store, approval expiry worker, gateway gate, downgrade hook, cycle scheduler, FX ingestion, plan lifecycle, Invoice model, Contest/Credit models, ScheduledExport, per-request cost-center (partial), readiness hydration, AlertRule bridge, dedup store (partial), drift metric. (docs/audit/epic-008-review-2026-04-20.md §U*)
+
 ### EPIC-008
 
 - **M1 BudgetPolicy threshold overload** — split `approval_threshold_pct` into edit/waiver variants. Needs product input. (docs/audit/epic-008-review.md §M1)

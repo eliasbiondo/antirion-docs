@@ -517,3 +517,27 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-007 (2026-04-20) | X-1..X-7 cross-epic | deferred | Need coordination |
 | EPIC-007 (2026-04-20) | MR-1..MR-5 missing models | deferred | New models needed |
 | EPIC-007 (2026-04-20) | U-1..U-8 missing features | deferred | Need new features; product input |
+| EPIC-008 (2026-04-20) | C1 BudgetEvent.summary | applied | STORY-198/199 now write BudgetEvent.title (model has title+body, not summary) |
+| EPIC-008 (2026-04-20) | C2 Billing.trial_ends_at | applied | Added trial_ends_at, pending_plan, pending_effective_at to Billing; saas-only fields now nullable |
+| EPIC-008 (2026-04-20) | C3 AlertEvent.type | applied | STORY-189 AC-001 uses source="budget"; U14 bridge deferred |
+| EPIC-008 (2026-04-20) | C4 Request.metadata downgrade | applied | Added Request.downgraded, Request.original_model_id; STORY-190 AC-001 uses them |
+| EPIC-008 (2026-04-20) | C5 approval_threshold_pct split | applied | Replaced with waiver_approval_threshold_pct and edit_approval_threshold_pct; STORY-187/197 updated |
+| EPIC-008 (2026-04-20) | M1 STORY-189 AlertRule lifecycle | deferred | Needs U14 bridge (new feature); product input |
+| EPIC-008 (2026-04-20) | M2 parallel paging surfaces | deferred | Resolved by U14 |
+| EPIC-008 (2026-04-20) | M3 "an alert fires" without rule | deferred | Resolved by U14 |
+| EPIC-008 (2026-04-20) | M4 BudgetForecast persistence | deferred | Needs new model + worker |
+| EPIC-008 (2026-04-20) | M5 Request.cost → Budget.spent pipeline | deferred | Needs new feature (U1) |
+| EPIC-008 (2026-04-20) | M6 STORY-188 atomicity | applied | Added transactional NFR + cycle/policy inheritance lines |
+| EPIC-008 (2026-04-20) | M7 API path split | deferred | Structural; needs product input |
+| EPIC-008 (2026-04-20) | M8 FEAT-091 overlap | deferred | Resolved by M2/U14 |
+| EPIC-008 (2026-04-20) | M9 Billing lifecycle | applied | Added pending_plan + pending_effective_at; full PlanChange model still deferred |
+| EPIC-008 (2026-04-20) | M10 Request.cost_center | applied | Added Request.cost_center field |
+| EPIC-008 (2026-04-20) | M11 STORY-193 UI | applied | Added ui block with WaiverModal |
+| EPIC-008 (2026-04-20) | M12 STORY-185 effective_cap | deferred | Needs product input on compute vs persisted |
+| EPIC-008 (2026-04-20) | m1 overAllocated camelCase | applied | Now over_allocated |
+| EPIC-008 (2026-04-20) | m2..m7, m9, m10 minor | deferred | Editorial / new worker specs |
+| EPIC-008 (2026-04-20) | m8 FX override audit magnitude | applied | STORY-202 AC-002 now records prior_rate/override_rate/delta_pct |
+| EPIC-008 (2026-04-20) | m11 overage dedup store | applied | Added Budget.last_overage_notified_at |
+| EPIC-008 (2026-04-20) | m12 STORY-200 errors list | applied | Populated errors: [401,403,404] |
+| EPIC-008 (2026-04-20) | X1..X7 cross-epic | deferred | Need coordination / U14 |
+| EPIC-008 (2026-04-20) | U1..U16 uncited-required | deferred | Each requires net-new feature / worker; product input |

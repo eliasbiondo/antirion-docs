@@ -11092,7 +11092,7 @@ stories:
   - id: AC-001
     scenario: Small waiver uses direct path
     given:
-    - BudgetPolicy.approval_threshold_pct is 50
+    - BudgetPolicy.waiver_approval_threshold_pct is 50
     - Requested waiver is 20% over current budget
     when:
     - The finance lead grants the waiver
@@ -11101,7 +11101,7 @@ stories:
   - id: AC-002
     scenario: Large waiver requires approval
     given:
-    - BudgetPolicy.approval_threshold_pct is 50
+    - BudgetPolicy.waiver_approval_threshold_pct is 50
     - Requested waiver is 70%
     when:
     - The finance lead submits it
@@ -11145,7 +11145,7 @@ stories:
     - I save allocations that sum to 120000
     then:
     - I see a non-blocking warning "Over-allocated by 20%"
-    - The allocations are still saved with `overAllocated: true`
+    - The allocations are still saved with `over_allocated: true`
   api:
   - method: PATCH
     path: /api/budgets/teams/:id/allocations
@@ -11168,6 +11168,8 @@ stories:
   non_functional:
   - Budget counters live in the shared limiter store; enforcement decisions complete in under 5 ms p95
   - Counter reconciliation runs on a worker cadence; drift between live counters and ledger alerts
+  - The allocation mutation (creating/updating N Budget rows + N Project.budget_id writes) runs in a single transaction
+  - Generated Budgets inherit the parent Budget's cycle (cycle_start, cycle_end, reset_schedule) and the parent BudgetPolicy
 - id: STORY-189
   feature: FEAT-084
   title: Set a budget policy with soft and hard thresholds
@@ -11186,7 +11188,7 @@ stories:
     when:
     - The team's spent crosses 80% of budget
     then:
-    - An AlertEvent of severity "warn" is generated with type "budget.soft"
+    - An AlertEvent is generated with severity "warn", source "budget" and title "budget soft threshold crossed" (AlertEvent has no .type field; EPIC-008 → AlertRule bridge is deferred per U14)
     - Traffic is not throttled
   - id: AC-002
     scenario: Hard-cap block
@@ -11242,7 +11244,7 @@ stories:
     - A request to "claude-sonnet-4-5" arrives for the team
     then:
     - The request is served by "claude-haiku-4-5"
-    - The request is tagged "downgraded" with the original model in metadata
+    - Request.downgraded is set to true and Request.original_model_id records the model originally requested
     - A BudgetEvent of type "enforce" records the downgrade
   data_models:
   - Budget
@@ -11338,6 +11340,18 @@ stories:
     - The effective cap for this cycle is raised by 5000
     - A BudgetEvent of type "waiver" is recorded
     - Enforcement resumes if the new cap is crossed
+  ui:
+    screens:
+    - Budgets
+    components:
+    - WaiverModal
+    - AmountInput
+    - ReasonInput
+    - ValidUntilInput
+    states:
+    - default
+    - confirming
+    - submitting
   api:
   - method: POST
     path: /api/budgets/waivers
@@ -11522,9 +11536,9 @@ stories:
   - id: AC-002
     scenario: Edit requires approval on critical increases
     given:
-    - The BudgetPolicy requires approval for increases > 50%
+    - BudgetPolicy.edit_approval_threshold_pct is 50
     when:
-    - I change amount from 5000 to 10000
+    - I change amount from 5000 to 10000 (a 100% increase)
     then:
     - An Approval is created with kind "budget-change"
     - Budget.amount remains 5000 until the Approval is approved
@@ -11580,7 +11594,7 @@ stories:
     then:
     - The 3 Projects' budget_id is updated
     - The original Budget row is soft-deleted with deleted_at set
-    - A BudgetEvent of type "change" with summary "deleted" is written
+    - A BudgetEvent of type "change" with title "budget deleted" is written
   - id: AC-002
     scenario: Block delete on active Approval
     given:
@@ -11639,7 +11653,7 @@ stories:
     then:
     - Budget.spent becomes 0
     - rollover_amount becomes 0
-    - A BudgetEvent of type "change" with summary "cycle reset" is written
+    - A BudgetEvent of type "change" with title "cycle reset" is written
   - id: AC-002
     scenario: Rollover capped balance
     given:
@@ -11707,7 +11721,10 @@ stories:
     path: /api/budgets/:id/events
     response:
       items: BudgetEvent[]
-    errors: []
+    errors:
+    - 401
+    - 403
+    - 404
   data_models:
   - Budget
   - BudgetEvent
@@ -11791,6 +11808,7 @@ stories:
     - I enter an override rate for today
     then:
     - An FxRate row with source "manual" is written and used for subsequent conversions
+    - An AuditLog entry records action "budget.fx.override" with context {prior_rate, override_rate, delta_pct}
   - id: AC-003
     scenario: Stale rate alert
     given:
@@ -22174,6 +22192,17 @@ models:
   - name: tag
     type: string
     nullable: true
+  - name: cost_center
+    type: string
+    nullable: true
+    description: Per-request cost-center tag (distinct from Billing.cost_center); ingestion path per FEAT-141 (header X-Cost-Center, API-key tag, or project attribute)
+  - name: downgraded
+    type: bool
+    description: True when BudgetPolicy.action=downgrade-model rerouted this request from the requested model to a cheaper target (see STORY-190)
+  - name: original_model_id
+    type: FK:Model
+    nullable: true
+    description: Set when downgraded=true; records the model originally requested
   - name: prompt
     type: string
     nullable: true
@@ -22983,6 +23012,10 @@ models:
   - name: deleted_at
     type: timestamp
     nullable: true
+  - name: last_overage_notified_at
+    type: timestamp
+    nullable: true
+    description: Dedup anchor for STORY-200 overage notifications; notifications are throttled per Budget per hour
 - name: BudgetPolicy
   description: Enforcement policy for a budget.
   fields:
@@ -22993,9 +23026,12 @@ models:
     type: int
   - name: hard_cap_pct
     type: int
-  - name: approval_threshold_pct
+  - name: waiver_approval_threshold_pct
     type: int
-    description: Percent increase above which a budget change creates an Approval (default 50).
+    description: Percent above which granting a waiver creates an Approval (default 50). Used by STORY-187.
+  - name: edit_approval_threshold_pct
+    type: int
+    description: Percent above which editing a budget amount creates an Approval (default 50). Used by STORY-197.
   - name: action
     type: string
     description: alert-only|require-approval|downgrade-model|block
@@ -23586,21 +23622,26 @@ models:
   - name: since
     type: timestamp
 - name: Billing
-  description: Plan, commitment and invoice information for the workspace.
+  description: Plan, commitment and invoice information for the workspace. The saas-only fields (plan, contract_start, contract_end, commitment, commitment_used, next_invoice_at) are nullable in self_hosted mode.
   fields:
   - name: org_id
     type: FK:Org
     pk: true
   - name: plan
     type: string
+    nullable: true
   - name: contract_start
     type: timestamp
+    nullable: true
   - name: contract_end
     type: timestamp
+    nullable: true
   - name: commitment
     type: number
+    nullable: true
   - name: commitment_used
     type: number
+    nullable: true
   - name: next_invoice_at
     type: timestamp
     nullable: true
@@ -23615,6 +23656,17 @@ models:
     nullable: true
   - name: tax_id
     type: string
+    nullable: true
+  - name: trial_ends_at
+    type: timestamp
+    nullable: true
+    description: Set when a paid trial is active; FEAT-169 uses this to drive "trial expiring" notifications
+  - name: pending_plan
+    type: string
+    nullable: true
+    description: Scheduled plan change; applied by the plan-lifecycle worker at pending_effective_at
+  - name: pending_effective_at
+    type: timestamp
     nullable: true
 - name: Approval
   description: A pending approval request created by a "require-approval" policy.
