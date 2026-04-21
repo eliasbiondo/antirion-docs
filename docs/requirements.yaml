@@ -11475,7 +11475,7 @@ stories:
     when:
     - The team's spent crosses 80% of budget
     then:
-    - An AlertEvent is generated with severity "warn", source "budget" and title "budget soft threshold crossed" (AlertEvent has no .type field; EPIC-008 → AlertRule bridge is deferred per U14)
+    - The Budget's FEAT-199-provisioned AlertRule (category="budget", metric="budget.utilisation_pct") fires at severity "warn"; the standard FEAT-100 lifecycle applies and BudgetEvent.type="threshold" is recorded as the audit trail
     - Traffic is not throttled
   - id: AC-002
     scenario: Hard-cap block
