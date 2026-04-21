@@ -49,6 +49,20 @@ Each entry: brief description, source audit citation, reason deferred.
 - **(b)4/5 STORY-044 → FEAT-102 / FEAT-167 / FEAT-179 dependencies** — same linkage convention gap. (docs/audit/epic-002-review.md §(b)4-5)
 - **(c)2 FEAT-015 trusted-browser list & individual revoke** — audit suggests a new story or AC to list/revoke TrustedBrowser rows individually. Needs product input. (docs/audit/epic-002-review.md §(c)2)
 
+### EPIC-003 (2026-04-20 re-audit)
+
+- **M3 BYOK rotate_policy_days editable** — FEAT-025 promises "enforce rotation policy" but no story lets an operator set `rotate_policy_days`. Needs new story or extended STORY-060. (docs/audit/epic-003-review-2026-04-20.md §M3)
+- **M4 ApiKey.scopes materialization vs derived** — model description implies auth-time compute; stories write materialized column. Pick one and align STORY-323 edge auth. (docs/audit/epic-003-review-2026-04-20.md §M4)
+- **m3 ApiKey.rotation_due dead field** — no story writes or reads it; either drop or add a writer. (docs/audit/epic-003-review-2026-04-20.md §m3)
+- **m7 non_functional boilerplate** — prune per-story lines that do not match scope. Editorial sweep. (docs/audit/epic-003-review-2026-04-20.md §m7)
+- **m8 BYOKCredential.rate_limit_rpm/tpm vs ProviderRateLimit rows** — two structures, no canonical owner. (docs/audit/epic-003-review-2026-04-20.md §m8)
+- **X2 STORY-323 edge auth / scopes representation** — edge logic must match whichever representation EPIC-003 picks. (docs/audit/epic-003-review-2026-04-20.md §X2)
+- **U1 BYOK rotation-grace expiry job** — Critical. Predecessor never transitions to "revoked" after grace window; no analogous job exists. (docs/audit/epic-003-review-2026-04-20.md §U1)
+- **U2 BYOK rotation-policy configuration surface** — no UI/API to set `rotate_policy_days`. Ties to M3. (docs/audit/epic-003-review-2026-04-20.md §U2)
+- **U3 BYOK upstream-secret inbound leak-scan path** — FEAT-028 only covers gateway-issued keys; no BYOK-leak story. (docs/audit/epic-003-review-2026-04-20.md §U3)
+- **U4 KeyAnomaly detector config surface** — FEAT-041 is generic (Anomaly); no mention of KeyAnomaly thresholds. (docs/audit/epic-003-review-2026-04-20.md §U4)
+- **U5 ApiKeyExpiryNotice dedupe / quiet-hours** — dedupe key and NotificationPreference honouring unspecified. (docs/audit/epic-003-review-2026-04-20.md §U5)
+
 ### EPIC-003
 
 - **m7 Approval.kind shared between FEAT-027 and FEAT-160** — audit wants a separate Approval.kind for break-glass key creation vs elevated-scope grant. Belongs in the EPIC-011 pass. (docs/audit/epic-003-review.md §m7)

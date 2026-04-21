@@ -387,3 +387,24 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-002 (2026-04-20) | U-6 UserPrefs row seeding | deferred | Needs new AC/story covering defaults and seeding event |
 | EPIC-002 (2026-04-20) | U-7 account-deletion cascade for user-owned resources | deferred | Needs product policy on ApiKey/Team.lead/AlertRule/Webhook/PromptTemplate cascade |
 | EPIC-002 (2026-04-20) | U-8 LoginAttempt retention | deferred | Needs RetentionConfig class + sweep worker (EPIC-010); product input |
+| EPIC-003 (2026-04-20) | C1 STORY-057 AlertEvent.type | applied | AC-002 rewritten to use severity/source/fingerprint (no .type field) |
+| EPIC-003 (2026-04-20) | M1 STORY-057 status=degraded on 401 | applied | AC-002 now sets BYOKCredential.status="invalid" for auth failure |
+| EPIC-003 (2026-04-20) | M2 Approval.kind collision | applied | Added "break-glass-key-create" enum value; STORY-377 switched to new kind |
+| EPIC-003 (2026-04-20) | M3 rotate_policy_days editable | deferred | Needs new story under FEAT-025; product input |
+| EPIC-003 (2026-04-20) | M4 ApiKey.scopes materialization race | deferred | Needs product decision between derived and materialized representation |
+| EPIC-003 (2026-04-20) | M5 STORY-069 Org.owner → owner_user_id | applied | AC-001 now names Org.owner_user_id |
+| EPIC-003 (2026-04-20) | m1 STORY-068 "generated label" | applied | Replaced with "generated name" |
+| EPIC-003 (2026-04-20) | m2 STORY-050 grace-end AuditLog | applied | AC-002 now writes AuditLog with actor_type=system and action=apikey.rotation.grace_end |
+| EPIC-003 (2026-04-20) | m3 ApiKey.rotation_due dead field | deferred | Needs product decision to drop or to add a writer |
+| EPIC-003 (2026-04-20) | m4 KeyAnomaly.severity enum | applied | Added info\|warn\|crit description; STORY-055 uses "warn" |
+| EPIC-003 (2026-04-20) | m5 persona drift | applied | STORY-054/055 → security officer; STORY-067/068 → platform operator |
+| EPIC-003 (2026-04-20) | m6 FEAT-028 mode tag | applied | Added mode: both |
+| EPIC-003 (2026-04-20) | m7 non_functional boilerplate | deferred | Broad editorial pass; out of scope for targeted round |
+| EPIC-003 (2026-04-20) | m8 BYOK rate-limit duplicate | deferred | Needs product decision between BYOKCredential fields vs ProviderRateLimit rows |
+| EPIC-003 (2026-04-20) | X1 FEAT-160 break-glass | applied | Resolved by M2 (new Approval.kind) |
+| EPIC-003 (2026-04-20) | X2 STORY-323 edge auth alignment | deferred | Ties to M4 |
+| EPIC-003 (2026-04-20) | U1 BYOK rotation-grace expiry job | deferred | Needs new story under FEAT-025; analogous to STORY-063 |
+| EPIC-003 (2026-04-20) | U2 rotation-policy config surface | deferred | Ties to M3 |
+| EPIC-003 (2026-04-20) | U3 BYOK upstream-secret leak-scan | deferred | Needs new feature or extension of FEAT-028 |
+| EPIC-003 (2026-04-20) | U4 KeyAnomaly detector config | deferred | Needs scope decision for FEAT-041 |
+| EPIC-003 (2026-04-20) | U5 ApiKeyExpiryNotice dedupe/quiet-hours | deferred | Needs new story under FEAT-026 |
