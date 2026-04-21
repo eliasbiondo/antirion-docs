@@ -9087,6 +9087,32 @@ stories:
     then:
     - No CacheEntry row is written and no existing entry is updated
     - Invariant - writes to CacheEntry are conditional on Request.status < 400 AND SafetyEvent.action NOT IN ("block")
+  - id: AC-004
+    scenario: Cache hits decrement Budget.spent
+    given:
+    - A cached response is served
+    when:
+    - The metering pipeline (STORY-450) consumes the Request
+    then:
+    - Budget.spent increments by Request.cache_cost (not 0)
+    - FEAT-066 "savings" is derived-display only, not a separate counter
+  - id: AC-005
+    scenario: Shadow traffic never reads or writes cache
+    given:
+    - A RoutingRule has strategy="shadow" and a shadow arm is selected
+    when:
+    - The gateway processes the request
+    then:
+    - The shadow arm neither reads nor writes cache (pure comparison)
+    - The primary arm's cache lookup and write path is unaffected
+  - id: AC-006
+    scenario: Canary cache sharing
+    given:
+    - A RoutingRule has strategy="canary" with both primary and canary model targets
+    when:
+    - A request is served by either arm
+    then:
+    - Both arms read/write the same cache key space; cache keys are salted by resolved_model_id so canary-model responses partition naturally from primary-model responses
   ui:
     screens:
     - Cache
@@ -9853,6 +9879,7 @@ stories:
   - CacheEntry
   non_functional:
   - Eviction never drops an entry that was written in the last 60 seconds
+  - When a write burst exceeds max_size_mb within the 60-second protection window, cache writes continue (admit) with aggressive CacheEvictionEvent(reason="size") emission rather than rejecting new writes
 - id: STORY-156
   feature: FEAT-068
   title: Audit cache evictions
