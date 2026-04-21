@@ -23,3 +23,9 @@ Each entry: brief description, source audit citation, reason deferred.
 - **(b)4/5 STORY-044 → FEAT-102 / FEAT-167 / FEAT-179 dependencies** — same linkage convention gap. (docs/audit/epic-002-review.md §(b)4-5)
 - **(c)2 FEAT-015 trusted-browser list & individual revoke** — audit suggests a new story or AC to list/revoke TrustedBrowser rows individually. Needs product input. (docs/audit/epic-002-review.md §(c)2)
 
+### EPIC-003
+
+- **m7 Approval.kind shared between FEAT-027 and FEAT-160** — audit wants a separate Approval.kind for break-glass key creation vs elevated-scope grant. Belongs in the EPIC-011 pass. (docs/audit/epic-003-review.md §m7)
+- **X1 FEAT-133 BYOK data class enumeration** — add BYOK credential ciphertext as a CMK-wrappable data class in FEAT-133. Deferred to EPIC-010 pass. (docs/audit/epic-003-review.md §X1)
+- **(c) BYOK rotation policy edit story** — `rotate_policy_days` observable but not editable; needs a new story under FEAT-025. Product input required. (docs/audit/epic-003-review.md §(c))
+

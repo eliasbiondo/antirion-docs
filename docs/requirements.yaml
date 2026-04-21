@@ -538,7 +538,7 @@ features:
 - id: FEAT-022
   epic: EPIC-003
   title: API key lifecycle
-  description: Create, rotate with grace window, and revoke gateway API keys.
+  description: Create, rotate with grace window, revoke and list/browse gateway API keys.
   priority: P0
   stories:
   - STORY-049
@@ -571,7 +571,7 @@ features:
 - id: FEAT-025
   epic: EPIC-003
   title: BYOK provider credentials
-  description: Register and rotate upstream provider credentials used for outbound calls.
+  description: Register, rotate, test, list, label, delete and enforce rotation policy on upstream provider credentials used for outbound calls.
   priority: P0
   stories:
   - STORY-056
@@ -746,7 +746,7 @@ features:
 - id: FEAT-041
   epic: EPIC-004
   title: Anomaly detector configuration
-  description: Configure the anomaly detectors that drive FEAT-022 signals — list, set thresholds, enable/disable by category.
+  description: Configure the anomaly detectors that drive FEAT-024 signals — list, set thresholds, enable/disable by category.
   priority: P1
   stories:
   - STORY-095
@@ -4639,7 +4639,7 @@ stories:
     given:
     - The workspace has 120 ApiKey rows
     when:
-    - I filter by team "copilot", scope "read", and sort by last_used desc
+    - I filter by team "copilot", scope "chat.completions", and sort by last_used desc
     then:
     - I see a paginated list of matching keys with preview, owner, last_used and status
   - id: AC-002
@@ -4693,7 +4693,16 @@ stories:
     - A request comes from 203.0.113.5
     then:
     - The request is rejected with 403
-    - A SafetyEvent or AuditLog entry records the allowlist violation
+    - An AuditLog entry with action "apikey.ip_allowlist.violation" is recorded
+  - id: AC-003
+    scenario: TTL cap enforced
+    given:
+    - ApiAccessConfig.key_max_ttl_days is 90
+    when:
+    - I set expires_at beyond now + 90 days
+    then:
+    - The PATCH returns 400 with "expires_at exceeds ApiAccessConfig.key_max_ttl_days"
+    - The key expires_at is unchanged
   api:
   - method: PATCH
     path: /api/keys/:id
@@ -4707,6 +4716,7 @@ stories:
         rate_limit_tpm: int
         ip_allowlist:
         - string
+        expires_at: timestamp
     response:
       key: ApiKey
     errors:
@@ -4790,7 +4800,7 @@ stories:
     - The anomaly detector runs on its recent traffic
     then:
     - A KeyAnomaly of kind "geo" and medium severity is created
-    - It appears in the anomaly ticker and the key's detail panel
+    - It appears in the key's detail panel
   api:
   - method: GET
     path: /api/keys/:id/anomalies
@@ -4813,7 +4823,7 @@ stories:
     as_a: admin
     i_want: to bring my own key for each upstream provider
     so_that: the gateway uses our negotiated rates and rate limits
-  priority: P1
+  priority: P0
   acceptance_criteria:
   - id: AC-001
     scenario: Add a provider credential
@@ -4823,18 +4833,28 @@ stories:
     - I click "Add key" for provider "anthropic"
     - I paste the secret and click "Save"
     then:
-    - A BYOKCredential is stored (encrypted at rest)
+    - A BYOKCredential is stored (encrypted at rest) with status "active"
     - Outbound requests to Anthropic use this credential
     - Only the last 4 characters of the secret are ever shown
   - id: AC-002
-    scenario: Rotate a credential
+    scenario: Rotate a credential with grace overlap
     given:
     - An active BYOKCredential exists for "openai"
     when:
-    - I click "Rotate" and paste the new secret
+    - I click "Rotate" and paste the new secret with a grace window
     then:
-    - The new secret replaces the old
+    - A successor BYOKCredential is created and linked via the predecessor's successor_id
+    - rotation_grace_ends is set on the predecessor to now + grace window
+    - Both credentials are valid for outbound calls until rotation_grace_ends elapses, after which the predecessor status becomes "revoked"
     - An AuditLog entry records actor, provider and action "byok.rotate"
+  - id: AC-003
+    scenario: BYOK ciphertext stored in residency region
+    given:
+    - Org.region is "eu-west-1"
+    when:
+    - A BYOKCredential is registered or rotated
+    then:
+    - The BYOKCredential.ciphertext is stored only in the ResidencyConfig region (per FEAT-130)
   api:
   - method: POST
     path: /api/byok
@@ -4865,7 +4885,7 @@ stories:
   - BYOKCredential
   - AuditLog
   non_functional:
-  - Secret encrypted at rest with workspace CMK when residency region supports it
+  - Secret stored in the configured KMS and wrapped with the workspace CMK when FEAT-133 CMK is active for the byok_credential data class; if the CMK is revoked, outbound calls using this credential fail closed per FEAT-133
   - Secret never returned in API responses
 - id: STORY-057
   feature: FEAT-025
@@ -4982,7 +5002,7 @@ stories:
     when:
     - I open BYOK settings
     then:
-    - I see each credential with label, provider, last_rotated_at, status (healthy|expiring|invalid) and rotate_policy_days
+    - I see each credential with label, provider, last_rotated_at, status (active|degraded|overdue|invalid|revoked) and rotate_policy_days
   data_models:
   - BYOKCredential
   non_functional:
@@ -5031,7 +5051,7 @@ stories:
     - The daily policy check runs
     then:
     - The credential status becomes "overdue"
-    - An alert is raised to the security contact
+    - A Notification of kind "security" is emitted to Org.security_contact (falling back to Org.owner_user_id in saas and to platform admin in self_hosted) per project.notifications_model
   - id: AC-002
     scenario: Rotation resets clock
     given:
@@ -5039,7 +5059,7 @@ stories:
     when:
     - The admin rotates it
     then:
-    - last_rotated_at is updated and status returns to "healthy"
+    - last_rotated_at is updated and status returns to "active"
   data_models:
   - BYOKCredential
   - AuditLog
@@ -5049,24 +5069,14 @@ stories:
   - Provider credentials decrypt only at outbound-call time; rotation is zero-downtime with grace overlap
 - id: STORY-062
   feature: FEAT-026
-  title: Warn ahead of API key expiry
+  title: Surface imminent API key expiry on the key list
   narrative:
     as_a: service owner
-    i_want: early notice before a gateway key expires
-    so_that: I can rotate it before production calls fail
+    i_want: imminent-expiry keys visibly called out on the key list
+    so_that: I notice what needs rotation at a glance
   priority: P1
   acceptance_criteria:
   - id: AC-001
-    scenario: Warning at T-14d and T-3d
-    given:
-    - An ApiKey has expires_at in 14 days
-    when:
-    - The expiry reminder job runs daily
-    then:
-    - An email is sent to the key owner and to every user with role admin or owner
-    - An ApiKeyExpiryNotice row is written to avoid duplicate sends
-    - A subsequent run at 3 days sends a second reminder with severity "high"
-  - id: AC-002
     scenario: Surfaced on the key list
     given:
     - An ApiKey expires in under 14 days
@@ -5091,9 +5101,8 @@ stories:
     errors: []
   data_models:
   - ApiKey
-  - ApiKeyExpiryNotice
   non_functional:
-  - Reminder job is idempotent and safe to re-run
+  - UI derives the pill from ApiKey.expires_at; no background job required
 - id: STORY-063
   feature: FEAT-026
   title: Auto-revoke expired keys
@@ -5156,7 +5165,7 @@ stories:
     when:
     - The scheduler crosses 30, 14, 7 or 1 day before expiry
     then:
-    - A warning email is sent to the owner and admins at each checkpoint
+    - A Notification of kind "security" is emitted to ApiKey.owner_user_id (falling back to Org.security_contact, then Org.owner_user_id in saas and platform admin in self_hosted) per project.notifications_model
     - An ApiKeyExpiryNotice row records each sent warning
   - id: AC-002
     scenario: Rotation cancels pending warnings
@@ -5180,16 +5189,19 @@ stories:
     i_want: to request elevated scope on my API key
     so_that: I can do a specific task that my default scope does not allow
   priority: P1
+  depends_on:
+  - STORY-049
   acceptance_criteria:
   - id: AC-001
     scenario: Request elevated scope
     given:
-    - My ApiKey has scope "read"
+    - My ApiKey.base_scopes contains "chat.completions"
     when:
-    - I request scope "write" with reason and duration
+    - I request additional scope "cache.write" with reason and duration
     then:
     - An Approval of kind "key-elevated-scope" is created with target_type="ApiKey" and target_id=key
-    - My key's effective scope is unchanged until the Approval is approved
+    - The Approval.context records base_scopes and requested elevated_scopes
+    - ApiKey.scopes (effective) is unchanged until the Approval is approved
   data_models:
   - Approval
   - ApiKey
@@ -5205,6 +5217,7 @@ stories:
     so_that: scope changes are governed
   priority: P1
   depends_on:
+  - STORY-049
   - STORY-065
   acceptance_criteria:
   - id: AC-001
@@ -5214,16 +5227,19 @@ stories:
     when:
     - I approve with the requested duration
     then:
-    - The ApiKey's effective scope is elevated until the expiry
-    - An AuditLog entry records "key.scope.elevate"
+    - ApiKey.elevated_scopes is set to the requested scopes and ApiKey.elevated_until is set to now + duration
+    - ApiKey.scopes (effective) becomes base_scopes unioned with elevated_scopes
+    - A Notification of kind "security" is emitted to ApiKey.owner_user_id and Org.security_contact per project.notifications_model
+    - An AuditLog entry records "key.scope.elevate" with the resolved audience list
   - id: AC-002
     scenario: Expire reverts scope
     given:
-    - The elevated scope expiry passes
+    - ApiKey.elevated_until is in the past
     when:
     - The scheduled job runs
     then:
-    - The ApiKey returns to its base scope
+    - ApiKey.elevated_scopes is cleared and elevated_until is set to null
+    - ApiKey.scopes (effective) reverts to ApiKey.base_scopes
   data_models:
   - Approval
   - ApiKey
@@ -5239,6 +5255,8 @@ stories:
     i_want: to accept a signed notification from GitHub or a partner secret-scan service
     so_that: a leaked key can be acted on immediately
   priority: P0
+  depends_on:
+  - STORY-049
   acceptance_criteria:
   - id: AC-001
     scenario: Valid signed notification
@@ -5247,7 +5265,7 @@ stories:
     when:
     - The gateway validates the signature
     then:
-    - A KeyAnomaly of type "leak" is recorded on the matching ApiKey
+    - A KeyAnomaly of kind "leak" is recorded on the matching ApiKey
     - The leak response job is enqueued
   - id: AC-002
     scenario: Invalid signature rejected
@@ -5257,6 +5275,14 @@ stories:
     - It hits the ingestion endpoint
     then:
     - The response is 401 and no state changes
+  - id: AC-003
+    scenario: Air-gapped or disabled inbound endpoint
+    given:
+    - The install is self_hosted and inbound secret-scan ingestion is disabled (per FEAT-028 air-gapped policy)
+    when:
+    - A notification hits the endpoint
+    then:
+    - The response is 404 and no state is written
   data_models:
   - ApiKey
   - KeyAnomaly
@@ -15975,6 +16001,16 @@ stories:
     then:
     - The response is 401 with error code "api_key_revoked"
     - An AuditLog entry records the attempt with actor_type "service" and the key prefix
+  - id: AC-005
+    scenario: Rotating key during grace window
+    given:
+    - An ApiKey with status "rotating" and rotation_grace_ends in the future
+    - The successor ApiKey has its own secret_hash
+    when:
+    - A client presents either predecessor or successor secret
+    then:
+    - Both predecessor and successor secret_hash values are valid; authorization succeeds against either
+    - After rotation_grace_ends elapses, only the successor secret_hash is accepted and the predecessor returns 401
   api:
   - method: POST
     path: /v1/chat/completions
@@ -20790,6 +20826,10 @@ models:
     type: int
   - name: seat_cap
     type: int
+  - name: owner_user_id
+    type: FK:User
+    nullable: true
+    description: Workspace owner for notifications_model fallback resolution
   - name: billing_contact
     type: string
   - name: tech_contact
@@ -21209,6 +21249,18 @@ models:
     description: service|user|ephemeral
   - name: scopes
     type: json
+    description: Effective scopes at authorization time (base_scopes unioned with elevated_scopes while elevated_until is in the future)
+  - name: base_scopes
+    type: json
+    description: Scopes granted at creation; restored when elevated_until expires
+  - name: elevated_scopes
+    type: json
+    nullable: true
+    description: Time-bounded elevated scopes granted via FEAT-027 approvals
+  - name: elevated_until
+    type: timestamp
+    nullable: true
+    description: When set in the future, elevated_scopes are additive to base_scopes
   - name: models
     type: json
   - name: rate_limit_rpm
@@ -21266,7 +21318,7 @@ models:
     type: FK:ApiKey
   - name: kind
     type: string
-    description: geo|spike|ua
+    description: geo|spike|ua|leak
   - name: severity
     type: string
   - name: message
@@ -21289,20 +21341,30 @@ models:
     type: FK:Org
   - name: provider_id
     type: FK:Provider
-  - name: name
+  - name: label
     type: string
+    description: Display label shown in BYOK UI surfaces
   - name: key_last4
     type: string
   - name: ciphertext
     type: json
   - name: status
     type: string
+    description: active|degraded|overdue|invalid|revoked (precedence overdue < degraded < invalid < revoked; active when none apply)
   - name: rotate_policy_days
     type: int
     nullable: true
-  - name: rotated_at
+  - name: last_rotated_at
     type: timestamp
     nullable: true
+  - name: successor_id
+    type: FK:BYOKCredential
+    nullable: true
+    description: Successor credential during zero-downtime rotation
+  - name: rotation_grace_ends
+    type: timestamp
+    nullable: true
+    description: When set, both this credential and successor_id are valid for outbound calls until this time
   - name: rate_limit_rpm
     type: int
     nullable: true

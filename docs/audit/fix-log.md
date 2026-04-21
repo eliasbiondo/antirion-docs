@@ -64,3 +64,32 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-002 | (b)3/4/5 STORY-043/044 cross-epic refs | deferred | No schema for narrative cross-refs; needs linkage convention |
 | EPIC-002 | (c)1 FEAT-020 owner hand-off | applied | Description updated to cross-reference FEAT-005/FEAT-012; no invented FEAT |
 | EPIC-002 | (c)2 FEAT-015 trusted-browser list | deferred | New story/AC needed; requires product input |
+| EPIC-003 | C1 KeyAnomaly.kind | applied | Added "leak" to KeyAnomaly.kind enum description |
+| EPIC-003 | C2 BYOKCredential.status | applied | Declared enum active|degraded|overdue|invalid|revoked with precedence; STORY-059/061 aligned |
+| EPIC-003 | C3 STORY-062 duplicate cadence | applied | STORY-062 rewritten as UI-pill-only; cadence owned by STORY-064 |
+| EPIC-003 | C4 FEAT-041 description | applied | Reference corrected from FEAT-022 to FEAT-024 |
+| EPIC-003 | M1 BYOK rotation grace | applied | Added BYOKCredential.successor_id + rotation_grace_ends; STORY-056 AC-002 rewritten |
+| EPIC-003 | M2 STORY-053 TTL | applied | Added expires_at to PATCH body + AC-003 (TTL cap via ApiAccessConfig.key_max_ttl_days) |
+| EPIC-003 | M3 BYOK name vs label | applied | Renamed model field to label |
+| EPIC-003 | M4 rotated_at vs last_rotated_at | applied | Renamed model field to last_rotated_at |
+| EPIC-003 | M5 scope vocabulary | applied | STORY-052 filter and STORY-065 AC use domain scopes (chat.completions, cache.write) |
+| EPIC-003 | M6 elevated scope representation | applied | ApiKey gained base_scopes, elevated_scopes, elevated_until; STORY-065/066 ACs rewritten |
+| EPIC-003 | M7 STORY-056 priority | applied | Raised to P0 |
+| EPIC-003 | M8 STORY-056 CMK wording | applied | Non_functional rewritten to reference FEAT-133 CMK data class and fail-closed policy |
+| EPIC-003 | M9 notifications model drift | applied | STORY-061/064 audiences rewritten to canonical roles with fallback chain |
+| EPIC-003 | M10 STORY-053 AC-002 | applied | "SafetyEvent or AuditLog" → "AuditLog with action apikey.ip_allowlist.violation" |
+| EPIC-003 | M11 STORY-323 rotating-state AC | applied | Added AC-005 for dual-hash grace at the edge |
+| EPIC-003 | m1 FEAT-022 description | applied | Added list/browse |
+| EPIC-003 | m2 FEAT-025 description | applied | Expanded to cover six stories |
+| EPIC-003 | m3 STORY-055 anomaly ticker | applied | Removed undefined "anomaly ticker" phrase |
+| EPIC-003 | m4 STORY-067 air-gapped 404 | applied | Added AC-003 |
+| EPIC-003 | m5 STORY-068 audit entries | skipped-as-non-actionable | Audit covered transitively by STORY-069; author notes it is consistent |
+| EPIC-003 | m6 individual key revoke policy | skipped-as-non-actionable | Audit flags for awareness only |
+| EPIC-003 | m7 Approval.kind shared | deferred | Cross-epic; EPIC-011 (FEAT-160) pass will handle |
+| EPIC-003 | m8 STORY-065/066 notification audience | applied | Added Notification AC on STORY-066 approve path |
+| EPIC-003 | m9 FEAT-028 mode key | skipped-as-non-actionable | Baseline accepts description-level declaration |
+| EPIC-003 | X1 FEAT-133 BYOK data class | deferred | Belongs to EPIC-010 pass (FEAT-133 data-class enumeration) |
+| EPIC-003 | X2 BYOK residency | applied | Added STORY-056 AC-003 requiring ciphertext in ResidencyConfig region |
+| EPIC-003 | X5 Org.owner_user_id | applied | Added owner_user_id FK:User (nullable) to Org |
+| EPIC-003 | (b) STORY-065/066/067 depends_on STORY-049 | applied | Declared dependencies |
+| EPIC-003 | (c) BYOK rotation policy edit | deferred | New story needed under FEAT-025 — product input required |
