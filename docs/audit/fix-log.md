@@ -432,3 +432,26 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-004 (2026-04-20) | X3 cache savings dual emitter | deferred | Needs product decision on canonical emitter |
 | EPIC-004 (2026-04-20) | R1..R4 missing refs | deferred | Tie to C4/C5/M7/m2 |
 | EPIC-004 (2026-04-20) | U1..U8 missing features | deferred | Each requires net-new feature; product input |
+| EPIC-005 (2026-04-20) | C1 STORY-106 wrong ref | applied | STORY-379/380 → STORY-382 / STORY-384 |
+| EPIC-005 (2026-04-20) | C2 mid-stream retry config | deferred | Needs new story under FEAT-050/051; product input |
+| EPIC-005 (2026-04-20) | C3 RoutingRule sub-schemas | deferred | Structural model change; product input (carried from prior pass) |
+| EPIC-005 (2026-04-20) | M1 canary windows | deferred | Carried from prior pass |
+| EPIC-005 (2026-04-20) | M2 missing strategy stories | deferred | Carried from prior pass |
+| EPIC-005 (2026-04-20) | M3 Team.owner regression | applied | STORY-129 AC-001 now names Team.lead_user_id |
+| EPIC-005 (2026-04-20) | M4 CatalogPolicy precedence | deferred | Carried from prior pass |
+| EPIC-005 (2026-04-20) | M5 fallback naming collision | deferred | Carried from prior pass |
+| EPIC-005 (2026-04-20) | M6 auto-promote chain mutation | deferred | Carried from prior pass |
+| EPIC-005 (2026-04-20) | M7 cache/safety cross-epic | deferred | Carried from prior pass |
+| EPIC-005 (2026-04-20) | M8 catalog sync | deferred | Carried from prior pass |
+| EPIC-005 (2026-04-20) | M9 FEAT-058/059 placement | deferred | Structural; needs product input |
+| EPIC-005 (2026-04-20) | m1 STORY-117 hero canary fields | deferred | Product input on hero response shape |
+| EPIC-005 (2026-04-20) | m2 STORY-114 human_description | deferred | Needs decision derived-vs-persisted |
+| EPIC-005 (2026-04-20) | m3 STORY-119 divergence model | deferred | Ties to U2 |
+| EPIC-005 (2026-04-20) | m4 STORY-120 drawer copy | deferred | Ties to M2 |
+| EPIC-005 (2026-04-20) | m5 CatalogPolicy.allowed_regions | deferred | Needs new story in EPIC-009 residency |
+| EPIC-005 (2026-04-20) | m6 STORY-108 BYOK preflight | applied | Added warn-only AC-003 |
+| EPIC-005 (2026-04-20) | m7 STORY-129 weekly reminder audience | applied | non_functional now routes via FEAT-102 with AC-001 audience |
+| EPIC-005 (2026-04-20) | m8 STORY-105 fallback wording | applied | "fallback chain" → "fallback chain(s) of routing rules targeting this model" |
+| EPIC-005 (2026-04-20) | m9 STORY-121 runtime AC | applied | AC-002 rewritten to config-side only; runtime delegated to FEAT-142 |
+| EPIC-005 (2026-04-20) | X1..X5 cross-epic | deferred | Tied to other deferred items |
+| EPIC-005 (2026-04-20) | U1..U8 missing features | deferred | Each requires net-new feature; product input |

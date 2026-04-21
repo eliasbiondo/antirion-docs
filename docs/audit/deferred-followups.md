@@ -95,6 +95,14 @@ Each entry: brief description, source audit citation, reason deferred.
 - **M6 FEAT-033 to EPIC-009 alerts integration** — add a story bridging Anomaly → Alert / AlertEvent. Needs product input. (docs/audit/epic-004-review.md §M6)
 - **m1 non_functional copy-paste drift** — broad editorial pass to prune per-story NFR lists that inherit inapplicable constraints. Deferred; out of scope for the targeted-fix round. (docs/audit/epic-004-review.md §m1)
 
+### EPIC-005 (2026-04-20 re-audit)
+
+- **C2 Mid-stream retry config surface** — RoutingRule has no field for "fallback may reissue full request mid-stream". (docs/audit/epic-005-review-2026-04-20.md §C2)
+- **C3 RoutingRule sub-schemas** — canary/shadow/retry remain opaque JSON. (docs/audit/epic-005-review-2026-04-20.md §C3)
+- **M1 canary windows, M2 strategy stories, M4 CatalogPolicy precedence, M5 fallback naming, M6 auto-promote, M7 cache/safety cross-epic, M8 catalog sync, M9 FEAT-058/059 placement** — structural or product-input decisions. (docs/audit/epic-005-review-2026-04-20.md §M1..M9)
+- **m1..m5 minors** — hero response shape, human_description persistence, divergence model, drawer copy source, allowed_regions enforcement. (docs/audit/epic-005-review-2026-04-20.md §m1..m5)
+- **U1..U8 uncited-but-required** — provider catalog sync (Critical), shadow comparison model (Major), canary metric aggregation (Major), routing-rule validator (Major), routing change notifications (Major), readiness hydration (Major), preview allowlist (Minor), golden-dataset versioning (Minor). (docs/audit/epic-005-review-2026-04-20.md §U1..U8)
+
 ### EPIC-005
 
 - **C3 mid-stream retry semantics contradiction** — baseline says "retry the remaining prefix"; FEAT-139 STORY-327 AC-002 says "do not retry mid-stream". Needs product input. (docs/audit/epic-005-review.md §C3)

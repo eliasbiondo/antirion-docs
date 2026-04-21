@@ -7288,7 +7288,7 @@ stories:
     - The panel shows context size, output max, input/output/cache pricing
     - It shows 30-day requests, spend, tokens, cache hit rate, error rate
     - It shows p50/p95/p99 latency and TTFT p50/p95 with a histogram
-    - It shows the fallback chain and top teams
+    - It shows the fallback chain(s) of routing rules targeting this model and top teams
   - id: AC-002
     scenario: No traffic
     given:
@@ -7329,7 +7329,7 @@ stories:
   - id: AC-001
     scenario: Headroom row per provider
     given:
-    - Providers have configured rate limits (see STORY-379/380) and have live traffic
+    - Providers have configured rate limits (see STORY-382 / STORY-384) and have live traffic
     when:
     - I view the lower strip on /models
     then:
@@ -7468,6 +7468,15 @@ stories:
     then:
     - I see "This model already exists"
     - No duplicate is created
+  - id: AC-003
+    scenario: BYOK credential preflight
+    given:
+    - I am on /models adding a Model whose provider has no active BYOKCredential (EPIC-003 FEAT-025)
+    when:
+    - I pick the provider
+    then:
+    - A warn-only banner appears ("No active BYOK credential for this provider; requests will fail with 503 no_provider_credential until one is configured")
+    - The Create action remains available
   api:
   - method: POST
     path: /api/models
@@ -8119,19 +8128,18 @@ stories:
     - The request returns 200 from "Y" if "Y" succeeds
     - The RoutingDecision timeline records the cascade
   - id: AC-002
-    scenario: Circuit breaker opens
+    scenario: Circuit breaker config persists
     given:
-    - Provider "X" has failed past threshold within the window
+    - I configure circuit-breaker cooldown = 60s and scope = per-provider on the rule
     when:
-    - A new request matches the rule
+    - The PATCH is saved
     then:
-    - The circuit breaker for "X" is open and the first fallback "Y" is tried directly
-    - An AlertEvent "circuit.open" is generated
+    - RoutingRule carries the cooldown and scope values
+    - Runtime transitions of the breaker state are owned by FEAT-142 (STORY-336)
   data_models:
   - RoutingRule
   - Provider
   - RoutingDecision
-  - AlertEvent
   non_functional:
   - Circuit breaker state persists in the shared store per project.non_functional_baseline.statelessness with TTL = cooldown; runtime transitions are owned by FEAT-142
 - id: STORY-122
@@ -8460,7 +8468,7 @@ stories:
     then:
     - The Model.status becomes "deprecated" and deprecated_on is set
     - A ModelDeprecationNotice is created listing keys and teams still calling the model in the last 7 days
-    - A Notification is delivered to the owning principal on each affected resource (ApiKey.owner_user_id, Team.owner) and to Org.tech_contact, with fallback to Org.owner_user_id in saas and platform admin in self_hosted per project.notifications_model; AuditLog records the resolved audience list
+    - A Notification is delivered to the owning principal on each affected resource (ApiKey.owner_user_id, Team.lead_user_id) and to Org.tech_contact, with fallback to Org.owner_user_id in saas and platform admin in self_hosted per project.notifications_model; AuditLog records the resolved audience list
     - Requests continue to succeed but include an X-Antirion-Deprecation-Warning header
   - id: AC-002
     scenario: Migration progress
@@ -8499,7 +8507,7 @@ stories:
   - ApiKey
   - AuditLog
   non_functional:
-  - Weekly reminder email until the deadline
+  - Weekly reminder Notification delivered via FEAT-102 channel routing to the same audience as AC-001 (ApiKey.owner_user_id, Team.lead_user_id, Org.tech_contact with fallback chain) until the deadline
 - id: STORY-130
   feature: FEAT-056
   title: Hard-delete a disabled model
