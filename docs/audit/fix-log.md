@@ -408,3 +408,27 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-003 (2026-04-20) | U3 BYOK upstream-secret leak-scan | deferred | Needs new feature or extension of FEAT-028 |
 | EPIC-003 (2026-04-20) | U4 KeyAnomaly detector config | deferred | Needs scope decision for FEAT-041 |
 | EPIC-003 (2026-04-20) | U5 ApiKeyExpiryNotice dedupe/quiet-hours | deferred | Needs new story under FEAT-026 |
+| EPIC-004 (2026-04-20) | C1 STORY-089 RBAC/audit/notification | applied | Added AC-003/AC-004 for scope + AuditLog + FEAT-102 routing; data_models extended |
+| EPIC-004 (2026-04-20) | C2 STORY-102 tool-use data/api | applied | Added api block + ToolInvocation to data_models |
+| EPIC-004 (2026-04-20) | C3 STORY-103 streaming rollup | applied | MetricSeries extended with client_cancelled_count/mid_stream_dropped_count/ttft_p50/ttft_p95; STORY-103 api block added + MetricSeries in data_models |
+| EPIC-004 (2026-04-20) | C4 FEAT-033 → FEAT-099/100/102 bridge | deferred | Needs new story; product input on Anomaly→AlertEvent synthesis |
+| EPIC-004 (2026-04-20) | C5 ToolInvocation producer | deferred | Needs new story under FEAT-146; coordination with C4 |
+| EPIC-004 (2026-04-20) | M1 mode declarations | applied | Added mode:both to FEAT-029..FEAT-044; FEAT-033 description updated for saas/self_hosted |
+| EPIC-004 (2026-04-20) | M2 FEAT-031 tools/flags drill-in | deferred | Carried from prior audit; needs product input |
+| EPIC-004 (2026-04-20) | M3 STORY-072 API Key/User filter UI | applied | Added AC-006/AC-007 + ApiKeyPicker/UserPicker components |
+| EPIC-004 (2026-04-20) | M4 STORY-099 pointer-only | deferred | Structural; needs product decision to delete or fold in |
+| EPIC-004 (2026-04-20) | M5 FEAT-043/044 api blocks | applied | Added api blocks for STORY-102 and STORY-103 |
+| EPIC-004 (2026-04-20) | M6 STORY-077 time-range dep | applied | Added depends_on STORY-086 |
+| EPIC-004 (2026-04-20) | M7 FEAT-039 request share | deferred | Needs new AC/story; product input |
+| EPIC-004 (2026-04-20) | m1 non_functional drift | deferred | Broad editorial pass |
+| EPIC-004 (2026-04-20) | m2 STORY-094 CSV export | deferred | Ties to C1 hardening path |
+| EPIC-004 (2026-04-20) | m3 STORY-082 CacheEntry | applied | Added CacheEntry and MetricSeries to data_models |
+| EPIC-004 (2026-04-20) | m4 STORY-086 export NFR | applied | Dropped unrelated export NFR |
+| EPIC-004 (2026-04-20) | m5 STORY-085 ui block | applied | Added ui block with AnomalyPanel/AnomalyDrawer |
+| EPIC-004 (2026-04-20) | m6 STORY-095 audit note | applied | Dropped rollup NFR; added note about audit via STORY-096/097 |
+| EPIC-004 (2026-04-20) | m7 AnomalyDetector owner/updated_by | applied | Added owner_user_id, updated_by_user_id; description notes tenant-scoped management |
+| EPIC-004 (2026-04-20) | X1 FEAT-033 → FEAT-176 cross-ref | applied | FEAT-033 description now cross-refs FEAT-176 |
+| EPIC-004 (2026-04-20) | X2 STORY-338 model_id/provider_id | applied | Renamed span attrs |
+| EPIC-004 (2026-04-20) | X3 cache savings dual emitter | deferred | Needs product decision on canonical emitter |
+| EPIC-004 (2026-04-20) | R1..R4 missing refs | deferred | Tie to C4/C5/M7/m2 |
+| EPIC-004 (2026-04-20) | U1..U8 missing features | deferred | Each requires net-new feature; product input |

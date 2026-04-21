@@ -616,6 +616,7 @@ features:
   epic: EPIC-004
   title: Gateway overview dashboard
   description: KPI strip, charts band, team/model/provider breakdowns. Drill-in links jump to /requests for row-level inspection.
+  mode: both
   priority: P0
   stories:
   - STORY-070
@@ -628,6 +629,7 @@ features:
   epic: EPIC-004
   title: Request log with filters
   description: Dedicated request log with multi-dimension filters, latency histogram, saved views.
+  mode: both
   priority: P0
   stories:
   - STORY-072
@@ -643,6 +645,7 @@ features:
   epic: EPIC-004
   title: Request detail drawer
   description: Drill into a single request with prompt, response, timing, tools, flags, cURL, replay.
+  mode: both
   priority: P0
   stories:
   - STORY-078
@@ -655,6 +658,7 @@ features:
   epic: EPIC-004
   title: Analytics
   description: Spend trends, stacked provider breakdown, heatmap, provider SLA, model efficiency, cache impact, KPI highlight strip and top-models leaderboard.
+  mode: both
   priority: P1
   stories:
   - STORY-082
@@ -667,7 +671,8 @@ features:
 - id: FEAT-033
   epic: EPIC-004
   title: Anomaly signals
-  description: Auto-detected anomalies with severity, context, and contextual actions.
+  description: Auto-detected anomalies with severity, context, and contextual actions. In saas mode sustained severity=crit signals fan out to Antirion trust_and_safety and surface on FEAT-176 (platform-wide abuse and isolation dashboards); in self_hosted the trust_and_safety fanout is silently dropped per project.notifications_model.
+  mode: both
   priority: P1
   stories:
   - STORY-085
@@ -677,6 +682,7 @@ features:
   epic: EPIC-004
   title: Time-range selector
   description: Preset and custom time-range picker shared across observability pages.
+  mode: both
   priority: P0
   stories:
   - STORY-086
@@ -687,6 +693,7 @@ features:
   epic: EPIC-004
   title: Global search
   description: Search requests across id, user, model, and prompt text.
+  mode: both
   priority: P1
   stories:
   - STORY-087
@@ -697,6 +704,7 @@ features:
   epic: EPIC-004
   title: CSV export of request data
   description: Export the filtered request set to CSV.
+  mode: both
   priority: P1
   stories:
   - STORY-088
@@ -707,6 +715,7 @@ features:
   epic: EPIC-004
   title: Request replay with mutation
   description: Re-run a historical request, optionally changing model, parameters or prompt, to debug regressions.
+  mode: both
   priority: P1
   stories:
   - STORY-090
@@ -717,6 +726,7 @@ features:
   epic: EPIC-004
   title: Request comparison
   description: Side-by-side diff of two request/response pairs for root-cause analysis.
+  mode: both
   priority: P2
   stories:
   - STORY-091
@@ -727,6 +737,7 @@ features:
   epic: EPIC-004
   title: Shareable links for views and requests
   description: Generate signed, scoped share links to a saved view or a specific request detail.
+  mode: both
   priority: P2
   stories:
   - STORY-092
@@ -738,6 +749,7 @@ features:
   epic: EPIC-004
   title: Cost breakdown analytics
   description: Break spend down by model, team, project, key and environment with input/output/cache decomposition.
+  mode: both
   priority: P1
   stories:
   - STORY-094
@@ -748,6 +760,7 @@ features:
   epic: EPIC-004
   title: Anomaly detector configuration
   description: Configure the anomaly detectors that drive FEAT-033 anomaly signals — list, set thresholds, enable/disable by category.
+  mode: both
   priority: P1
   stories:
   - STORY-095
@@ -757,6 +770,7 @@ features:
   epic: EPIC-004
   title: Analytics saved views
   description: Save an analytics dashboard configuration, share via ShareLink with resource_type=analytics_view, load or delete.
+  mode: both
   priority: P1
   stories:
   - STORY-098
@@ -767,6 +781,7 @@ features:
   epic: EPIC-004
   title: Tool-use analytics view
   description: Top tools by invocation, failure rate and latency.
+  mode: both
   priority: P1
   stories:
   - STORY-102
@@ -774,6 +789,7 @@ features:
   epic: EPIC-004
   title: Streaming-specific analytics
   description: TTFT filter, client-cancelled count, mid-stream drops.
+  mode: both
   priority: P1
   stories:
   - STORY-103
@@ -5621,6 +5637,24 @@ stories:
     - I click the × on a chip
     then:
     - Only that filter is removed and the table recomputes
+  - id: AC-006
+    scenario: Filter by API key
+    given:
+    - The filter rail is expanded
+    when:
+    - I pick one or more ApiKey values via ApiKeyPicker
+    then:
+    - The /api/requests query is issued with api_key_id set
+    - Chips render the ApiKey.name (not the key prefix)
+  - id: AC-007
+    scenario: Filter by user
+    given:
+    - The filter rail is expanded
+    when:
+    - I pick one or more User values via UserPicker
+    then:
+    - The /api/requests query is issued with user_id set
+    - Under PII-redaction mode the chip displays a redacted label but the filter value is retained server-side
   ui:
     screens:
     - Request Log
@@ -5630,6 +5664,8 @@ stories:
     - MultiFilter
     - LatencyHisto
     - Toggle
+    - ApiKeyPicker
+    - UserPicker
     states:
     - populated
     - empty
@@ -5939,6 +5975,8 @@ stories:
     i_want: to page through requests via cursor or jump to a specific date
     so_that: I can navigate long logs without offset drift
   priority: P0
+  depends_on:
+  - STORY-086
   acceptance_criteria:
   - id: AC-001
     scenario: Load more via cursor
@@ -6237,6 +6275,8 @@ stories:
   - Request
   - Provider
   - Model
+  - CacheEntry
+  - MetricSeries
   non_functional:
   - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
   - Dashboards and analytics read from pre-aggregated rollups computed by the worker fleet; raw-log fallback only within the last minute
@@ -6369,6 +6409,15 @@ stories:
     - In saas mode the event is dispatched to the Antirion trust_and_safety sub-queue
     - In self_hosted mode the cross-tenant signal is silently dropped (per project.notifications_model)
     - The resolved audience list is visible in the drawer
+  ui:
+    screens:
+    - Analytics
+    components:
+    - AnomalyPanel
+    - AnomalyDrawer
+    states:
+    - default
+    - drawer-open
   api:
   - method: GET
     path: /api/anomalies
@@ -6446,7 +6495,6 @@ stories:
   non_functional:
   - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
   - Dashboards and analytics read from pre-aggregated rollups computed by the worker fleet; raw-log fallback only within the last minute
-  - Export generation runs as an async worker job with a 24h SLO and a visible failure state
 - id: STORY-087
   feature: FEAT-035
   title: Global search across requests
@@ -6587,12 +6635,31 @@ stories:
     when:
     - I pick "Parquet -> S3" and provide a bucket/prefix
     then:
-    - Parquet files are written to s3://bucket/prefix/ and I get a completion notification
+    - Parquet files are written to s3://bucket/prefix/ and a completion Notification is delivered to the acting principal via FEAT-102 channel routing
+  - id: AC-003
+    scenario: RBAC + audit controls inherited from STORY-088
+    given:
+    - The caller lacks the "requests.export" scope
+    when:
+    - The caller submits a JSONL or Parquet export
+    then:
+    - The response is 403 and no file is written
+  - id: AC-004
+    scenario: AuditLog for JSONL/Parquet exports
+    given:
+    - A JSONL or Parquet export completes
+    when:
+    - The export job transitions to "ready"
+    then:
+    - An AuditLog entry records actor, filter set, row count, format (jsonl|parquet), destination (download|s3 with bucket/prefix) and action "requests.export"
   data_models:
   - Request
+  - AuditLog
+  - Notification
   non_functional:
   - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
-  - Dashboards and analytics read from pre-aggregated rollups computed by the worker fleet; raw-log fallback only within the last minute
+  - S3 destination credentials live in the configured KMS and never appear in logs, telemetry or persisted payloads
+  - Channel delivery is via FEAT-102 notification-channels routing
 - id: STORY-090
   feature: FEAT-037
   title: Replay a historical request with mutation
@@ -6898,8 +6965,7 @@ stories:
   data_models:
   - AnomalyDetector
   non_functional:
-  - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
-  - Dashboards and analytics read from pre-aggregated rollups computed by the worker fleet; raw-log fallback only within the last minute
+  - Detector mutations are audited via STORY-096/097 (this read-only list does not itself write AuditLog)
 - id: STORY-096
   feature: FEAT-041
   title: Configure anomaly detector thresholds
@@ -7071,8 +7137,30 @@ stories:
     - The page loads
     then:
     - I see top 20 tools with invocations, failure rate and p50/p95 latency
+  api:
+  - method: GET
+    path: /api/analytics/tool-use
+    request:
+      query:
+        from: timestamp
+        to: timestamp
+        limit: int
+    response:
+      tools:
+      - tool_name: string
+        tool_id: string
+        invocations: int
+        failure_rate: number
+        p50_ms: number
+        p95_ms: number
+    errors:
+    - 400
+    - 401
+    - 403
+    inferred: true
   data_models:
   - Request
+  - ToolInvocation
   non_functional:
   - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
   - Dashboards and analytics read from pre-aggregated rollups computed by the worker fleet; raw-log fallback only within the last minute
@@ -7100,9 +7188,30 @@ stories:
     when:
     - I open the panel
     then:
-    - I see counts of client_cancelled and mid-stream drops over time
+    - I see counts of client_cancelled and mid-stream drops over time read from MetricSeries rollups (client_cancelled_count, mid_stream_dropped_count, ttft_p50_ms, ttft_p95_ms)
+  api:
+  - method: GET
+    path: /api/analytics/streaming
+    request:
+      query:
+        from: timestamp
+        to: timestamp
+        bucket: string
+    response:
+      series:
+      - at: timestamp
+        client_cancelled_count: int
+        mid_stream_dropped_count: int
+        ttft_p50_ms: number
+        ttft_p95_ms: number
+    errors:
+    - 400
+    - 401
+    - 403
+    inferred: true
   data_models:
   - Request
+  - MetricSeries
   non_functional:
   - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
   - Dashboards and analytics read from pre-aggregated rollups computed by the worker fleet; raw-log fallback only within the last minute
@@ -16822,7 +16931,7 @@ stories:
     when:
     - A request is served
     then:
-    - A span "antirion.gateway.request" is exported with attributes request_id, org_id, team_id, user_id, api_key_id, model, provider, routing_rule_id, routing_strategy, canary_arm, shadow, cost, input_tokens, output_tokens, latency_ms, ttft_ms
+    - A span "antirion.gateway.request" is exported with attributes request_id, org_id, team_id, user_id, api_key_id, model_id, provider_id, routing_rule_id, routing_strategy, canary_arm, shadow, cost, input_tokens, output_tokens, latency_ms, ttft_ms
     - Child spans are emitted for dialect translation, outbound call, retry attempts and streaming
   - id: AC-002
     scenario: Inbound traceparent preserved
@@ -21979,6 +22088,18 @@ models:
     type: int
   - name: output_tokens
     type: int
+  - name: client_cancelled_count
+    type: int
+    description: Count of Requests with client_cancelled=true in the bucket
+  - name: mid_stream_dropped_count
+    type: int
+    description: Count of Requests with mid_stream_dropped=true in the bucket
+  - name: ttft_p50_ms
+    type: int
+    nullable: true
+  - name: ttft_p95_ms
+    type: int
+    nullable: true
 - name: SavedView
   description: A saved request-log or analytics filter view.
   fields:
@@ -22057,7 +22178,7 @@ models:
     nullable: true
     description: Resolved audience list (per project.notifications_model) at the time the anomaly was raised
 - name: AnomalyDetector
-  description: Configuration for an auto-detector that produces Anomaly rows.
+  description: Configuration for an auto-detector that produces Anomaly rows. Management is tenant-scoped in both modes (not operator-scoped).
   fields:
   - name: id
     type: uuid
@@ -22076,6 +22197,12 @@ models:
     type: int
   - name: last_fired_at
     type: timestamp
+    nullable: true
+  - name: owner_user_id
+    type: FK:User
+    nullable: true
+  - name: updated_by_user_id
+    type: FK:User
     nullable: true
   relations:
   - type: has_many

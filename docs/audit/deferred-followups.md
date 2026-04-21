@@ -69,6 +69,25 @@ Each entry: brief description, source audit citation, reason deferred.
 - **X1 FEAT-133 BYOK data class enumeration** — add BYOK credential ciphertext as a CMK-wrappable data class in FEAT-133. Deferred to EPIC-010 pass. (docs/audit/epic-003-review.md §X1)
 - **(c) BYOK rotation policy edit story** — `rotate_policy_days` observable but not editable; needs a new story under FEAT-025. Product input required. (docs/audit/epic-003-review.md §(c))
 
+### EPIC-004 (2026-04-20 re-audit)
+
+- **C4 FEAT-033 → FEAT-099/100/102 bridge** — Anomaly severity=crit still doesn't synthesize AlertEvent or go through FEAT-102 routing. (docs/audit/epic-004-review-2026-04-20.md §C4)
+- **C5 ToolInvocation producer** — no story declares the row writer; producer should live under FEAT-146. (docs/audit/epic-004-review-2026-04-20.md §C5)
+- **M2 FEAT-031 tools/flags drill-in** — tools/flags drawer panels still have no backing AC. (docs/audit/epic-004-review-2026-04-20.md §M2)
+- **M4 STORY-099 pointer-only** — resolve by deletion + fold or by shape. (docs/audit/epic-004-review-2026-04-20.md §M4)
+- **M7 FEAT-039 request-scoped ShareLink** — enum value "request" has no backing AC. (docs/audit/epic-004-review-2026-04-20.md §M7)
+- **m1 non_functional copy-paste drift** — pervasive across STORY-073..077, 082..084, 086. Editorial sweep. (docs/audit/epic-004-review-2026-04-20.md §m1)
+- **m2 STORY-094 CSV export controls** — inline CSV exports don't inherit STORY-088 guarantees. (docs/audit/epic-004-review-2026-04-20.md §m2)
+- **X3 "Cache savings" dual emitter** — STORY-082 AC-004 and STORY-084 both emit the metric. (docs/audit/epic-004-review-2026-04-20.md §X3)
+- **U1 Request-log ingestion pipeline** — Critical. No feature owns the pipeline. (docs/audit/epic-004-review-2026-04-20.md §U1)
+- **U2 MetricSeries rollup worker** — Critical. 26 story NFRs pin to rollups with no producer. (docs/audit/epic-004-review-2026-04-20.md §U2)
+- **U3 Anomaly detector evaluation worker** — Critical. STORY-085 AC-003 demands worker behavior no feature owns. (docs/audit/epic-004-review-2026-04-20.md §U3)
+- **U4 Prompt full-text search index management** — Major. Index lifecycle and viewer-conditional indexing unowned. (docs/audit/epic-004-review-2026-04-20.md §U4)
+- **U5 Async request-data export lifecycle** — Major. No model, no worker spec, no retry/expiry. (docs/audit/epic-004-review-2026-04-20.md §U5)
+- **U6 ToolInvocation producer pipeline** — Major. See C5. (docs/audit/epic-004-review-2026-04-20.md §U6)
+- **U7 Share-link visit authorization/audit** — Major. Visit-time RBAC, visit AuditLog, open_count concurrency unowned. (docs/audit/epic-004-review-2026-04-20.md §U7)
+- **U8 Replay isolation mechanics** — Minor. Budget/anomaly-exclusion behavior unspecified. (docs/audit/epic-004-review-2026-04-20.md §U8)
+
 ### EPIC-004
 
 - **C1 conflict FEAT-041 citation** — EPIC-003 audit proposed FEAT-024; EPIC-004 audit proposed FEAT-033. Applied later (more specific) fix to FEAT-033. Flagging in case reviewers disagree. (docs/audit/epic-003-review.md §C4 + docs/audit/epic-004-review.md §C1)
