@@ -4505,42 +4505,59 @@ stories:
   - STORY-232
   acceptance_criteria:
   - id: AC-001
-    scenario: Toggle email for an event
+    scenario: Toggle email for a specific event
     given:
     - I am on Account -> Notifications
     when:
-    - I uncheck email for event "audit.weekly"
+    - I PATCH /api/users/me/notifications with { event_type: "audit.weekly", channels: [...] } removing "email"
     then:
-    - My NotificationPreference row for event "audit.weekly" has "email" removed from its channels array
-    - I stop receiving that digest
+    - The NotificationPreference row with (scope="user", user_id=me, event_type="audit.weekly") is upserted with "email" removed from channels
+    - I stop receiving that digest via email
   - id: AC-002
-    scenario: Set quiet hours
+    scenario: Set global default quiet hours
     given:
     - I am on Account -> Notifications
     when:
-    - I set quiet hours 19:00 - 08:00
+    - I PATCH /api/users/me/notifications with { event_type: null, quiet_hours_start: "19:00", quiet_hours_end: "08:00" }
     then:
-    - Push notifications outside urgent paging are delayed until 08:00 in my timezone
+    - The NotificationPreference sentinel row (scope="user", user_id=me, event_type=null) is upserted with the quiet-hours window
+    - For every event that does not set its own override, non-urgent-paging delivery is delayed until 08:00 in my timezone
+    - Events with severity=crit or explicitly marked urgent-paging still fire during quiet hours
+  - id: AC-003
+    scenario: Override quiet hours for a specific event
+    given:
+    - The sentinel row has quiet_hours 19:00-08:00
+    when:
+    - I PATCH /api/users/me/notifications with { event_type: "billing.invoice_ready", quiet_hours_start: null, quiet_hours_end: null }
+    then:
+    - The per-event row has null quiet_hours and overrides the sentinel; billing.invoice_ready fires without delay
+    - Other event types continue to honour the sentinel window
   api:
   - method: PATCH
     path: /api/users/me/notifications
     request:
       body:
+        event_type: string
+        channels:
+        - string
         digest_frequency: string
         quiet_hours_start: string
         quiet_hours_end: string
-        prefs: json
+        urgent_paging_override: bool
     response:
-      notifications: NotificationPreference
+      preference: NotificationPreference
     errors:
+    - 400
     - 401
     inferred: true
+    note: event_type is optional; when null the PATCH targets the sentinel default row. Resolution walks event-specific row → sentinel row → notifications_model default
   data_models:
   - User
   - NotificationPreference
   non_functional:
   - Profile and preference fields treated as PII — redacted from telemetry and error payloads
   - Changes apply on the next request without requiring a full page reload
+  - Delivery resolution walks the preference chain deterministically - event_type row, then event_type=null sentinel, then notifications_model default channels
 - id: STORY-044
   feature: FEAT-018
   title: Request my personal data export
@@ -23477,7 +23494,7 @@ models:
   - type: belongs_to
     model: User
 - name: NotificationPreference
-  description: Per-user or per-org default for an event/channel pair.
+  description: Per-user or per-org preference row. Keyed by (scope, scope_id, event_type); event_type=null is the sentinel default row that applies when no event-specific row exists. A unique constraint is enforced on (scope, user_id, org_id, event_type) so at most one default and one override per event exists per principal.
   fields:
   - name: id
     type: uuid
@@ -23488,22 +23505,31 @@ models:
   - name: user_id
     type: FK:User
     nullable: true
+    description: Set when scope="user"; null when scope="org"
   - name: org_id
     type: FK:Org
     nullable: true
+    description: Set when scope="org"; null when scope="user"
   - name: event_type
     type: string
+    nullable: true
+    description: Null = global default row; a non-null value scopes the preference to a specific event class (e.g. "security.user.flag", "audit.weekly")
   - name: channels
     type: json
+    description: Per-row channel subset (email|slack|pagerduty|webhook|inbox); resolution walks event_type row, then event_type=null sentinel, then notifications_model defaults
   - name: digest_frequency
     type: string
     nullable: true
   - name: quiet_hours_start
     type: string
     nullable: true
+    description: Per-row quiet-hours window start; applies to this event_type or, on the sentinel row (event_type=null), to every event that does not set its own override
   - name: quiet_hours_end
     type: string
     nullable: true
+  - name: urgent_paging_override
+    type: bool
+    description: When true, urgent-paging events (severity=crit or kind=security marked urgent per story) bypass quiet_hours on this row
 - name: ApiKey
   description: A gateway API key with scopes, limits and lifecycle.
   fields:
