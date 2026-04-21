@@ -12527,7 +12527,7 @@ stories:
     - I set condition metric "p95_latency_ms", operator ">", threshold 1500, window "30m"
     - I set for_duration "5m" (sustained duration the condition must hold before firing)
     - I set cooldown "15m" (re-fire suppression window after a fire)
-    - I pick channels [email, slack]
+    - I pick an audience of canonical roles (e.g. [{role:"resource_owner"}, {role:"org_contact", contact:"security_contact"}]) whose delivery channels FEAT-102 will resolve at fire time
     - I click Create rule
     then:
     - An AlertRule is created with enabled=true and evaluated against live telemetry immediately on save
@@ -12626,8 +12626,7 @@ stories:
         for_duration: string
         cooldown: string
         severity: string
-        channels:
-        - string
+        audience: json
     response:
       rule: AlertRule
     errors:
@@ -12743,8 +12742,7 @@ stories:
         for_duration: string
         cooldown: string
         severity: string
-        channels:
-        - string
+        audience: json
     response:
       rule: AlertRule
     errors:
@@ -13094,12 +13092,13 @@ stories:
   - id: AC-001
     scenario: Slack notification on fire
     given:
-    - An AlertRule has channels ["slack"]
+    - An AlertRule's resolved audience includes a Slack-addressable role
     when:
     - It fires
     then:
     - A Slack message is posted to the configured channel with title, severity, link and ack button
     - An AlertTimelineEntry of type "page" records the delivery
+    - An AuditLog entry records action "notification.send" with the resolved audience list (role, user_id or contact, channel) and the channel attempt result per project.notifications_model
   - id: AC-002
     scenario: PagerDuty ack syncs back
     given:
@@ -13108,13 +13107,62 @@ stories:
     - An on-call responder acknowledges in PagerDuty
     then:
     - Within 60 seconds, the AlertEvent status in Antirion becomes "acknowledged"
+    - An AuditLog entry records the inbound ack with signature-verification result
+  - id: AC-003
+    scenario: Email delivery
+    given:
+    - An AlertRule's resolved audience includes a user with email preference set
+    when:
+    - The rule fires
+    then:
+    - The transactional email service delivers the alert message using the configured sender
+    - An AlertTimelineEntry of type "page" records the delivery and an AuditLog entry records the channel attempt
+  - id: AC-004
+    scenario: Webhook delivery with HMAC
+    given:
+    - A workspace has a Webhook subscribing to alert.fire events
+    when:
+    - An AlertRule fires
+    then:
+    - The Webhook is invoked with an HMAC-signed body; retries follow the 6h backoff policy; failures transition the webhook per STORY-300 threshold
+    - An AuditLog entry records the channel attempt
+  - id: AC-005
+    scenario: In-app inbox delivery
+    given:
+    - An AlertRule's resolved audience resolves to specific user_ids
+    when:
+    - The rule fires
+    then:
+    - A Notification row of kind="alert" is written per recipient for the FEAT-169 inbox
+    - An AuditLog entry records the channel attempt
+  - id: AC-006
+    scenario: Invalid PagerDuty signature
+    given:
+    - An inbound PagerDuty ack arrives with a failing signature
+    when:
+    - The receiver verifies the signature
+    then:
+    - The event is dropped and an AlertTimelineEntry of type "note" is written with message="signature_invalid"
+    - An AuditLog entry records the rejection
+  - id: AC-007
+    scenario: Deployment-mode collapse of audience
+    given:
+    - An AlertRule's audience references an Antirion-staff sub-queue
+    when:
+    - The install mode is self_hosted
+    then:
+    - The sub-queue entry is dropped (except when FEAT-179 phone-home has opted in) and the audience collapses to platform admin per project.notifications_model
+    - An AuditLog entry records the resolved audience list after collapse
   data_models:
   - AlertEvent
   - AlertRule
   - NotificationPreference
+  - AuditLog
+  - Notification
   non_functional:
   - At-least-once delivery with exponential backoff to 6h
   - PagerDuty webhook events verified via signature
+  - Every audit record on a notification-bearing event records the resolved audience list and the channel attempt per project.notifications_model
 - id: STORY-233
   feature: FEAT-103
   title: Snooze an alert rule
@@ -23964,8 +24012,9 @@ models:
   - name: severity
     type: string
     description: info|warn|crit
-  - name: channels
+  - name: audience
     type: json
+    description: Canonical-role audience spec consumed by FEAT-102; items are of shape {role, contact?, user_id?, sub_queue?} where role is one of (acting_principal|resource_owner|org_contact|platform_operator|antirion_staff_subqueue|user_subscription) per project.notifications_model
   - name: enabled
     type: bool
   - name: runbook_id
