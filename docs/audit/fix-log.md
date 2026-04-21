@@ -594,3 +594,27 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-011 (2026-04-20) | m1..m8 minors | deferred | Editorial boilerplate, plus a couple of model-field extensions |
 | EPIC-011 (2026-04-20) | X1..X7 cross-epic | deferred | Tied to pipeline ordering / structural items |
 | EPIC-011 (2026-04-20) | U1..U9 missing features | deferred | Pipeline ordering, AccessLog, concurrency cap, readiness hydration, etc. |
+| EPIC-012 (2026-04-20) | C1 STORY-398 HelpArticlePin | applied | AC-001 writes HelpArticlePin row; data_models extended |
+| EPIC-012 (2026-04-20) | C2 STORY-398 view analytics | deferred | Needs new HelpArticleView event model / time-series |
+| EPIC-012 (2026-04-20) | C3 STORY-396 TosAcceptance.required_version | applied | Rewrote to create LegalDocument with superseded_by_id linkage |
+| EPIC-012 (2026-04-20) | C4 STORY-402 Notification.kind | applied | AC-001/AC-002 split per-mode; covers all 11 enum values |
+| EPIC-012 (2026-04-20) | C5 FEAT-167 ambiguity | deferred | Structural; product input |
+| EPIC-012 (2026-04-20) | C6 STORY-400 owner_org_id enforcement | applied | AC-001/AC-002 scoped to owner=me; AC-003 forbids cross-tenant |
+| EPIC-012 (2026-04-20) | M1 FEAT-167 mode tag | deferred | Ties to C5 |
+| EPIC-012 (2026-04-20) | M2 STORY-396 publisher role | applied | Narrative now describes mode-gated publisher |
+| EPIC-012 (2026-04-20) | M3 STORY-391 self_hosted host | applied | AC-001 now references mode-correct host + no saas link surface |
+| EPIC-012 (2026-04-20) | M4 STORY-391 platform-incident projection | applied | AC-002 rewired to STORY-412 projection |
+| EPIC-012 (2026-04-20) | M5 STORY-401 mode cost composition | applied | AC-003 (saas) + AC-004 (self_hosted) |
+| EPIC-012 (2026-04-20) | M6 STORY-401 NFR wording | applied | Forecast inputs read from local caches only |
+| EPIC-012 (2026-04-20) | M7 PricingQuote.breakdown shape | applied | Description declares keys |
+| EPIC-012 (2026-04-20) | M8 air-gapped help stories | deferred | New stories needed |
+| EPIC-012 (2026-04-20) | M9 widget URL invariant | applied | STORY-391 AC-003 covers widget URL resolver |
+| EPIC-012 (2026-04-20) | M10/M11 STORY-399 UI ambiguity | deferred | Ties to C5 |
+| EPIC-012 (2026-04-20) | M12 FEAT-169 coverage | deferred | Needs new stories per source feature |
+| EPIC-012 (2026-04-20) | M13 FEAT-162 depends_on FEAT-177 | applied | Added FEAT-177 to FEAT-162 depends_on |
+| EPIC-012 (2026-04-20) | M14 STORY-402 depends_on | applied | Added STORY-412, STORY-418 |
+| EPIC-012 (2026-04-20) | m1 STORY-389 FEAT-135 ref | applied | AC now cites FEAT-135 |
+| EPIC-012 (2026-04-20) | m2 STORY-387 GET /api/residency | applied | Added read endpoint |
+| EPIC-012 (2026-04-20) | m3..m9 minors | deferred | Editorial / new stories |
+| EPIC-012 (2026-04-20) | X1..X3 cross-epic | deferred | Forecast route / Antirion sub-queue / invitee first-run |
+| EPIC-012 (2026-04-20) | U1..U12 missing features | deferred | Partial via M2/C3/M5; rest need new features |

@@ -1973,6 +1973,8 @@ features:
   description: Guide a new workspace owner through pinning data residency, inviting teammates, connecting a provider, creating a key and issuing a test request. Residency must be pinned before any tenant data can be written. In saas mode the signed-up workspace owner walks the full checklist. In self_hosted mode the install wizard (FEAT-177) has already completed — residency is read-only from install config, the license is assumed valid (FEAT-175), and the checklist collapses to "invite, connect provider, create key, issue test request" for the first Org created on the install.
   mode: both
   priority: P0
+  depends_on:
+  - FEAT-177
   stories:
   - STORY-387
   - STORY-388
@@ -18718,6 +18720,15 @@ stories:
     - submitting
     - done
   api:
+  - method: GET
+    path: /api/residency
+    response:
+      config: ResidencyConfig
+      editable: bool
+    errors:
+    - 401
+    inferred: true
+    note: editable is true only in saas when config IS NULL; false once residency is pinned or in self_hosted (read-only from install config)
   - method: POST
     path: /api/residency/initial
     request:
@@ -18814,7 +18825,7 @@ stories:
     when:
     - I click "Send test request" on the checklist
     then:
-    - The gateway issues a /v1/chat/completions call using the newly created key
+    - The gateway issues the FEAT-135 OpenAI-compatible chat-completions request using the newly created key
     - I see the response and a link to the Request detail page
     - The checklist item ticks
   ui:
@@ -18884,23 +18895,33 @@ stories:
   priority: P1
   acceptance_criteria:
   - id: AC-001
-    scenario: Component status
+    scenario: Component status at the mode-correct host
     given:
-    - The status page is published at status.antirion.example
+    - The status page is published at the platform-operator-configured status host for the current mode (status.antirion.example in saas; a platform-admin-configured host in self_hosted)
     when:
     - I open the URL
     then:
     - I see per-component status (Ingress, Routing, Caching, Safety) as operational/degraded/outage
     - I see the last 30 days of uptime per component
+    - In self_hosted, only local-install component status is rendered; there is no surfacing or linking to status.antirion.example
   - id: AC-002
-    scenario: Incident lifecycle
+    scenario: Incident lifecycle driven by PlatformIncident projection
     given:
-    - An operator creates a StatusPageIncident with impact "major"
+    - STORY-412 creates a PlatformIncident with state "investigating" and impact "major"
     when:
-    - Updates are posted
+    - Updates are posted on the PlatformIncident
     then:
-    - The page shows the incident with a timeline of updates and an ETA
-    - When marked "resolved", it moves to the history
+    - A StatusPageIncident row is created with platform_incident_id referencing that PlatformIncident
+    - The public page renders the incident with a timeline of updates and an ETA, within the config-reload SLA
+    - When the PlatformIncident is marked "resolved", the StatusPageIncident moves to the history
+  - id: AC-003
+    scenario: Widget always points at the mode-correct page
+    given:
+    - The in-app status widget renders on any tenant page
+    when:
+    - The widget resolves its link URL
+    then:
+    - The URL is derived from deployment mode; saas widgets never link to a self_hosted host and vice versa
   ui:
     screens:
     - Shell
@@ -19143,27 +19164,30 @@ stories:
   feature: FEAT-165
   title: Publish a new ToS version and re-prompt users
   narrative:
-    as_a: workspace admin
+    as_a: publisher (Antirion legal in saas; platform admin uploading customer legal texts in self_hosted)
     i_want: to publish a new Terms of Service version
-    so_that: users re-accept on the next sign-in
+    so_that: users re-accept on the next sign-in per FEAT-165 mode split
   priority: P1
   acceptance_criteria:
   - id: AC-001
     scenario: Publish and re-prompt
     given:
-    - A current ToS version is in effect
+    - The appropriate mode-gated publisher role (saas - Antirion legal; self_hosted - platform admin) is authenticated
     when:
-    - I upload a new version and click "Publish"
+    - A new legal document is prepared and published
     then:
-    - TosAcceptance.required_version bumps
-    - On next sign-in, users are prompted to accept the new version
-    - Acceptance creates a TosAcceptance row with version and timestamp
+    - A new LegalDocument row is created with kind="tos", version=new, effective_at set, published_at=now, published_by_user_id=me
+    - The previous LegalDocument for the same (org_id, kind) is flagged superseded so the "current required version" resolver returns the new row
+    - On next sign-in, users whose latest TosAcceptance(document="tos").version differs from the current LegalDocument.version are re-prompted
+    - Acceptance creates a TosAcceptance row referencing the LegalDocument.version and a timestamp
   data_models:
+  - LegalDocument
   - TosAcceptance
   - AuditLog
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
+  - In saas the publication event routes notifications to Antirion legal (notifications_model sub-queue); in self_hosted the event notifies platform admin
 - id: STORY-397
   feature: FEAT-166
   title: Open contextual help from any screen
@@ -19231,7 +19255,7 @@ stories:
     when:
     - I click "Pin" in admin
     then:
-    - HelpArticle.pinned becomes true and it appears at the top of the help panel
+    - A HelpArticlePin row is created with (org_id, article_id, pinned_by_user_id=me, pinned_at=now); the article appears at the top of the help panel
   - id: AC-002
     scenario: View article usage
     given:
@@ -19242,6 +19266,7 @@ stories:
     - I see views per article over the selected time range
   data_models:
   - HelpArticle
+  - HelpArticlePin
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
@@ -19314,22 +19339,30 @@ stories:
   priority: P1
   acceptance_criteria:
   - id: AC-001
-    scenario: Cancel running job
+    scenario: Cancel running tenant-scoped job
     given:
-    - A WorkerJob is "running"
+    - A WorkerJob is "running" and WorkerJob.owner_org_id = my_org_id
     when:
     - I click "Cancel" and confirm
     then:
     - The job is signalled to stop and its status becomes "cancelled"
     - An AuditLog entry records the cancellation
   - id: AC-002
-    scenario: Requeue dead-lettered job
+    scenario: Requeue dead-lettered tenant-scoped job
     given:
-    - A WorkerJob is in the dead-letter queue
+    - A WorkerJob is in the dead-letter queue and WorkerJob.owner_org_id = my_org_id
     when:
     - I click "Requeue"
     then:
     - The job is moved back to its queue with attempt counter reset
+  - id: AC-003
+    scenario: Cross-tenant cancel forbidden
+    given:
+    - A WorkerJob has owner_org_id != my_org_id (or is a platform-wide job with owner_org_id IS NULL)
+    when:
+    - I click "Cancel" or "Requeue" via the tenant-admin surface
+    then:
+    - The API returns 403 "worker_job.cross_tenant_cancel_forbidden" and the job status is unchanged; platform-wide jobs are managed via FEAT-170 STORY-405
   data_models:
   - WorkerJob
   - AuditLog
@@ -19363,6 +19396,22 @@ stories:
     then:
     - A PricingQuote row is persisted with inputs, output and timestamp
     - The quote is shareable via the same share-link mechanism as views
+  - id: AC-003
+    scenario: saas cost composition
+    given:
+    - The install mode is saas
+    when:
+    - The calculator renders the projected monthly cost
+    then:
+    - Projected cost equals provider passthrough plus Antirion plan fees plus commitment offset (inputs from FEAT-096 / FEAT-098)
+  - id: AC-004
+    scenario: self_hosted cost composition
+    given:
+    - The install mode is self_hosted
+    when:
+    - The calculator renders the projected monthly cost
+    then:
+    - Projected cost equals provider passthrough; the Antirion subscription line is hidden; a separate annualized license renewal line derived from FEAT-175 is shown
   ui:
     screens:
     - Budgets
@@ -19398,7 +19447,7 @@ stories:
   - PricingQuote
   - Model
   non_functional:
-  - Forecast inputs never leave the org; no third-party pricing API calls
+  - Forecast inputs never leave the org. Provider pricing is read from the local pricing-catalog cache; in saas Antirion plan fees and commitment offsets are read from the local Billing catalog — neither path makes a third-party outbound call on the forecast path
 - id: STORY-402
   feature: FEAT-169
   title: Unified notification inbox with bell icon
@@ -19407,16 +19456,29 @@ stories:
     i_want: a single inbox of my notifications with read/unread state
     so_that: I do not miss anything
   priority: P1
+  depends_on:
+  - STORY-412
+  - STORY-418
   acceptance_criteria:
   - id: AC-001
-    scenario: See notifications
+    scenario: See notifications in saas
     given:
-    - I have 5 new notifications
+    - The install mode is saas and I have multiple new notifications
     when:
     - I click the bell icon
     then:
-    - I see a list of notifications (alert fires, approvals, job completions, deprecations) with read state and links
+    - I see a list covering Notification.kind values (alert, approval, job, deprecation, billing, security, maintenance, incident, platform_notice) with read state and links
+    - Kinds not in the saas allow-list (license, license_violation) are never rendered
   - id: AC-002
+    scenario: See notifications in self_hosted
+    given:
+    - The install mode is self_hosted and I have multiple new notifications
+    when:
+    - I click the bell icon
+    then:
+    - I see a list covering Notification.kind values (alert, approval, job, deprecation, billing, security, maintenance, incident, license, license_violation) with read state and links
+    - Kinds not in the self_hosted allow-list (platform_notice) are never rendered
+  - id: AC-003
     scenario: Mark read
     given:
     - I have an unread notification in the inbox
@@ -24570,6 +24632,10 @@ models:
   - name: published_by_user_id
     type: FK:User
     nullable: true
+  - name: superseded_by_id
+    type: FK:LegalDocument
+    nullable: true
+    description: When set, this document is superseded; the "currently-required" row is the one where superseded_by_id IS NULL per (org_id, kind)
 - name: TosAcceptance
   description: Immutable record of ToS/DPA/privacy acceptance by a user at a version.
   fields:
@@ -24892,6 +24958,7 @@ models:
     type: number
   - name: breakdown
     type: json
+    description: '{provider_input, provider_output, provider_cache, antirion_plan_fee?, antirion_commitment_offset?, license_annualized?} - optional keys reflect mode (saas sets the antirion_* keys; self_hosted sets license_annualized)'
   - name: currency
     type: string
   - name: created_at

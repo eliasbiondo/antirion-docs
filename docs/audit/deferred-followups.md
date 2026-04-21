@@ -241,6 +241,17 @@ Each entry: brief description, source audit citation, reason deferred.
 - **X2..X7** — cross-epic coordination (shared-credentials toggle, cache/safety/budget pipeline positions, telemetry cross-link, per-tenant concurrency cap). (docs/audit/epic-011-review.md §X2..X7)
 - **Minor editorial (m1..m12)** — boilerplate NFRs, skeletal Files/Batches stories, minor wording. (docs/audit/epic-011-review.md §m1..m12)
 
+### EPIC-012 (2026-04-20 re-audit)
+
+- **C2 STORY-398 view analytics** — scalar view_count insufficient; needs HelpArticleView event model. (docs/audit/epic-012-review-2026-04-20.md §C2)
+- **C5 FEAT-167 ambiguity** — same structural collision as prior audit; unresolved. (docs/audit/epic-012-review-2026-04-20.md §C5)
+- **M1/M10/M11 FEAT-167 mode tag / UI location / platform paging in tenant epic** — all tie to C5. (docs/audit/epic-012-review-2026-04-20.md §M*)
+- **M8 FEAT-166 air-gapped stories** — new stories (398a/b, 397 AC-003). (docs/audit/epic-012-review-2026-04-20.md §M8)
+- **M12 FEAT-169 coverage** — new stories per source feature needed. (docs/audit/epic-012-review-2026-04-20.md §M12)
+- **m3..m9 minors** — email subscription abuse, localization, inbox retention/archive/pagination, FEAT-169 lead, help analytics GET endpoint, /budgets/forecast route sharing. (docs/audit/epic-012-review-2026-04-20.md §m*)
+- **X1..X3 cross-epic** — forecast route with FEAT-085, Antirion sub-queue routing, invitee first-run boundary. (docs/audit/epic-012-review-2026-04-20.md §X*)
+- **U1..U12 uncited-but-required** — Notification inbox retention, HelpArticleView event pipeline, LegalDocument publish workflow (partial via C3), StatusPageSubscriber model, bundled-help worker, StatusPageIncident projection worker, pricing catalog cache, WorkerJob ACL middleware, TosAcceptance current-version resolver (partial via C3), widget URL resolver, help air-gap degrader, malware-scan worker. (docs/audit/epic-012-review-2026-04-20.md §U*)
+
 ### EPIC-012
 
 - **C5 FEAT-167 vs FEAT-170 overlap** — worker fleet observability split between EPIC-012 (tenant) and EPIC-013 (platform) needs structural decision. (docs/audit/epic-012-review.md §C5)
