@@ -2228,6 +2228,8 @@ features:
   description: Durable pipeline from a live gateway request to a persisted Request row. Queue contract, at-least-once semantics, idempotent handlers, backfill on ClickHouse ingestion gap, ingestion-health alert wiring, and an operator-visible ingestion dashboard.
   mode: both
   priority: P0
+  depends_on:
+  - FEAT-191
   stories:
   - STORY-447
   - STORY-448
@@ -2237,6 +2239,8 @@ features:
   description: Pre-aggregates MetricSeries rows on 1m/5m/1h/1d cadences per scope (org|team|provider|model|project|api_key|env); handles late-arriving data backfill; reconciles against ClickHouse raw logs; honours retention.
   mode: both
   priority: P0
+  depends_on:
+  - FEAT-186
   stories:
   - STORY-449
 - id: FEAT-188
@@ -2245,6 +2249,8 @@ features:
   description: Counter write-back pipeline Request.cost → Budget.spent (including cache_cost contribution; downgrade-served cost counted against the served model's budget). Reconciles live shared-store counters against persisted ledger on a worker cadence and raises the budget.counter.drift alert on deviation.
   mode: both
   priority: P0
+  depends_on:
+  - FEAT-186
   stories:
   - STORY-450
 - id: FEAT-189
@@ -2253,6 +2259,9 @@ features:
   description: Hot-path pipeline stage that reads the budget counter and, when the hard cap is reached, rejects with 402 Payment Required (error_code="budget_exhausted", cycle-aware Retry-After). Emits BudgetEvent.type="enforce". Placed between idempotency lookup and cache lookup per FEAT-191.
   mode: both
   priority: P0
+  depends_on:
+  - FEAT-188
+  - FEAT-191
   stories:
   - STORY-451
 - id: FEAT-190
@@ -2334,6 +2343,8 @@ features:
   description: Provisions system-managed AlertRule rows (category="budget") per Budget at create/edit time. Metrics budget.utilisation_pct (threshold=BudgetPolicy.soft_alert_pct), budget.overage, budget.forecast.mape, budget.fx.staleness_hours, budget.counter.drift. Resolves the parallel-paging gap (prior M1/M2/M3/M8) by making the AlertRule the single paging source; BudgetEvent stays as the audit trail.
   mode: both
   priority: P0
+  depends_on:
+  - FEAT-188
   stories:
   - STORY-461
 - id: FEAT-200
@@ -27285,6 +27296,11 @@ models:
   - name: download_url
     type: string
     nullable: true
+  relations:
+  - type: belongs_to
+    model: Org
+  - type: has_many
+    model: InvoiceLine
 - name: InvoiceLine
   description: A single line on an Invoice (plan fee, overage, provider passthrough rollup, credit).
   fields:
@@ -27303,6 +27319,9 @@ models:
   - name: cost_center
     type: string
     nullable: true
+  relations:
+  - type: belongs_to
+    model: Invoice
 - name: InvoiceContest
   description: A tenant-filed contest against an InvoiceLine. Distinct status machine from SupportTicket.
   fields:

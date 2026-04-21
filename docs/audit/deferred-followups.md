@@ -1,3 +1,107 @@
+## 2026-04-21 applied wave-summary (PR #29)
+
+The 2026-04-20 re-audit pass plus waves 1..15 on PR #29 have resolved or
+substantially fleshed out most of the items originally listed below. The
+following answers have landed in requirements.yaml and so the
+corresponding items below are no longer deferred:
+
+- Q1 STORY-018 offboard typed-email confirmation
+- Q2 STORY-012 role-change Notification with canonical audience
+- Q4 Transactional email (FEAT-183 + STORY-442/443)
+- Q5 platform_admin seeding path (FEAT-177 + STORY-425/473)
+- Q6 User.status=inactive dormancy sweep on FEAT-008
+- Q7 FEAT-021 collapsed into FEAT-003 (STORY-048 deleted, STORY-006 absorbed)
+- Q9 Account deletion cutover (FEAT-185 + STORY-446)
+- Q10 Recovery-code sign-in (STORY-463)
+- Q11 Avatar lifecycle (size/type/remove on STORY-035)
+- Q12 BYOK rotate_policy_days editable (STORY-464)
+- Q13 ApiKey.scopes derived + ApiKey.type=break_glass
+- Q14 BYOK rotation-grace expiry job (STORY-465)
+- Q15 BYOK leak-scan extension (STORY-466)
+- Q16 BYOKCredential.rate_limit_rpm/tpm removed; ProviderRateLimit canonical
+- Q17 Anomaly → AlertEvent bridge (STORY-467)
+- Q18 ToolInvocation producer (STORY-468)
+- Q19 Request-log ingestion pipeline (FEAT-186 + STORY-447/448)
+- Q20 MetricSeries rollup worker (FEAT-187 + STORY-449)
+- Q21 Request-scoped ShareLink (STORY-469)
+- Q22 RoutingRule.fallback.reissue_after_bytes + STORY-121 AC-003
+- Q23 RoutingRule structured sub-schemas (fallback/retry/canary/shadow)
+- Q24 Named canary windows (300/3600/900s)
+- Q25 Strategy stories (STORY-478..481 for single/weighted/failover/least-loaded)
+- Q26 CatalogPolicy ↔ RoutingRule precedence documented on model
+- Q27 ModelAlias.fallback vs RoutingRule.fallback resolution order documented
+- Q28 Provider catalog sync (FEAT-190 + STORY-452)
+- Q29 EPIC-014 split (FEAT-058/059 moved)
+- Q31 Streaming × cache (STORY-472 residency partition — streaming-replay is still deferred as noted)
+- Q32 Safety-policy-change cache invalidation (reason=safety_policy_change covered in EPIC-006 applied)
+- Q33 Cache-hit Budget.spent decrement (STORY-142 AC-004)
+- Q34 Shadow/canary × cache (STORY-142 AC-005/006)
+- Q35 Eviction burst behaviour (STORY-155 NFR)
+- Q36 PiiPolicy model + STORY-159/160/174 rewired
+- Q37 SafetyAllowanceGrant model + STORY-169 AC-002 wired
+- Q41 /api/budgets/* canonicalization
+- Q42 Request.cost → Budget.spent pipeline (FEAT-188 + STORY-450)
+- Q43 Gateway budget admission (FEAT-189 + STORY-451)
+- Q44 Downgrade routing hook (STORY-470)
+- Q45 Budget → AlertRule bridge (FEAT-199 + STORY-461)
+- Q46 Invoice/InvoiceLine/InvoiceContest/CreditRequest models + STORY-209/210/214 rewired
+- Q47 AlertRuleSubscription model + STORY-227 rewired
+- Q48 AlertRule.channels → .audience refactor
+- Q49 Release-gate on burned SLO (STORY-471)
+- Q51 FEAT-107 mode split
+- Q52 FEAT-127 DR role split (STORY-294 rewritten)
+- Q53 GeoIP fail-closed default
+- Q54 Audit signing-key lifecycle (FEAT-198 + STORY-460)
+- Q55 Break-glass Org fields (ingress_paused_until etc.)
+- Q56 OrgSigningSecret model + STORY-275 wired
+- Q57 Pipeline ordering (FEAT-191 + STORY-453)
+- Q58 FEAT-160 moved to EPIC-003
+- Q59 EPIC-015 split
+- Q60 AccessLog model + STORY-323 wired
+- Q61 Per-tenant concurrency cap (FEAT-197 + STORY-454)
+- Q62 Residency-aware cache lookup (STORY-472)
+- Q63 HelpArticleView model + STORY-398 wired
+- Q64 FEAT-167 retired; baseline cites FEAT-170
+- Q65 FEAT-166 air-gapped stories (STORY-474/475)
+- Q66 FEAT-169 platform-notice and license inbox stories (STORY-476/477)
+- Q67 StatusPageSubscriber model + STORY-392 full flow
+- Q68 Pricing catalog cache (FEAT-200 + STORY-462)
+- Q69 FEAT-170 URLs moved to /operator/fleet*
+- Q70 OperatorPrincipal polymorphic FKs across audit tables
+- Q71 installed_on baseline dimension + FEAT-181/182 retagged
+- Q72 PhoneHomeCallLog.payload_sample + sample_retained_until
+- Q73 InstallBootstrapIntent model + STORY-425 wired
+- Q74 Operator paging integration (FEAT-192 + STORY-455)
+- Q75 Cross-tenant abuse correlation (FEAT-196 + STORY-459)
+- Q76 Install identity keys (FEAT-193 + STORY-456)
+- Q77 Tenant satisfaction surveys (FEAT-195 + STORY-458)
+- Q78 License tier catalog (FEAT-194 + STORY-457)
+- Q79 destructive_action_confirmation_policy additions
+- Q80 STORY-232 audience+channel-attempt audit sweep (AC-001..AC-007)
+
+### Items still genuinely deferred
+
+- **C-6 streaming × cache replay framing** — the SSE re-framing contract
+  for streaming cache hits is still an open product question (STORY-472
+  covers residency partitioning only). Needs a dedicated STORY under
+  FEAT-060 spelling out TTFT, keep-alive cadence and cached SSE comment.
+- **M-7 STORY-043 quiet-hours row shape** — global-vs-per-event semantics
+  on NotificationPreference still need product input (applied wave did
+  not touch STORY-043).
+- **M1 BudgetPolicy threshold-overload pre-split** — answered in wave 1
+  via the split into waiver_approval_threshold_pct and
+  edit_approval_threshold_pct; kept here for historical traceability.
+- **Editorial non_functional copy-paste drift** — minor sweep across
+  EPIC-003..EPIC-011 stories that inherit NFR lines unrelated to their
+  scope.
+- **Per-epic minor m-* editorial items** — wording drift, UI-reference
+  ownership clarifications, baseline tech_contact roster reconciliation,
+  and similar cosmetics remain.
+- **Cross-epic coordination items** — a subset of the 2026-04-20
+  re-audit X-items (e.g. outreach export linked to FEAT-124, ingestion-
+  health AlertRule full wiring into FEAT-186) are partially covered by
+  the new features but still want a dedicated sweep to verify.
+
 # Deferred Follow-ups
 
 Items surfaced during the EPIC-001..013 audit pass that were not applied to `docs/requirements.yaml` because they require product input, propose net-new features, or conflict with other findings.
