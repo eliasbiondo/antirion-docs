@@ -444,7 +444,7 @@ features:
 - id: FEAT-012
   epic: EPIC-001
   title: Role management and custom roles
-  description: List built-in roles, create/edit/delete custom roles scoped to permissions. Built-in tenant roles are owner, admin, member and viewer in both deployment modes. The platform admin role is a reserved built-in that exists only in self_hosted mode, cannot be granted to an ordinary workspace member, cannot be created as a custom role in either mode, and is rejected by the role API if requested in saas mode. Role assignment attempts that violate these constraints produce an AuditLog "role.assignment_rejected" entry.
+  description: List built-in roles, create/edit/delete custom roles scoped to permissions. Built-in tenant roles are owner, admin, developer, analyst, viewer and service in both deployment modes. The platform admin role is a reserved built-in that exists only in self_hosted mode, cannot be granted to an ordinary workspace member, cannot be created as a custom role in either mode, and is rejected by the role API if requested in saas mode. Role assignment attempts that violate these constraints produce an AuditLog "role.assignment_rejected" entry.
   priority: P1
   stories:
   - STORY-031
@@ -2260,8 +2260,9 @@ stories:
   - Session
   - TrustedBrowser
   non_functional:
-  - Membership and role changes are audited with actor, subject, timestamp and before/after
-  - Revocations and role changes propagate to every node within the config-reload SLA
+  - Trust cookie flags HttpOnly, Secure and SameSite=Lax; scoped to the app domain
+  - TrustedBrowser fingerprint is stable across reboots and expires at 30 days maximum
+  - Trust is revoked on password change, MFA reset or admin session revocation
 - id: STORY-003
   feature: FEAT-001
   title: Request password reset
@@ -2710,7 +2711,7 @@ stories:
   - User
   - Role
   non_functional:
-  - Role hierarchy owner (6) > admin (5) > developer (4) > analyst (3) > viewer (2) > service (1)
+  - Levels per Role.level; writes gated by level
   - Scopes checked server-side on every mutating endpoint
 - id: STORY-012
   feature: FEAT-005
@@ -2893,15 +2894,6 @@ stories:
     then:
     - The User.team_id becomes null
     - Their requests are no longer attributed to this team's budget
-  - id: AC-004
-    scenario: Prevent deleting team with active keys
-    given:
-    - A Team owns active ApiKeys
-    when:
-    - I try to delete the team
-    then:
-    - I see "Team still has 3 active keys — revoke or reassign them first"
-    - The Team is not deleted
   api:
   - method: PATCH
     path: /api/teams/:id
@@ -2941,20 +2933,9 @@ stories:
     - 403
     - 404
     inferred: true
-  - method: DELETE
-    path: /api/teams/:id
-    response:
-      ok: bool
-    errors:
-    - 401
-    - 403
-    - 404
-    - 409
-    inferred: true
   data_models:
   - Team
   - User
-  - ApiKey
   - AuditLog
   non_functional:
   - Membership and role changes are audited with actor, subject, timestamp and before/after
@@ -3041,6 +3022,15 @@ stories:
     then:
     - The Confirm button stays disabled and I see "Type the team slug to confirm"
     - The Team is not deleted
+  - id: AC-005
+    scenario: Block delete when team has active Projects
+    given:
+    - A Team has one or more active Projects referencing it
+    when:
+    - I click "Delete team"
+    then:
+    - I see "Team has N active projects — move or archive them first"
+    - The Team is not deleted
   api:
   - method: DELETE
     path: /api/teams/:id
@@ -3086,6 +3076,15 @@ stories:
     - All owned ApiKeys with type "user" are revoked
     - The User status becomes "offboarded"
     - An AuditLog entry records actor, target and action "user.offboard"
+  - id: AC-002
+    scenario: Block offboarding the last remaining owner
+    given:
+    - The target User is the only remaining user with role "owner"
+    when:
+    - I click "Offboard" on the user
+    then:
+    - I see "A workspace must have at least one owner"
+    - The User is not offboarded
   api:
   - method: POST
     path: /api/users/:id/offboard
@@ -3120,11 +3119,11 @@ stories:
   - id: AC-001
     scenario: Reassign to service account
     given:
-    - The leaving user owns 4 service keys
+    - The leaving user owns 4 ApiKeys where type = "service" and revoked_at IS NULL
     when:
     - I pick a target service account and click "Transfer"
     then:
-    - All 4 ApiKey.owner_user_id point at the target
+    - All 4 ApiKey.owner_user_id point at the target (only keys with type = "service" and revoked_at IS NULL are transferred)
     - An AuditLog entry records "key.transfer" for each key
   - id: AC-002
     scenario: Block offboarding on unassigned service keys
@@ -3228,7 +3227,7 @@ stories:
     so_that: suspicious accounts are tracked without offboarding them immediately
   priority: P1
   depends_on:
-  - STORY-018
+  - STORY-011
   acceptance_criteria:
   - id: AC-001
     scenario: Flag a user
@@ -3239,7 +3238,7 @@ stories:
     then:
     - The User.status becomes "flagged"
     - An AuditLog entry records actor, reason and action "user.flag"
-    - An AlertEvent of severity "warn" is generated for the security oncall
+    - A Notification of kind "security" is emitted to Org.security_contact (falling back to Org.owner in saas and to platform admin in self_hosted) per project.notifications_model
   - id: AC-002
     scenario: Clear the flag
     given:
@@ -3279,7 +3278,7 @@ stories:
   data_models:
   - User
   - AuditLog
-  - AlertEvent
+  - Notification
   non_functional:
   - Membership and role changes are audited with actor, subject, timestamp and before/after
   - Revocations and role changes propagate to every node within the config-reload SLA
@@ -3297,16 +3296,16 @@ stories:
   - id: AC-001
     scenario: Account locked after threshold
     given:
-    - The org lockout policy is 5 failures in 15 minutes
+    - The SessionPolicy specifies lockout_threshold=5 within lockout_window_minutes=15
     - A User has 4 recent failed attempts
     when:
     - A 5th failed attempt is recorded
     then:
-    - The User.status is set to "locked"
-    - locked_until is set to now + policy.lockout_minutes
+    - User.locked_until is set to now + SessionPolicy.lockout_duration_minutes
     - Further sign-in attempts return 423 Locked with a generic message
     - A LoginAttempt is recorded with outcome "locked"
-    - An AuditLog entry is written with action "user.locked"
+    - An AuditLog entry is written with action "user.locked" and records the resolved audience list
+    - A Notification of kind "security" ("user.locked") is emitted to the target User per project.notifications_model
   - id: AC-002
     scenario: IP throttled independent of user
     given:
@@ -3338,8 +3337,10 @@ stories:
   - User
   - LoginAttempt
   - AuditLog
+  - SessionPolicy
+  - Notification
   non_functional:
-  - Thresholds configurable via org-level policy with safe defaults
+  - Thresholds configurable via org-level SessionPolicy (lockout_threshold, lockout_window_minutes, lockout_duration_minutes) with safe defaults
   - Lock decisions must be race-free under concurrent login attempts
 - id: STORY-024
   feature: FEAT-009
@@ -3355,16 +3356,16 @@ stories:
   - id: AC-001
     scenario: Unlock from user detail
     given:
-    - A User has status "locked"
+    - A User has User.locked_until set in the future
     - I am a workspace admin
     when:
     - I open the user detail drawer and click "Unlock account"
     - I confirm the action
     then:
-    - The User.status becomes "active"
-    - locked_until is cleared
-    - An AuditLog entry is written with action "user.unlocked"
-    - The affected user receives an email stating the account was unlocked
+    - User.locked_until is cleared
+    - User.failed_login_count is reset to 0
+    - An AuditLog entry is written with action "user.unlocked" and records the resolved audience list
+    - A Notification of kind "security" ("user.unlocked") is emitted to the target User (owning principal) per project.notifications_model
   ui:
     screens:
     - Teams & Users
@@ -3389,8 +3390,9 @@ stories:
   data_models:
   - User
   - AuditLog
+  - Notification
   non_functional:
-  - Only roles owner/admin may unlock accounts
+  - Only roles owner/admin may unlock accounts; developer, analyst, viewer and service are denied
 - id: STORY-025
   feature: FEAT-010
   title: Initiate SAML Single Log-Out and accept back-channel logout receipts
@@ -3441,7 +3443,7 @@ stories:
     when:
     - I click "New service account" and enter a name and human owner
     then:
-    - A User row with is_service_account=true is created
+    - A User row with role="service" is created (human_owner_user_id set to the selected human owner, created_by_user_id set to the acting admin)
     - An initial credential is issued and shown once
   data_models:
   - User
@@ -3467,7 +3469,7 @@ stories:
     when:
     - I open the list
     then:
-    - I see name, human owner, team, last_used_at and status per row
+    - I see name, human_owner_user_id, team, User.last_active_at and status per row
   data_models:
   - User
   non_functional:
@@ -3509,6 +3511,9 @@ stories:
     i_want: to delete a retired service account
     so_that: unused machine identities are cleaned up
   priority: P1
+  depends_on:
+  - STORY-026
+  - STORY-028
   acceptance_criteria:
   - id: AC-001
     scenario: Delete with typed confirmation
@@ -3517,7 +3522,7 @@ stories:
     when:
     - I click "Delete" and type the service account name
     then:
-    - The service account User row is soft-deleted
+    - The service account User.status is set to "offboarded"
     - An AuditLog entry records "service_account.delete"
   - id: AC-002
     scenario: Block when credentials active
@@ -3550,7 +3555,7 @@ stories:
     when:
     - The page loads
     then:
-    - I see human owner, team, created_by, created_at and last 24h request count
+    - I see human_owner_user_id, team, created_by_user_id, User.joined_at, User.last_active_at and last 24h Request count
   data_models:
   - User
   - Request
@@ -20735,6 +20740,15 @@ models:
     type: string
   - name: security_contact
     type: string
+  - name: finance_contact
+    type: string
+    nullable: true
+  - name: privacy_officer
+    type: string
+    nullable: true
+  - name: primary_contact
+    type: string
+    nullable: true
   - name: timezone
     type: string
   - name: fiscal_year_start
@@ -20792,7 +20806,7 @@ models:
     nullable: true
   - name: role
     type: string
-    description: owner|admin|developer|analyst|viewer|service
+    description: owner|admin|developer|analyst|viewer|service|platform_admin (platform_admin is assignable only in self_hosted installs; rejected in saas)
   - name: status
     type: string
     description: active|pending|flagged|inactive|offboarded
@@ -20832,6 +20846,14 @@ models:
   - name: offboarded_at
     type: timestamp
     nullable: true
+  - name: human_owner_user_id
+    type: FK:User
+    nullable: true
+    description: For role='service' users, the human principal accountable for the service account
+  - name: created_by_user_id
+    type: FK:User
+    nullable: true
+    description: Actor who created this user (service accounts and invitations)
   relations:
   - type: belongs_to
     model: Org
@@ -21005,18 +21027,26 @@ models:
   - type: has_many
     model: Project
 - name: Role
-  description: Named role with inherited scopes.
+  description: Named role with inherited permissions. Built-in roles have org_id=null; custom roles are scoped to an Org and their name is unique within (org_id, name).
   fields:
   - name: id
     type: uuid
     pk: true
+  - name: org_id
+    type: FK:Org
+    nullable: true
+    description: Null for global built-in roles; set for tenant-scoped custom roles
   - name: name
     type: string
-    unique: true
+    description: Unique within (org_id, name); built-in names are globally reserved
   - name: level
     type: int
-  - name: scopes
+  - name: permissions
     type: json
+    description: Grouped permission identifiers granted to the role
+  - name: builtin
+    type: bool
+    description: True for platform-defined built-in roles; false for tenant-created custom roles
   - name: description
     type: string
 - name: PersonalToken
@@ -22338,6 +22368,18 @@ models:
   - name: default_role
     type: string
     nullable: true
+  - name: slo_url
+    type: string
+    nullable: true
+    description: IdP Single Logout endpoint used for SAML LogoutRequest
+  - name: back_channel_logout_url
+    type: string
+    nullable: true
+    description: Endpoint receiving IdP back-channel logout receipts
+  - name: signing_cert
+    type: text
+    nullable: true
+    description: IdP signing certificate (PEM) used to validate SLO receipts and assertions
 - name: ScimConfig
   description: SCIM 2.0 provisioning configuration.
   fields:
@@ -23149,7 +23191,7 @@ models:
   - name: updated_at
     type: timestamp
 - name: SessionPolicy
-  description: Org-wide browser session timeout policy.
+  description: Org-wide browser session timeout and sign-in lockout policy.
   fields:
   - name: org_id
     type: FK:Org
@@ -23158,6 +23200,15 @@ models:
     type: int
   - name: absolute_max_hours
     type: int
+  - name: lockout_threshold
+    type: int
+    description: Failed sign-in attempts within lockout_window_minutes that trigger a lock
+  - name: lockout_window_minutes
+    type: int
+    description: Rolling window for counting failed sign-in attempts
+  - name: lockout_duration_minutes
+    type: int
+    description: How long locked_until is set into the future after a lock fires
   - name: updated_at
     type: timestamp
 - name: AuditSinkHealthCheck
