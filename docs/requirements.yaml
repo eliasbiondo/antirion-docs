@@ -10028,7 +10028,7 @@ stories:
     scenario: Credit card blocked
     given:
     - A prompt contains a Luhn-valid credit-card number
-    - PiiCategory "cc" has action "block"
+    - The effective policy for (my_org_id, "cc") resolves to action "block" - either a PiiPolicy row sets it or the PiiCategory "cc" default action is "block"
     when:
     - The request is processed
     then:
@@ -10051,29 +10051,52 @@ stories:
   title: Set per-workspace PII strictness
   narrative:
     as_a: security lead
-    i_want: to set redaction strictness (loose, balanced, strict)
-    so_that: I can tune false positives vs coverage
+    i_want: to set redaction strictness (loose, balanced, strict) per category for my workspace
+    so_that: I can tune false positives vs coverage without affecting other tenants
   priority: P1
   depends_on:
   - STORY-159
   acceptance_criteria:
   - id: AC-001
-    scenario: Switch strictness
+    scenario: Switch strictness for a category
     given:
-    - Current strictness is "balanced"
+    - No PiiPolicy row exists for (my_org_id, cc); PiiCategory.strictness default is "balanced"
     when:
-    - I choose "strict"
+    - I PATCH /api/safety/pii-policies with body { pii_category_id: "cc", strictness: "strict" }
     then:
-    - The stored config value updates
-    - Subsequent detections use more aggressive masking
+    - A PiiPolicy row is upserted with (org_id=my_org_id, pii_category_id="cc", strictness="strict", edited_by_user_id=me, edited_at=now)
+    - Subsequent detections for this tenant read the PiiPolicy value (falling back to PiiCategory default when no row exists)
+    - The change writes "pii_policy.update" to AuditLog and propagates within the config_hot_reload SLA
+  - id: AC-002
+    scenario: Read effective policy
+    given:
+    - A mix of PiiPolicy rows and PiiCategory defaults
+    when:
+    - I GET /api/safety/pii-policies
+    then:
+    - The response returns an effective table merging tenant PiiPolicy rows on top of PiiCategory defaults
   api:
+  - method: GET
+    path: /api/safety/pii-policies
+    response:
+      policies:
+      - pii_category_id: string
+        strictness: string
+        action: string
+        source: string
+    errors:
+    - 401
+    - 403
+    inferred: true
   - method: PATCH
-    path: /api/safety/pii-config
+    path: /api/safety/pii-policies
     request:
       body:
+        pii_category_id: string
         strictness: string
+        action: string
     response:
-      config: json
+      policy: PiiPolicy
     errors:
     - 400
     - 401
@@ -10081,9 +10104,11 @@ stories:
     inferred: true
   data_models:
   - PiiCategory
+  - PiiPolicy
   - AuditLog
   non_functional:
   - Strictness writes propagate to every node within the config_hot_reload SLA (30s)
+  - PiiPolicy is the canonical per-tenant override - detectors read (org_id, pii_category_id) first and fall back to PiiCategory defaults
 - id: STORY-161
   feature: FEAT-071
   title: Detect and block prompt injections and jailbreaks
@@ -10510,7 +10535,7 @@ stories:
     when:
     - I click "Override to allow" with a reason
     then:
-    - A one-time allow is granted to the original fingerprint for the next 24h
+    - A SafetyAllowanceGrant row is written with (org_id=my_org, fingerprint=SafetyEvent.fingerprint, expires_at=now+24h, granted_by_user_id=me, reason) and detectors consult this table before enforcing block
     - An AuditLog entry records the override and reason
   api:
   - method: POST
@@ -10529,10 +10554,12 @@ stories:
     inferred: true
   data_models:
   - SafetyEvent
+  - SafetyAllowanceGrant
   - AuditLog
   non_functional:
   - Detectors run in-process with an explicit per-request latency budget; budget breach fails open or closed per policy
   - Detector model versions are pinned per rule and recorded on every decision for auditability
+  - Detectors consult SafetyAllowanceGrant on the request path and honour non-expired grants
 - id: STORY-170
   feature: FEAT-075
   title: Version every change to a detection rule
@@ -10761,18 +10788,18 @@ stories:
   - id: AC-001
     scenario: Set a stricter PII strictness
     given:
-    - The org PiiCategory "health" is set to "balanced"
+    - The org-level PiiPolicy for "health" is "balanced" (or no PiiPolicy row, PiiCategory default "balanced")
     when:
     - I open my team's guardrails page and set "health" strictness to "strict"
     - I save
     then:
-    - A TeamSafetyPolicy row is created scoping the change to my team
+    - A TeamSafetyPolicy row is created scoping the change to my team; the team override layers on top of the org-level PiiPolicy
     - For traffic with team_id = my team, strictness is "strict"
-    - For other teams, the org default applies
+    - For other teams, the org-level PiiPolicy (or PiiCategory default) applies
   - id: AC-002
     scenario: Cannot loosen below org minimum
     given:
-    - The org sets "health" to "strict"
+    - The org PiiPolicy for "health" is "strict"
     when:
     - I try to set my team's "health" to "loose"
     then:
@@ -12825,8 +12852,8 @@ stories:
   title: Subscribe to alert rule fires as an individual user
   narrative:
     as_a: team member
-    i_want: to subscribe to fires of a specific alert rule
-    so_that: I am notified even when I am not the default recipient
+    i_want: to subscribe to fires of a specific alert rule with per-subscriber channel preferences
+    so_that: I am notified even when I am not in the default audience
   priority: P1
   acceptance_criteria:
   - id: AC-001
@@ -12834,15 +12861,48 @@ stories:
     given:
     - An AlertRule exists
     when:
-    - I click "Subscribe" on the rule
+    - I click "Subscribe" on the rule and optionally pick channel preferences (subset of email|slack|pagerduty|webhook|inbox)
     then:
-    - A subscription row is created linking me to the rule
-    - Future fires notify me via my preferred channel
+    - An AlertRuleSubscription row is created with (alert_rule_id, user_id=me, channels=picked or null)
+    - FEAT-102 routing at fire time unions subscription-resolved recipients with the rule's default audience
+    - An AuditLog entry records action "alert_rule.subscribe"
+  - id: AC-002
+    scenario: Unsubscribe
+    given:
+    - An AlertRuleSubscription exists
+    when:
+    - I DELETE /api/alert-rules/:id/subscribe
+    then:
+    - The row is deleted
+    - An AuditLog entry records action "alert_rule.unsubscribe"
+  api:
+  - method: POST
+    path: /api/alert-rules/:id/subscribe
+    request:
+      body:
+        channels:
+        - string
+    response:
+      subscription: AlertRuleSubscription
+    errors:
+    - 401
+    - 403
+    - 404
+    inferred: true
+  - method: DELETE
+    path: /api/alert-rules/:id/subscribe
+    response:
+      ok: bool
+    errors:
+    - 401
+    - 404
+    inferred: true
   data_models:
   - AlertRule
-  - NotificationPreference
+  - AlertRuleSubscription
+  - AuditLog
   non_functional:
-  - Alert evaluation runs on a bounded interval; backlog or missed evaluations raise their own operational alert
+  - Subscription resolution runs at fire time; subscribers are unioned with the rule's canonical audience before FEAT-102 channel routing
   - Notification delivery is retried with exponential backoff by the worker fleet and deduped per rule-fire
 - id: STORY-228
   feature: FEAT-100
@@ -15136,12 +15196,12 @@ stories:
   - id: AC-003
     scenario: Rotate org signing secret
     given:
-    - An org signing secret exists (used for webhook HMAC defaults)
+    - An OrgSigningSecret row exists for this Org (used for webhook HMAC defaults)
     when:
     - I click "Rotate signing secret" and type the workspace slug to confirm per project.destructive_action_confirmation_policy
     then:
-    - A new signing secret is generated and shown once
-    - The previous secret continues to validate for a 5-minute replay window
+    - A new secret is generated and shown once; OrgSigningSecret.secret_hash is set to the new value, previous_secret_hash to the old, previous_valid_until to now+5m, rotated_at=now and rotated_by_user_id=me
+    - Webhook deliveries within the 5-minute replay window verify HMAC against either the new or previous_secret_hash; beyond the window only the new hash is accepted
     - An AuditLog entry records action "org.secret.rotate"
   api:
   - method: POST
@@ -16775,7 +16835,7 @@ stories:
     - The gateway processes the request
     then:
     - The response is 401 with error code "missing_api_key"
-    - No Request row is written beyond the rejection metadata
+    - No Request row is written; an AccessLog row is written instead with (org_id=null, at=now, ip, user_agent, path, method, outcome="unauthorized", bytes_in)
   - id: AC-002
     scenario: Valid key, scope OK
     given:
@@ -16826,6 +16886,7 @@ stories:
     inferred: true
   data_models:
   - ApiKey
+  - AccessLog
   - AuditLog
   non_functional:
   - Key lookup uses a salted hash; constant-time compare
@@ -19192,19 +19253,45 @@ stories:
   title: Subscribe to status updates and view component history
   narrative:
     as_a: customer
-    i_want: to subscribe to status page updates and view component history
-    so_that: I am notified of incidents on the components I depend on
+    i_want: to subscribe to status page updates with confirmation and view component history
+    so_that: I am notified of incidents on the components I depend on and my subscription cannot be abused
   priority: P1
   acceptance_criteria:
   - id: AC-001
-    scenario: Subscribe by email
+    scenario: Subscribe by email with double opt-in
     given:
     - The status page is public
     when:
     - I submit my email
     then:
-    - I receive a confirmation email and, after confirmation, incident notifications
+    - A StatusPageSubscriber row is created with status="pending_confirm", confirm_token_hash set; a confirmation email is sent via FEAT-183
+    - When I click the confirmation link within 7 days, status becomes "confirmed" and confirmed_at is stamped; expired or tampered tokens return 400
   - id: AC-002
+    scenario: One-click unsubscribe
+    given:
+    - A confirmed StatusPageSubscriber exists
+    when:
+    - I click the Unsubscribe link in any notification email
+    then:
+    - status becomes "unsubscribed" and unsubscribed_at is stamped
+    - No further notification email is sent to this address until I re-subscribe
+  - id: AC-003
+    scenario: Per-IP rate limit
+    given:
+    - An IP has submitted 5 subscribe requests in the last minute
+    when:
+    - A 6th request arrives from the same IP
+    then:
+    - The request returns 429 with Retry-After; no row is created
+  - id: AC-004
+    scenario: Bounce auto-suspend
+    given:
+    - The transactional email provider reports 3 hard bounces for an address within 7 days
+    when:
+    - The bounce feedback is consumed
+    then:
+    - status becomes "bounced"; bounce_count and last_bounce_at are updated; further sends are suppressed
+  - id: AC-005
     scenario: Component history
     given:
     - I click a component
@@ -19214,6 +19301,7 @@ stories:
     - I see uptime percentage and a list of resolved incidents
   data_models:
   - StatusPageIncident
+  - StatusPageSubscriber
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
@@ -19506,12 +19594,14 @@ stories:
     when:
     - I open analytics
     then:
-    - I see views per article over the selected time range
+    - I see views per article over the selected time range; the query reads aggregated HelpArticleView rows (worker-rolled-up hourly and daily) rather than the scalar HelpArticle.view_count counter
   data_models:
   - HelpArticle
   - HelpArticlePin
+  - HelpArticleView
   non_functional:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
+  - HelpArticleView events are written on each help-palette article view; an hourly/daily aggregator worker produces the time-range series read by AC-002
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
 - id: STORY-399
   feature: FEAT-167
@@ -21120,19 +21210,32 @@ stories:
     - The bootstrap token is invalidated and cannot be reused
     - An AuditLog "install.platform_admin_bootstrapped" is written referencing the token id
   - id: AC-002
-    scenario: SSO-only mode
+    scenario: SSO-only mode persists intent
     given:
     - The wizard step 3 selected SSO as the platform admin auth source
     when:
     - I submit the SSO IdP metadata and a claimed identifier
     then:
-    - The first user matching the claimed identifier on SSO sign-in is granted platform admin
+    - An InstallBootstrapIntent row is written with (install_id, claimed_identifier, idp_config_snapshot, created_at=now, consumed_at=null)
     - No password is set and /api/operator/install/bootstrap is disabled
+  - id: AC-003
+    scenario: SSO first-match grants platform admin
+    given:
+    - An InstallBootstrapIntent with consumed_at=null exists
+    when:
+    - A user signs in via SSO whose identifier matches InstallBootstrapIntent.claimed_identifier
+    then:
+    - The signed-in user is granted the platform admin role; InstallBootstrapIntent.consumed_at is stamped
+    - An AuditLog entry records "install.platform_admin_sso_bootstrapped" with the install_id and claimed_identifier
+    - Subsequent SSO sign-ins do not grant platform admin via the same intent
   data_models:
   - User
+  - OperatorPrincipal
+  - InstallBootstrapIntent
   - AuditLog
   non_functional:
   - The bootstrap token lives only in container logs and is never persisted to any store the tenant plane can read
+  - InstallBootstrapIntent is single-use; consumed_at is the only write that completes the flow
   - platform admin is a reserved built-in role (see FEAT-012) and cannot be granted through normal role management
 - id: STORY-426
   feature: FEAT-177
@@ -24604,9 +24707,17 @@ models:
   - name: actor_user_id
     type: FK:User
     nullable: true
+    description: Set when actor_kind="user" (tenant User); null otherwise
+  - name: actor_operator_id
+    type: FK:OperatorPrincipal
+    nullable: true
+    description: Set when actor_kind="operator" (Antirion-staff in saas or platform_admin in self_hosted); null otherwise
+  - name: actor_kind
+    type: string
+    description: user|operator|system|service - resolves which of actor_user_id / actor_operator_id is populated
   - name: actor_type
     type: string
-    description: user|sso|system|service
+    description: user|sso|system|service (legacy - carried forward for compatibility; actor_kind is the resolver)
   - name: action
     type: string
   - name: target_type
@@ -25724,6 +25835,14 @@ models:
     nullable: true
   - name: created_by_user_id
     type: FK:User
+    nullable: true
+    description: Deprecated - use created_by_kind + created_by_operator_id (or created_by_user_id for a tenant-local User). Nullable so Antirion-staff-declared incidents in saas can set created_by_operator_id instead
+  - name: created_by_operator_id
+    type: FK:OperatorPrincipal
+    nullable: true
+  - name: created_by_kind
+    type: string
+    description: user|operator - resolves which of created_by_user_id / created_by_operator_id is populated
   - name: created_at
     type: timestamp
   - name: updated_at
@@ -25780,14 +25899,23 @@ models:
   - name: initiated_by_user_id
     type: FK:User
     nullable: true
-    description: Null for deployments kicked off by the platform (e.g. auto-rollback on SLO breach); pending OperatorPrincipal per EPIC-013 C5
+    description: Set when actor_kind="user"; null for system-initiated deployments or operator-initiated flows (which use initiated_by_operator_id)
+  - name: initiated_by_operator_id
+    type: FK:OperatorPrincipal
+    nullable: true
   - name: acting_user_id
     type: FK:User
     nullable: true
-    description: Principal whose action drove the most recent stage transition; null for system-driven transitions (auto-rollback)
+    description: Principal whose action drove the most recent stage transition (tenant User); null for operator or system-driven transitions
+  - name: acting_operator_id
+    type: FK:OperatorPrincipal
+    nullable: true
+  - name: actor_kind
+    type: string
+    description: user|operator|system - resolves which actor_* column is populated
   - name: actor_type
     type: string
-    description: user|system — system when the stage transition is driven by worker/SLO/scheduler rather than a human
+    description: user|system (legacy - retained for compatibility; actor_kind is the resolver)
   - name: started_at
     type: timestamp
   - name: ended_at
@@ -26455,8 +26583,18 @@ models:
   - name: shielded_by_user_id
     type: FK:User
     nullable: true
+  - name: shielded_by_operator_id
+    type: FK:OperatorPrincipal
+    nullable: true
   - name: last_actor_user_id
     type: FK:User
+    nullable: true
+  - name: last_actor_operator_id
+    type: FK:OperatorPrincipal
+    nullable: true
+  - name: last_actor_kind
+    type: string
+    description: user|operator|system - resolves which last_actor_* column is populated
 - name: EngineeringIssueLink
   description: Link between a SupportTicket on the Antirion-side support queue and an internal engineering tracker issue.
   fields:
