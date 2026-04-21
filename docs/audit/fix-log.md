@@ -541,3 +541,23 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-008 (2026-04-20) | m12 STORY-200 errors list | applied | Populated errors: [401,403,404] |
 | EPIC-008 (2026-04-20) | X1..X7 cross-epic | deferred | Need coordination / U14 |
 | EPIC-008 (2026-04-20) | U1..U16 uncited-required | deferred | Each requires net-new feature / worker; product input |
+| EPIC-009 (2026-04-20) | C1 STORY-237 Incident model | applied | Rewrote ACs to use Incident; added publish AC and publish-gated StatusPageIncident flow |
+| EPIC-009 (2026-04-20) | C2 PostMortem API body | applied | POST /api/alerts/:id/post-mortem now takes summary/timeline/impact/root_cause |
+| EPIC-009 (2026-04-20) | C3 Slo.org_id nullable | applied | org_id now nullable; added scope_kind (tenant\|platform); STORY-244 AC-002 adds control-plane SLO |
+| EPIC-009 (2026-04-20) | C4 AlertTimelineEntry enum | applied | STORY-243 now writes type "escalate" with escalation message |
+| EPIC-009 (2026-04-20) | C5 AlertRuleSubscription | deferred | Needs new model; product input |
+| EPIC-009 (2026-04-20) | C6 AlertEvent.source | applied (STORY-189) | Set in EPIC-008 pass; other generators deferred |
+| EPIC-009 (2026-04-20) | M1 /ack vs /acknowledge | applied | STORY-228 path renamed to /ack to match STORY-234 |
+| EPIC-009 (2026-04-20) | M2/M3/M4 STORY-232 coverage | deferred | Needs AlertRule.audience refactor + extra ACs |
+| EPIC-009 (2026-04-20) | M5 STORY-237 participants routing | applied | AC-001 now routes through FEAT-102 with canonical audience role |
+| EPIC-009 (2026-04-20) | M6 PagerDuty gating | deferred | Needs product input on air-gapped fallback |
+| EPIC-009 (2026-04-20) | M7 FEAT-102 in-app inbox | applied | Description updated to include in-app inbox |
+| EPIC-009 (2026-04-20) | M8 STORY-238 ActionItem API | applied | Added POST/PATCH endpoints; data_models extended |
+| EPIC-009 (2026-04-20) | M9 STORY-237 publish AC | applied | AC-004 covers publish-to-status-page path |
+| EPIC-009 (2026-04-20) | M10 release-gate | deferred | Needs new story under FEAT-174 |
+| EPIC-009 (2026-04-20) | M11 control-plane SLO | applied | STORY-244 AC-002 defines control-plane-availability |
+| EPIC-009 (2026-04-20) | M12 mode declarations | applied | Added mode: both to FEAT-099..FEAT-106 |
+| EPIC-009 (2026-04-20) | m1 STORY-228 AuditLog | applied | AC-001/AC-002 now write AuditLog entries |
+| EPIC-009 (2026-04-20) | m2..m11 minors | deferred | Editorial/new-story work |
+| EPIC-009 (2026-04-20) | X1..X8 cross-epic | deferred | Most tie to C6 / release-gate / worker wiring |
+| EPIC-009 (2026-04-20) | U1..U11 missing features | deferred | Net-new features (evaluation worker, dispatch worker, inbound PD receiver, subscription CRUD, platform rule authoring, etc.) |

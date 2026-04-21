@@ -176,6 +176,16 @@ Each entry: brief description, source audit citation, reason deferred.
 - **M12 BudgetForecast model** — move projected/runs_out_on off Budget; define trend and worker cadence. Needs product input. (docs/audit/epic-008-review.md §M12)
 - **minor drift items (m1, m3, m4, m5, m7, m8, m9, m10, m11)** — boilerplate NFRs, typed-confirmation policy, audit of FX override magnitude, UserBudget.outlier definition, project owner join table, STORY-208 asymmetry, FEAT-097 mode branching, waiver cycle expiry, approval queue cleanup worker. (docs/audit/epic-008-review.md §m1..m11)
 
+### EPIC-009 (2026-04-20 re-audit)
+
+- **C5 AlertRuleSubscription model** — needs new model + API. (docs/audit/epic-009-review-2026-04-20.md §C5)
+- **M2/M3/M4 STORY-232 coverage + audience refactor** — AlertRule.channels → audience is the structural fix; STORY-232 needs email/webhook/in-app ACs + mode collapse + audit-of-audience. (docs/audit/epic-009-review-2026-04-20.md §M2-M4)
+- **M6 PagerDuty gating** — air-gapped fallback path unspecified. (docs/audit/epic-009-review-2026-04-20.md §M6)
+- **M10 release gate on burned error budget** — new story needed under FEAT-174. (docs/audit/epic-009-review-2026-04-20.md §M10)
+- **m2..m11 minors** — scope enum, config_hot_reload vs 10s eval, category enum, channels json, STORY-235 muted-match AC, severity validation, STORY-242 FEAT-102 + digest, STORY-246 depends_on, fires_30d writer, FEAT-104 updates field. (docs/audit/epic-009-review-2026-04-20.md §m*)
+- **X1..X8 cross-epic** — AlertEvent.source not set by emitters (EPIC-008/011 pending), anomaly→AlertEvent, ingestion-health, worker-fleet→AlertEvents, STORY-269 forward-path assertion, etc. (docs/audit/epic-009-review-2026-04-20.md §X*)
+- **U1..U11 uncited-but-required** — alert evaluation worker, notification dispatch worker, inbound PagerDuty webhook, AlertRuleSubscription CRUD, evaluation health monitor, ActionItem CRUD (partial), platform-scope AlertRule authoring, release-promotion SLO gate, anomaly fan-out, inbox writer, iCal on-call sync. (docs/audit/epic-009-review-2026-04-20.md §U*)
+
 ### EPIC-009
 
 - **C1/C2 audience-driven notifications refactor** — structural change to AlertRule.channels and STORY-232 to adopt notifications_model roles. Needs product input. (docs/audit/epic-009-review.md §C1, §C2)

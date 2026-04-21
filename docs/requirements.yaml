@@ -1360,6 +1360,7 @@ features:
   epic: EPIC-009
   title: Alert rule management
   description: Define threshold, window, cooldown, severity and notification channels for each rule.
+  mode: both
   priority: P0
   stories:
   - STORY-223
@@ -1374,6 +1375,7 @@ features:
   epic: EPIC-009
   title: Alert lifecycle
   description: Acknowledge, resolve, snooze and escalate fired alerts.
+  mode: both
   priority: P0
   stories:
   - STORY-228
@@ -1384,6 +1386,7 @@ features:
   epic: EPIC-009
   title: Runbooks
   description: Attach diagnose, mitigate and escalate runbook steps to alert rules.
+  mode: both
   priority: P1
   stories:
   - STORY-230
@@ -1393,7 +1396,8 @@ features:
 - id: FEAT-102
   epic: EPIC-009
   title: Notification channels
-  description: Deliver notifications via email, Slack, PagerDuty and webhooks.
+  description: Deliver notifications via email, Slack, PagerDuty, webhooks and the in-app inbox (FEAT-169).
+  mode: both
   priority: P0
   stories:
   - STORY-232
@@ -1404,6 +1408,7 @@ features:
   epic: EPIC-009
   title: Alert snooze and acknowledge
   description: Snooze an alert rule or acknowledge an active alert with a reason and duration.
+  mode: both
   priority: P0
   stories:
   - STORY-233
@@ -1415,7 +1420,8 @@ features:
 - id: FEAT-104
   epic: EPIC-009
   title: Alert history, incidents and post-mortem
-  description: Browse past alert fires with timeline, declare incidents with severity/participants/updates, and write structured post-mortems linked to affected alerts.
+  description: Browse past alert fires with timeline, declare incidents with severity, participants and tenant-internal update timeline (publish to FEAT-173 for public status-page updates), and write structured post-mortems linked to affected alerts.
+  mode: both
   priority: P1
   stories:
   - STORY-236
@@ -1427,6 +1433,7 @@ features:
   epic: EPIC-009
   title: On-call schedule, rotation and escalation
   description: Define a weekly/daily on-call rotation per team so alerts page the right person, and auto-escalate when the primary does not acknowledge in time.
+  mode: both
   priority: P1
   stories:
   - STORY-239
@@ -1440,7 +1447,8 @@ features:
 - id: FEAT-106
   epic: EPIC-009
   title: SLO tracking
-  description: Define SLOs, render error-budget burn-down, alert on burn.
+  description: Define SLOs (tenant-scope and platform-scope via Slo.scope_kind), render error-budget burn-down, alert on burn.
+  mode: both
   priority: P1
   stories:
   - STORY-244
@@ -12671,6 +12679,7 @@ stories:
     then:
     - Its status becomes "acknowledged"
     - An AlertTimelineEntry of type "ack" is recorded with me as actor
+    - An AuditLog entry records action "alert_event.acknowledge"
     - Further notifications are suppressed until resolve or escalate
   - id: AC-002
     scenario: Resolve alert
@@ -12681,6 +12690,7 @@ stories:
     then:
     - Its status becomes "resolved"
     - An AlertTimelineEntry of type "resolve" is recorded
+    - An AuditLog entry records action "alert_event.resolve"
     - The affected_requests and duration fields are finalized
   ui:
     screens:
@@ -12695,7 +12705,7 @@ stories:
     - resolved
   api:
   - method: POST
-    path: /api/alerts/:id/acknowledge
+    path: /api/alerts/:id/ack
     response:
       alert: AlertEvent
     errors:
@@ -13068,9 +13078,9 @@ stories:
     given:
     - An AlertEvent has status "resolved"
     when:
-    - I click "Add post-mortem", write content and save
+    - I click "Add post-mortem", fill the four required sections (summary, timeline, impact, root_cause) and save
     then:
-    - A PostMortem row is linked to the AlertEvent with author and content
+    - A PostMortem row is linked to the AlertEvent with author and all four sections set (non-empty)
     - Other viewers can open the post-mortem from the alert detail
   ui:
     screens:
@@ -13097,10 +13107,15 @@ stories:
     path: /api/alerts/:id/post-mortem
     request:
       body:
-        content: string
+        title: string
+        summary: string
+        timeline: string
+        impact: string
+        root_cause: string
     response:
       id: string
     errors:
+    - 400
     - 403
     inferred: true
   data_models:
@@ -13123,31 +13138,42 @@ stories:
     given:
     - An AlertEvent is firing at severity "crit"
     when:
-    - I click "Declare incident", pick severity SEV-2 and add 2 participants
+    - I click "Declare incident", pick severity "crit" and add 2 participants
     then:
-    - A StatusPageIncident is created linked to the AlertEvent with state "investigating"
-    - Participants are notified
-    - An AuditLog entry records "incident.declare"
+    - An Incident is created linked to the AlertEvent with state "investigating" and severity in (info|warn|crit)
+    - Participants are notified via FEAT-102 using audience [{role:"incident_participant", user_ids:<list>}]
+    - An AuditLog entry records "incident.declare" with the resolved audience list per project.notifications_model
   - id: AC-002
     scenario: Post an update
     given:
-    - An open StatusPageIncident
+    - An open Incident
     when:
     - I post an update with state "identified" and a message
     then:
-    - The update appears on the public status page and on the incident detail timeline
+    - The update appears on the tenant-internal incident detail timeline (no public status page update until AC-004)
   - id: AC-003
     scenario: Resolve
     given:
-    - An open StatusPageIncident
+    - An open Incident
     when:
     - I mark it resolved with a final update
     then:
-    - State becomes "resolved" and resolved_at is set
+    - Incident.state becomes "resolved" and resolved_at is set
+  - id: AC-004
+    scenario: Publish to status page (gated)
+    given:
+    - An Incident is open
+    when:
+    - I click "Publish to status page"
+    then:
+    - The FEAT-173 publish path is invoked (platform operator gate in saas; platform admin in self_hosted); on success a StatusPageIncident row is created and Incident.published_status_page_incident_id is set
+    - Only after publish does the update appear on the public status page
   data_models:
-  - StatusPageIncident
+  - Incident
   - AlertEvent
   - AuditLog
+  - Notification
+  - StatusPageIncident
   non_functional:
   - Alert evaluation runs on a bounded interval; backlog or missed evaluations raise their own operational alert
   - Notification delivery is retried with exponential backoff by the worker fleet and deduped per rule-fire
@@ -13178,11 +13204,44 @@ stories:
     when:
     - The detail opens
     then:
-    - Each action item shows owner, due_date and status (open, in-progress, done)
+    - Each action item shows owner, due_date and status (one of open|in_progress|done per ActionItem.status enum)
+  api:
+  - method: POST
+    path: /api/post-mortems/:id/action-items
+    request:
+      body:
+        description: string
+        owner_user_id: uuid
+        due_date: timestamp
+    response:
+      action_item: ActionItem
+    errors:
+    - 400
+    - 401
+    - 403
+    - 404
+    inferred: true
+  - method: PATCH
+    path: /api/post-mortems/:id/action-items/:action_item_id
+    request:
+      body:
+        description: string
+        owner_user_id: uuid
+        due_date: timestamp
+        status: string
+    response:
+      action_item: ActionItem
+    errors:
+    - 400
+    - 401
+    - 403
+    - 404
+    inferred: true
   data_models:
   - PostMortem
+  - ActionItem
   - AlertEvent
-  - StatusPageIncident
+  - Incident
   non_functional:
   - Alert evaluation runs on a bounded interval; backlog or missed evaluations raise their own operational alert
   - Notification delivery is retried with exponential backoff by the worker fleet and deduped per rule-fire
@@ -13400,7 +13459,7 @@ stories:
     - The no-ack window elapses without acknowledgement
     then:
     - The secondary is paged
-    - An AlertTimelineEntry records "escalation.secondary"
+    - An AlertTimelineEntry records type "escalate" with message "secondary paged after no-ack window"
   - id: AC-002
     scenario: Escalate on primary locked or DND
     given:
@@ -13431,9 +13490,17 @@ stories:
     given:
     - I open SLOs
     when:
-    - I create an SLO "gateway-availability" with target 99.95% over 30d (matches project.availability_slo gateway data-plane target)
+    - I create a platform-scope SLO "gateway-availability" with target 99.95% over 30d and scope_kind="platform" (org_id null), matching project.availability_slo gateway data-plane target
     then:
     - An SLO row is created and the error budget is initialized
+  - id: AC-002
+    scenario: Define control-plane SLO
+    given:
+    - I am the platform operator (Antirion staff in saas; platform admin in self_hosted)
+    when:
+    - I create a platform-scope SLO "control-plane-availability" with target 99.9% over 30d, matching project.availability_slo control-plane target
+    then:
+    - An SLO row is created with scope_kind="platform" and the error budget is initialized
   data_models:
   - Slo
   non_functional:
@@ -24888,6 +24955,11 @@ models:
     pk: true
   - name: org_id
     type: FK:Org
+    nullable: true
+    description: Null for platform-scope SLOs (gateway fleet, worker fleet, ingest pipeline)
+  - name: scope_kind
+    type: string
+    description: tenant|platform (default tenant)
   - name: name
     type: string
   - name: target_pct
