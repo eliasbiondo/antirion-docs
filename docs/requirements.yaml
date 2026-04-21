@@ -34,7 +34,7 @@ project:
     tenant_isolation: Every query is partitioned by org_id. Per-tenant quotas bound concurrency, CPU-seconds, queue slots and storage so a noisy tenant cannot degrade others. Tenant-isolation is continuously verified by FEAT-134.
     portability: Services are stateless Linux containers that run identically on the reference Kubernetes deployment, the self_hosted Docker-Compose deployment and the managed saas. No component depends on a feature specific to a single cloud provider.
     deployment_modes: Antirion ships in exactly two deployment modes. "saas" is the multi-tenant managed offering operated by Antirion staff; platform-operator surfaces (EPIC-013) are visible only to Antirion staff accounts and never to tenant workspaces. "self_hosted" is deployed inside a customer's own infrastructure; the same platform-operator surfaces are visible only to principals holding the platform admin role on that install. The running mode is pinned at install time, surfaced to every service via config, and included on every audit record. Every feature that differs in scope, availability or data shape between the two modes declares its mode availability explicitly in its description. Features additionally declare `installed_on` when they differ by install type, with values `tenant_install` (default — deployed on every customer install regardless of mode), `antirion_console` (deployed only on Antirion's internally-operated console and never on customer installs) or `both`; absence of `installed_on` means `tenant_install`.
-    notifications_model: Canonical audience roles for every event-notification story. Stories cite these roles instead of inventing local language, and acceptance criteria name the audience per deployment mode. Audience roles are (a) the acting principal (user_id), (b) the owning principal on the resource (Resource.owner_user_id or Team.lead_user_id), (c) the org-scoped contact fields on Org (security_contact, billing_contact, finance_contact, privacy_officer, primary_contact), (d) the platform operator — which resolves to Antirion staff in saas and to principals holding the platform admin role in self_hosted, (e) Antirion-staff-only sub-queues in saas (trust_and_safety, support, sre, dpo, renewals, legal) that have no counterpart in self_hosted. The collapse rules across modes are fixed and every story follows them unchanged. Tenant-scoped roles (a)(b)(c) behave identically in both modes. Platform-operator role (d) is Antirion staff in saas and platform admin in self_hosted. Antirion-staff
+    notifications_model: Canonical audience roles for every event-notification story. Stories cite these roles instead of inventing local language, and acceptance criteria name the audience per deployment mode. Audience roles are (a) the acting principal (user_id), (b) the owning principal on the resource (Resource.owner_user_id or Team.lead_user_id), (c) the org-scoped contact fields on Org (security_contact, billing_contact, finance_contact, privacy_officer, primary_contact, tech_contact), (d) the platform operator — which resolves to Antirion staff in saas and to principals holding the platform admin role in self_hosted, (e) Antirion-staff-only sub-queues in saas (trust_and_safety, support, sre, dpo, renewals, legal) that have no counterpart in self_hosted. The collapse rules across modes are fixed and every story follows them unchanged. Tenant-scoped roles (a)(b)(c) behave identically in both modes. Platform-operator role (d) is Antirion staff in saas and platform admin in self_hosted. Antirion-staff
       sub-queues (e) exist only in saas; in self_hosted the same event routes to platform admin unless the customer has opted in to Antirion phone-home support for the event class (see FEAT-179). When a tenant-contact field is unset in self_hosted the event falls back to platform admin; when unset in saas the event falls back to Org.owner. Cross-tenant signals (isolation breaches, abuse heuristics, sustained anomalies) always reach Antirion trust_and_safety in saas and are silently dropped in self_hosted because the set of tenants is 1. Delivery channels per role are resolved by FEAT-102 notification-channels routing for user-addressable roles and by the platform operator's configured paging integration for (d) and (e). Every audit record on a notification-bearing event records the resolved audience list and the channel attempt, so routing correctness is diffable against this policy.
   tech_stack_hints:
   - next.js
@@ -1016,7 +1016,8 @@ features:
 - id: FEAT-064
   epic: EPIC-006
   title: Invalidation rules
-  description: Event-driven invalidation (logout, template update, nightly refresh, break-glass).
+  description: 'Event-driven cache invalidation. Canonical match events — session.logout, role.change, safety_policy.change, template.update, nightly.refresh, tenant.suspend, org.residency.pin, byok.rotate. InvalidationRule.match.event must be one of this set; unknown event strings are rejected at save time.'
+  mode: both
   priority: P2
   stories:
   - STORY-150
@@ -1333,7 +1334,8 @@ features:
 - id: FEAT-094
   epic: EPIC-008
   title: Budget policy library
-  description: Manage reusable BudgetPolicy records that can be attached to multiple Budgets.
+  description: Manage reusable BudgetPolicy records that can be attached to multiple Budgets. Non-destructive edits (threshold/action changes) cascade to attached Budgets within the config_hot_reload SLA; destructive edits (deletion, incompatible action changes) require detachment from every dependent Budget first.
+  mode: both
   priority: P1
   stories:
   - STORY-208
@@ -12765,7 +12767,7 @@ stories:
     when:
     - I click Create rule
     then:
-    - The first evaluation runs within 10 seconds of save
+    - The first evaluation runs within the project.non_functional_baseline.config_hot_reload SLA (<= 30s) of save
     - If the condition is already sustained for >= for_duration, an AlertEvent fires on the first evaluation tick
     - If not yet sustained, evaluation state is primed so the condition can fire as soon as for_duration elapses
   - id: AC-008
@@ -24943,6 +24945,7 @@ models:
     type: string
   - name: category
     type: string
+    description: budget|anomaly|slo|ingestion|pricing|rate_limit|provider_health|safety|system|custom - canonical category used by subscription filters and by system provisioners (FEAT-199 uses budget; FEAT-186 uses ingestion)
   - name: scope
     type: string
     nullable: true
@@ -25106,6 +25109,7 @@ models:
     nullable: true
   - name: signed_users
     type: int
+    description: Rolling 30-day count of distinct Users who have signed in via this SsoConfig; refreshed by the FEAT-187 rollup worker and rendered on the SSO settings summary card
   - name: domains
     type: json
   - name: require_for_domains
