@@ -48,3 +48,15 @@ Each entry: brief description, source audit citation, reason deferred.
 - **M10 cross-epic cache/safety interactions for canary/shadow** — unaddressed. (docs/audit/epic-005-review.md §M10)
 - **M11 catalog-sync feature** — no automated sync from upstream provider catalogs today. New feature. (docs/audit/epic-005-review.md §M11)
 
+### EPIC-006
+
+- **C-6 streaming × cache** — write/hit semantics for SSE/chunked responses unspecified; new story required. (docs/audit/epic-006-review.md §C-6)
+- **C-7 redaction/cache coherence** — cache key vs redacted prompt policy; SafetyEvent.action suppression rules. Needs product input. (docs/audit/epic-006-review.md §C-7)
+- **M-10 cache scope enumeration** — define cache.read/invalidate/admin scopes. Needs product input. (docs/audit/epic-006-review.md §M-10)
+- **M-12 eviction under write burst** — pick defined behavior when burst exceeds max_size_mb within 60s protection window. Needs product input. (docs/audit/epic-006-review.md §M-12)
+- **X-3 redaction/blocks × cache writes** — cross-epic (EPIC-007). (docs/audit/epic-006-review.md §X-3)
+- **X-4 cache hits × budget counters** — should cache hits still decrement budget? Needs product input. (docs/audit/epic-006-review.md §X-4)
+- **X-6 graceful degradation backend choice** — FEAT-148 needs specified cache backend for degraded reads. (docs/audit/epic-006-review.md §X-6)
+- **R-1/R-2/R-5/R-7 missing cache stories** — template-update/nightly-refresh/break-glass/prompt-segment-CRUD/STORY-145 savings report/per-team purge. Needs product input. (docs/audit/epic-006-review.md §R-1..R-7)
+- **R-6 invalidation event catalog** — InvalidationRule.match has no authoritative event list. Needs product input. (docs/audit/epic-006-review.md §R-6)
+

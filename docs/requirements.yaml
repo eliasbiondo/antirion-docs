@@ -1010,7 +1010,7 @@ features:
   epic: EPIC-006
   title: Cache warmup and preload
   description: Precompute and populate cache entries for a set of prompts or prompt segments ahead of traffic.
-  priority: P0
+  priority: P2
   stories:
   - STORY-154
   ui_references:
@@ -8623,9 +8623,9 @@ stories:
   title: Configure caching per model
   narrative:
     as_a: platform engineer
-    i_want: to choose backend (exact/prompt/semantic), TTL, key strategy and size caps per model
+    i_want: to choose backend (exact|prompt_prefix|semantic), TTL, key strategy (canonical|raw|normalized-semantic) and size caps per model
     so_that: I can tune cost and correctness for each workload
-  priority: P1
+  priority: P0
   acceptance_criteria:
   - id: AC-001
     scenario: Enable exact cache on a model
@@ -8636,6 +8636,7 @@ stories:
     - I save
     then:
     - A CacheConfig row is created for the model
+    - The cache key is computed over (org_id, resolved_model_id, resolved_provider_id, redacted_prompt) - not over aliases or raw prompts
     - 'Subsequent identical requests return cached responses with "cached: true"'
   - id: AC-002
     scenario: Lower TTL
@@ -8674,7 +8675,8 @@ stories:
         key_strategy: string
         max_entry_kb: int
         max_items: int
-        token_discount: number
+        max_size_mb: int
+        eviction_policy: string
         enabled: bool
     response:
       config: CacheConfig
@@ -8688,8 +8690,8 @@ stories:
   - CacheConfig
   - Model
   non_functional:
-  - Cache lookups complete within 5 ms p95 on a hit and never block a miss
-  - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage
+  - Cache lookup (hit-or-miss decision, excluding upstream dispatch on miss) completes in under 500 µs p95 as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
+  - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage, and are partitioned by CacheEntry.org_id so tenant isolation is schema-enforced
 - id: STORY-143
   feature: FEAT-061
   title: Create a semantic cache config
@@ -8829,9 +8831,18 @@ stories:
     given:
     - A day of cached and uncached requests
     when:
-    - The savings report runs
+    - The savings report runs (see STORY-153 analytics endpoint under FEAT-066)
     then:
     - Tokens-saved and dollars-saved are attributed correctly per model/team
+  - id: AC-003
+    scenario: Request cost decomposition on hit
+    given:
+    - A Request was served from cache (Request.cached = true)
+    when:
+    - Cost is computed
+    then:
+    - Request.input_cost = 0 and Request.output_cost = 0
+    - Request.cache_cost = cache_tokens * Model.cache_price / 1,000,000 (see STORY-332)
   data_models:
   - Request
   - CacheConfig
@@ -8863,7 +8874,7 @@ stories:
     when:
     - The previous version v7 is marked retired
     then:
-    - Its status becomes "cold" and its TTL drops to 0
+    - PromptSegment.status becomes "retired" and its TTL drops to 0
   api:
   - method: GET
     path: /api/cache/segments
@@ -8902,8 +8913,9 @@ stories:
     scenario: Bulk invalidate by model
     given:
     - I have searched for entries of model "claude-sonnet-4-5"
+    - The matching set exceeds 100 entries
     when:
-    - I click "Invalidate all in view" and confirm
+    - I click "Invalidate all in view" and type the target model (or team) slug to confirm per project.destructive_action_confirmation_policy
     then:
     - All matching entries are deleted
   api:
@@ -8928,6 +8940,7 @@ stories:
       ok: bool
     errors:
     - 401
+    - 403
     - 404
     inferred: true
   - method: POST
@@ -8936,6 +8949,7 @@ stories:
       body:
         scope: string
         target_id: uuid
+        confirm_slug: string
     response:
       invalidated: int
     errors:
@@ -8949,8 +8963,9 @@ stories:
   - Team
   - AuditLog
   non_functional:
-  - Cache lookups complete within 5 ms p95 on a hit and never block a miss
-  - Cache keys normalize semantics-preserving input variations to maximize hit rate without cross-tenant leakage
+  - Cache lookup (hit-or-miss decision, excluding upstream dispatch on miss) completes in under 500 µs p95 as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
+  - Cache keys are partitioned by CacheEntry.org_id so tenant isolation is schema-enforced
+  - POST /api/cache/invalidate scope ∈ {model, team, key, org}; org scope requires platform-operator privileges and typed-slug confirmation
 - id: STORY-148
   feature: FEAT-063
   title: Invalidate cache entries on BYOK rotation
@@ -8967,7 +8982,7 @@ stories:
     when:
     - The rotation completes
     then:
-    - Matching CacheEntry rows for the affected provider are invalidated
+    - An async purge deletes CacheEntry rows where byok_credential_id = the rotated credential (or, for rows without byok_credential_id, rows matched via Request.api_key_id -> ApiKey.owner -> BYOKCredential); eventual-consistency window documented per config-reload SLA
     - An AuditLog entry records "cache.invalidate" with reason "byok.rotate"
   data_models:
   - CacheEntry
@@ -9200,7 +9215,7 @@ stories:
     - loading
   api:
   - method: GET
-    path: /api/caching/analytics
+    path: /api/cache/analytics
     request:
       query:
         from: timestamp
@@ -9235,9 +9250,11 @@ stories:
     when:
     - I click "Warm up cache" and confirm
     then:
-    - A CacheWarmupJob is created with status "queued"
-    - Each segment is issued as a non-billable cache write request, subject to the segment's TTL
-    - The job records succeeded, failed, skipped counts and completes within the stated ETA
+    - A CacheWarmupJob is created with status "queued" (linked to the acting ApiKey and to the resolved BYOKCredential)
+    - Each segment is issued through the full request pipeline - edge auth, safety detectors (FEAT-070..081), residency enforcement (FEAT-130) and budget enforcement (EPIC-008) apply unchanged
+    - '"Non-billable" refers to Antirion-side markup only; upstream provider charges (for managed or BYOK) still apply and still decrement budget counters by Request.cache_cost on subsequent hits'
+    - Cache writes populate CacheEntry.org_id so tenant isolation is preserved
+    - The job records succeeded, failed, skipped counts
   ui:
     screens:
     - Cache
@@ -9251,7 +9268,7 @@ stories:
     - done
   api:
   - method: POST
-    path: /api/caching/warmup
+    path: /api/cache/warmup
     request:
       body:
         model_id: string
@@ -9303,8 +9320,8 @@ stories:
     - default
     - saving
   api:
-  - method: PUT
-    path: /api/caching/configs/:id
+  - method: PATCH
+    path: /api/cache/configs/:id
     request:
       body:
         eviction_policy: string
@@ -9338,7 +9355,7 @@ stories:
     when:
     - An entry is evicted
     then:
-    - An eviction event is written with reason (policy|ttl|size|safety_policy_change|manual_purge) and rule_id if applicable
+    - A CacheEvictionEvent row is written with reason (policy|ttl|size|safety_policy_change|manual_purge) and rule_id if applicable
   - id: AC-002
     scenario: Browse evictions
     given:
@@ -9348,6 +9365,7 @@ stories:
     then:
     - I see the last 24h of events with reason breakdown
   data_models:
+  - CacheEvictionEvent
   - CacheEntry
   - CacheConfig
   non_functional:
@@ -22011,19 +22029,20 @@ models:
   - name: t
     type: timestamp
 - name: CacheConfig
-  description: Per-model cache configuration.
+  description: Per-model cache configuration. Effective cache cost is driven by Model.cache_price; token_discount has been removed (M-6). Eviction policy and size ceiling live here.
   fields:
   - name: id
     type: uuid
     pk: true
   - name: model_id
     type: FK:Model
-    unique: true
+    description: Not globally unique — one config per (model_id, scope, scope_id); scope-level overrides live in CacheOverride
   - name: backend
     type: string
-    description: exact|prompt|semantic
+    description: exact|prompt_prefix|semantic
   - name: key_strategy
     type: string
+    description: canonical|raw|normalized-semantic
   - name: ttl_sec
     type: int
   - name: max_entry_kb
@@ -22031,8 +22050,13 @@ models:
   - name: max_items
     type: int
     nullable: true
-  - name: token_discount
-    type: number
+  - name: max_size_mb
+    type: int
+    nullable: true
+    description: Aggregate size ceiling per (model, scope) before eviction_policy kicks in
+  - name: eviction_policy
+    type: string
+    description: LRU|LFU|TTL-first
   - name: enabled
     type: bool
   - name: note
@@ -22107,20 +22131,41 @@ models:
     type: string
     nullable: true
 - name: CacheEntry
-  description: A single cached response.
+  description: A single cached response. Tenant-partitioned by org_id; indexed on (org_id, model_id, key_hash).
   fields:
   - name: id
     type: uuid
     pk: true
+  - name: org_id
+    type: FK:Org
   - name: model_id
     type: FK:Model
+  - name: provider_id
+    type: FK:Provider
+    nullable: true
+    description: Resolved provider at write time; used by BYOK rotation invalidation (STORY-148)
+  - name: byok_credential_id
+    type: FK:BYOKCredential
+    nullable: true
+  - name: semantic_cache_config_id
+    type: FK:SemanticCacheConfig
+    nullable: true
   - name: backend
     type: string
+    description: exact|prompt_prefix|semantic
   - name: team_id
     type: FK:Team
     nullable: true
+  - name: user_id
+    type: FK:User
+    nullable: true
+    description: Populated for user-scoped caches; enables InvalidationRule.action = drop-user
+  - name: streamed
+    type: bool
+    description: True when the stored body originated from a streaming request (affects replay framing)
   - name: key_preview
     type: string
+    description: Truncated to 128 chars; generated from the redacted prompt (never raw PII)
   - name: key_hash
     type: string
   - name: size_kb
@@ -22139,6 +22184,34 @@ models:
   - name: similarity_score
     type: number
     nullable: true
+    description: Populated only when backend = semantic; null otherwise
+- name: CacheEvictionEvent
+  description: A single cache-eviction occurrence captured for STORY-156 and downstream observability.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+  - name: cache_entry_id
+    type: uuid
+    description: Denormalized — the evicted entry may already be gone; FK not enforced
+  - name: model_id
+    type: FK:Model
+  - name: reason
+    type: string
+    description: policy|ttl|size|safety_policy_change|manual_purge
+  - name: rule_id
+    type: FK:InvalidationRule
+    nullable: true
+    description: Populated only when reason originates from an InvalidationRule
+  - name: size_kb
+    type: int
+  - name: ttl_remaining_sec
+    type: int
+    nullable: true
+  - name: evicted_at
+    type: timestamp
 - name: InvalidationRule
   description: Event-driven cache invalidation rule.
   fields:
@@ -22165,14 +22238,14 @@ models:
   - name: firings_24h
     type: int
 - name: CacheOverride
-  description: Team- or key-level override of a cache setting.
+  description: Scope-level override of a CacheConfig setting. Precedence (most specific wins) key > byok > env > project > team > model default.
   fields:
   - name: id
     type: uuid
     pk: true
   - name: scope
     type: string
-    description: team|key
+    description: team|key|project|env|byok
   - name: target_id
     type: uuid
   - name: setting

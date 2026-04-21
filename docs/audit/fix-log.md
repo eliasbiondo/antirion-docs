@@ -145,3 +145,34 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-005 | m7 STORY-121 wording | applied | Redis phrasing generalized to shared-store reference |
 | EPIC-005 | m10 RoutingDeploy.type toggle | applied | Removed unused "toggle" from enum |
 | EPIC-005 | X5 STORY-338 routing span fields | applied | Added routing_rule_id, routing_strategy, canary_arm, shadow |
+| EPIC-006 | C-1 CacheEntry.org_id | applied | Added org_id (non-null FK:Org) to CacheEntry |
+| EPIC-006 | C-2 CacheConfig.model_id unique | applied | Removed unique:true; CacheOverride.scope expanded to team|key|project|env|byok with precedence note |
+| EPIC-006 | C-3 eviction_policy/max_size_mb | applied | Added fields to CacheConfig |
+| EPIC-006 | C-4 drop-user unimplementable | applied | Added user_id to CacheEntry |
+| EPIC-006 | C-5 STORY-148 BYOK rotation | applied | Added provider_id, byok_credential_id to CacheEntry; STORY-148 AC rewritten |
+| EPIC-006 | C-6 streaming × cache | deferred | Needs new story; product input |
+| EPIC-006 | C-7 redaction/cache coherence | deferred | Needs product input |
+| EPIC-006 | C-8 warmup bypass | applied | STORY-154 AC rewritten to assert safety/budget/residency apply |
+| EPIC-006 | C-9 typed confirmation | applied | STORY-147 AC-002 now requires typed slug + confirm_slug in body |
+| EPIC-006 | M-1 semantic cache link | applied | Added semantic_cache_config_id to CacheEntry |
+| EPIC-006 | M-2 backend/key_strategy enum | applied | Enumerated backend = exact|prompt_prefix|semantic, key_strategy = canonical|raw|normalized-semantic |
+| EPIC-006 | M-3 URL namespace | applied | Unified /api/cache/* (renamed /api/caching/*) |
+| EPIC-006 | M-4 priority mismatches | applied | FEAT-067 P0 → P2; STORY-142 P1 → P0 |
+| EPIC-006 | M-5 retired vs cold | applied | STORY-146 AC uses status = "retired" |
+| EPIC-006 | M-6 pricing knob | applied | Removed CacheConfig.token_discount; Model.cache_price is authoritative |
+| EPIC-006 | M-7 cache hit cost decomposition | applied | STORY-145 AC-003 added |
+| EPIC-006 | M-8 CacheOverride precedence | applied | Documented in CacheOverride description (most specific wins) |
+| EPIC-006 | M-9 invalidate scope enum | applied | Added scope enum note (model|team|key|org) on STORY-147 non_functional |
+| EPIC-006 | M-10 cache scopes | deferred | Scope enumeration for cache.read/invalidate/admin — needs product input |
+| EPIC-006 | M-11 CacheEvictionEvent | applied | Added model; STORY-156 data_models references it |
+| EPIC-006 | M-12 eviction burst | deferred | Needs product input |
+| EPIC-006 | M-13 key_preview PII | applied | key_preview length bound and redaction note added on model |
+| EPIC-006 | X-1/X-2 cache-key pinning | applied | STORY-142 AC notes resolved-model cache key |
+| EPIC-006 | X-3 redaction/blocks | deferred | Overlaps C-7 |
+| EPIC-006 | X-4 budget on cache hits | deferred | Needs product input |
+| EPIC-006 | X-5 cache lookup latency | applied | STORY-142 non_functional now cites 500µs p95 sub-budget |
+| EPIC-006 | X-6 degraded-mode backend | deferred | Needs product input |
+| EPIC-006 | R-1/R-2/R-5/R-7 new stories | deferred | New stories needed; product input |
+| EPIC-006 | R-3 warmup ETA | skipped-as-non-actionable | Removed "stated ETA" wording via STORY-154 rewrite |
+| EPIC-006 | R-4 eviction rule_id FK | applied | CacheEvictionEvent.rule_id nullable FK:InvalidationRule |
+| EPIC-006 | R-6 invalidation event catalog | deferred | Needs product input |
