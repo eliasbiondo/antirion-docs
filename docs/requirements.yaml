@@ -464,7 +464,7 @@ features:
 - id: FEAT-014
   epic: EPIC-002
   title: Personal preferences
-  description: Theme, density, reduced motion, compact numbers, week start. Accessibility (WCAG 2.1 AA) and loading/empty/error-state rendering are workspace-wide defaults defined in project.ui_baseline rather than per-feature stories.
+  description: Theme, density, reduced motion, compact numbers, week start.
   priority: P2
   stories:
   - STORY-037
@@ -484,7 +484,7 @@ features:
   - proto/account.jsx
 - id: FEAT-016
   epic: EPIC-002
-  title: Personal access tokens
+  title: Personal tokens
   description: Create, list and revoke personal CLI tokens bound to the user's role.
   priority: P1
   stories:
@@ -512,7 +512,7 @@ features:
 - id: FEAT-019
   epic: EPIC-002
   title: Personal login history
-  description: Show the authenticated user their own recent successful and failed sign-in attempts with IP, device and location.
+  description: Show the authenticated user their own recent successful and failed sign-in attempts with IP, user_agent, device and location.
   priority: P1
   stories:
   - STORY-045
@@ -521,7 +521,7 @@ features:
 - id: FEAT-020
   epic: EPIC-002
   title: Personal account deletion
-  description: Let a user request deletion of their personal account with a grace window, owner hand-off, and cancellation path.
+  description: Let a user request deletion of their personal account with a grace window and cancellation path. Sole-owner deletion is blocked; owner hand-off is owned by FEAT-005 (role change) and FEAT-012 (role management).
   priority: P1
   stories:
   - STORY-046
@@ -3719,6 +3719,16 @@ stories:
     - I pick a PNG file and click "Save changes"
     then:
     - The image is uploaded and my avatar shows the new photo
+  - id: AC-004
+    scenario: Handle collision blocks save
+    given:
+    - Another User already has handle "p.okonkwo"
+    when:
+    - I change my handle to "p.okonkwo" and click "Save changes"
+    then:
+    - The PATCH returns 409
+    - I see "Handle already in use" inline
+    - My User record is unchanged
   ui:
     screens:
     - Account
@@ -3745,6 +3755,7 @@ stories:
     errors:
     - 400
     - 401
+    - 409
     inferred: true
   - method: POST
     path: /api/users/me/photo
@@ -3752,7 +3763,7 @@ stories:
       body:
         file: binary
     response:
-      photo_url: string
+      avatar_url: string
     errors:
     - 400
     - 401
@@ -3794,8 +3805,8 @@ stories:
     - I open the verification link
     then:
     - My User.email is updated to "new.email@acme.example"
-    - The EmailVerificationToken is marked used
-    - I see a success page with a link to sign in
+    - EmailVerificationToken.consumed_at is set to now
+    - I see a success page confirming the change; if I opened the link in a signed-out browser, the page offers a "Sign in" shortcut
   - id: AC-002
     scenario: Expired link
     given:
@@ -3879,6 +3890,7 @@ stories:
   priority: P0
   depends_on:
   - STORY-001
+  - STORY-006
   acceptance_criteria:
   - id: AC-001
     scenario: Successful password change
@@ -3892,6 +3904,8 @@ stories:
     - My User.password_hash is rotated
     - All other Sessions are revoked
     - I see a confirmation toast
+    - A Notification of kind "security" ("account.password_changed") is delivered to the acting principal via FEAT-102 channel routing
+    - An AuditLog entry with action "user.password_changed" is written and records the resolved audience list
   - id: AC-002
     scenario: Weak password rejected
     given:
@@ -3917,6 +3931,8 @@ stories:
   data_models:
   - User
   - Session
+  - AuditLog
+  - Notification
   non_functional:
   - Password hashed with argon2id on change
   - All other sessions invalidated on successful change
@@ -3928,16 +3944,18 @@ stories:
     i_want: to see enrolled MFA factors, regenerate recovery codes and clear trusted browsers
     so_that: I control my second factor
   priority: P0
+  depends_on:
+  - STORY-002
   acceptance_criteria:
   - id: AC-001
     scenario: Regenerate recovery codes
     given:
-    - I have 8 of 10 unused recovery codes
+    - I have 8 of 10 unused RecoveryCode rows
     when:
     - I click "Regenerate" in Recovery codes
     then:
-    - A new set of 10 codes is generated and shown once
-    - Old codes are invalidated
+    - All prior unused RecoveryCode rows are marked consumed (consumed_at set to now)
+    - 10 new RecoveryCode rows are created (code_hash stored; plaintext shown exactly once)
   - id: AC-002
     scenario: Clear trusted browsers
     given:
@@ -3966,6 +3984,7 @@ stories:
   data_models:
   - User
   - MfaFactor
+  - RecoveryCode
   - TrustedBrowser
   non_functional:
   - Profile and preference fields treated as PII — redacted from telemetry and error payloads
@@ -3996,7 +4015,7 @@ stories:
     when:
     - I click "Add security key" and complete the ceremony
     then:
-    - A new MfaFactor of type "webauthn" is created
+    - A new MfaFactor with kind "webauthn" is created
   data_models:
   - MfaFactor
   - User
@@ -4070,6 +4089,23 @@ stories:
     then:
     - The PersonalToken is deleted server-side
     - Requests using that token now return 401
+  - id: AC-003
+    scenario: Scope inheritance enforced
+    given:
+    - I am creating a new PersonalToken
+    when:
+    - I submit a scope the acting principal does not hold
+    then:
+    - The request returns 403
+    - No PersonalToken is created
+  - id: AC-004
+    scenario: List tokens
+    given:
+    - I own 3 PersonalToken rows
+    when:
+    - I open Account -> Personal tokens
+    then:
+    - I see each token with name, masked prefix, scopes, created_at and last_used_at (rendered as "never" when null)
   api:
   - method: POST
     path: /api/users/me/tokens
@@ -4093,11 +4129,18 @@ stories:
     - 401
     - 404
     inferred: true
+  - method: GET
+    path: /api/users/me/tokens
+    response:
+      items: PersonalToken[]
+    errors:
+    - 401
+    inferred: true
   data_models:
   - User
   - PersonalToken
   non_functional:
-  - Tokens inherit the user's role and scopes
+  - Tokens inherit the user's role and scopes; a scope the creator does not hold is rejected
   - Raw token shown once and stored only as hash
 - id: STORY-043
   feature: FEAT-017
@@ -4115,7 +4158,7 @@ stories:
     when:
     - I uncheck email for event "audit.weekly"
     then:
-    - My NotificationPreference for that event-channel pair is stored
+    - My NotificationPreference row for event "audit.weekly" has "email" removed from its channels array
     - I stop receiving that digest
   - id: AC-002
     scenario: Set quiet hours
@@ -4174,6 +4217,14 @@ stories:
     then:
     - I receive a ZIP archive containing profile.json, sessions.json, tokens.json, audit.json
     - The signed URL expires after first successful download
+  - id: AC-003
+    scenario: Audience recorded on completion per notifications_model
+    given:
+    - A DataExportJob has just transitioned to status "ready"
+    when:
+    - The worker fans out the completion event
+    then:
+    - An AuditLog entry records the resolved audience list - acting principal in both modes, with the Antirion dpo sub-queue added in saas and suppressed in self_hosted per project.notifications_model
   ui:
     screens:
     - Account
@@ -4186,7 +4237,7 @@ stories:
     - ready
   api:
   - method: POST
-    path: /api/account/data-exports
+    path: /api/users/me/data-exports
     response:
       job_id: string
       eta_at: timestamp
@@ -4195,7 +4246,7 @@ stories:
     - 409
     inferred: true
   - method: GET
-    path: /api/account/data-exports/:id
+    path: /api/users/me/data-exports/:id
     response:
       status: string
       download_url: string
@@ -4218,6 +4269,8 @@ stories:
     i_want: to see my recent successful and failed sign-ins
     so_that: I can spot unfamiliar access to my account
   priority: P1
+  depends_on:
+  - STORY-023
   acceptance_criteria:
   - id: AC-001
     scenario: List recent attempts
@@ -4226,7 +4279,7 @@ stories:
     when:
     - The page loads
     then:
-    - I see the last 30 LoginAttempt rows for my user with time, IP, device, location and outcome
+    - I see the last 30 LoginAttempt rows for my user with time, IP, user_agent, device, location and outcome
     - Failed attempts are visually distinct
     - A "Something unfamiliar? Reset password" shortcut is visible
   - id: AC-002
@@ -4248,7 +4301,7 @@ stories:
     - empty
   api:
   - method: GET
-    path: /api/account/login-history
+    path: /api/users/me/login-history
     request:
       query:
         limit: int
@@ -4279,11 +4332,11 @@ stories:
     - I am not the sole Org owner
     when:
     - I click "Delete my account"
-    - I confirm with my password or MFA and check the consequences box
+    - I confirm with my password or MFA and I type my account handle to confirm
     then:
     - An AccountDeletionRequest is created with status "pending" and scheduled_for now + 30 days
-    - The User.status becomes "pending_deletion"
-    - My personal tokens are marked as rotating and will be revoked at cutover
+    - User.status remains "active" until cutover - pending-deletion state is tracked via AccountDeletionRequest.status
+    - My PersonalToken rows have status set to "rotating" (to be revoked at cutover)
     - A confirmation email is sent to me and to each workspace owner
   - id: AC-002
     scenario: Owner cannot self-delete while sole owner
@@ -4306,15 +4359,17 @@ stories:
     - blocked
   api:
   - method: POST
-    path: /api/account/deletion
+    path: /api/users/me/deletion
     request:
       body:
         password: string
         mfa_code: string
+        confirm_handle: string
     response:
       request_id: string
       scheduled_for: timestamp
     errors:
+    - 400
     - 401
     - 409
     inferred: true
@@ -4345,8 +4400,7 @@ stories:
     - I click "Cancel deletion" on the security panel
     then:
     - The AccountDeletionRequest.status becomes "cancelled"
-    - User.status returns to "active"
-    - My tokens and keys are restored to "active"
+    - My PersonalToken rows with status "rotating" are restored to status "active"
     - An AuditLog entry with action "user.deletion.cancelled" is written
   ui:
     screens:
@@ -4359,7 +4413,7 @@ stories:
     - cancelled
   api:
   - method: DELETE
-    path: /api/account/deletion
+    path: /api/users/me/deletion
     response:
       ok: bool
     errors:
@@ -4380,6 +4434,8 @@ stories:
     i_want: to see my active sessions with device, location and last-active
     so_that: I can kick a lost device
   priority: P1
+  depends_on:
+  - STORY-006
   acceptance_criteria:
   - id: AC-001
     scenario: List sessions
@@ -20965,6 +21021,28 @@ models:
   - name: secret_hash
     type: string
     nullable: true
+  - name: is_primary
+    type: bool
+    description: Exactly one MfaFactor per user is primary at a time
+  - name: created_at
+    type: timestamp
+  relations:
+  - type: belongs_to
+    model: User
+- name: RecoveryCode
+  description: Hashed, single-use recovery code issued for MFA bypass.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: user_id
+    type: FK:User
+  - name: code_hash
+    type: string
+    unique: true
+  - name: consumed_at
+    type: timestamp
+    nullable: true
   - name: created_at
     type: timestamp
   relations:
@@ -21064,6 +21142,9 @@ models:
     unique: true
   - name: scopes
     type: json
+  - name: status
+    type: string
+    description: active|rotating|revoked
   - name: created_at
     type: timestamp
   - name: last_used_at

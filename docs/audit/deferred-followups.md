@@ -15,3 +15,11 @@ Each entry: brief description, source audit citation, reason deferred.
 - **X-2 STORY-020 cross-epic reference to FEAT-015** — audit suggests adding a `related_features` list; no such field in the current schema. Needs cross-epic linkage convention. (docs/audit/epic-001-review.md §X-2)
 - **X-3 STORY-018/019 cross-epic references to EPIC-003** — same issue as X-2. (docs/audit/epic-001-review.md §X-3)
 
+### EPIC-002
+
+- **C-4 FEAT-021/STORY-048 duplication of FEAT-003/STORY-006** — audit recommends collapsing FEAT-021 into FEAT-003 and moving STORY-048 list AC into STORY-006. Partial fix applied (depends_on added); full collapse requires product decision on feature ownership. (docs/audit/epic-002-review.md §C-4)
+- **m-8 STORY-043 quiet-hours semantics** — single global user-level setting vs per-event overrides. Model and API disagree; needs product input. (docs/audit/epic-002-review.md §m-8)
+- **(b)3 STORY-043 → FEAT-102 dependency** — canonical channel routing link not declarable without cross-epic reference field. (docs/audit/epic-002-review.md §(b)3)
+- **(b)4/5 STORY-044 → FEAT-102 / FEAT-167 / FEAT-179 dependencies** — same linkage convention gap. (docs/audit/epic-002-review.md §(b)4-5)
+- **(c)2 FEAT-015 trusted-browser list & individual revoke** — audit suggests a new story or AC to list/revoke TrustedBrowser rows individually. Needs product input. (docs/audit/epic-002-review.md §(c)2)
+
