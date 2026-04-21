@@ -25640,3 +25640,373 @@ models:
     type: FK:User
   - name: logged_at
     type: timestamp
+- name: OperatorPrincipal
+  description: Identity for principals who act on the operator plane. kind=antirion_staff in saas (provisioned via Antirion's corporate IdP); kind=platform_admin in self_hosted (provisioned during FEAT-177 install wizard). Polymorphic audit references read this table before falling back to User.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: kind
+    type: string
+    description: antirion_staff|platform_admin
+  - name: external_id
+    type: string
+    description: Identifier in the underlying IdP (Antirion corporate SSO in saas; install-local SSO or claimed identifier in self_hosted)
+  - name: name
+    type: string
+  - name: email
+    type: string
+    nullable: true
+  - name: active
+    type: bool
+  - name: created_at
+    type: timestamp
+  - name: deactivated_at
+    type: timestamp
+    nullable: true
+- name: PiiPolicy
+  description: Per-tenant override of the global PiiCategory taxonomy. Rows are keyed on (org_id, pii_category_id); reads fall back to PiiCategory defaults when no row exists.
+  fields:
+  - name: org_id
+    type: FK:Org
+    pk: true
+  - name: pii_category_id
+    type: FK:PiiCategory
+    pk: true
+  - name: strictness
+    type: string
+    description: loose|balanced|strict
+  - name: action
+    type: string
+    description: block|redact|flag|allow
+  - name: edited_by_user_id
+    type: FK:User
+    nullable: true
+  - name: edited_at
+    type: timestamp
+    nullable: true
+- name: SafetyAllowanceGrant
+  description: Time-boxed per-fingerprint allow grant written by STORY-169 when an operator overrides a specific SafetyEvent. Detectors consult this table before enforcing a block.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+  - name: fingerprint
+    type: string
+  - name: reason
+    type: string
+  - name: granted_by_user_id
+    type: FK:User
+  - name: created_at
+    type: timestamp
+  - name: expires_at
+    type: timestamp
+- name: AlertRuleSubscription
+  description: Per-user subscription to an AlertRule. Channels override the rule's default audience for the subscribing user.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: alert_rule_id
+    type: FK:AlertRule
+  - name: user_id
+    type: FK:User
+  - name: channels
+    type: json
+    nullable: true
+    description: When null, the rule's default audience applies; otherwise a subset of (email|slack|pagerduty|webhook|inbox) preferred for this subscriber
+  - name: created_at
+    type: timestamp
+- name: Invoice
+  description: A monthly invoice issued by Antirion to a saas workspace. One row per (org_id, period_start).
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+  - name: period_start
+    type: timestamp
+  - name: period_end
+    type: timestamp
+  - name: total
+    type: number
+  - name: currency
+    type: string
+  - name: status
+    type: string
+    description: draft|issued|paid|past_due|void
+  - name: issued_at
+    type: timestamp
+    nullable: true
+  - name: paid_at
+    type: timestamp
+    nullable: true
+  - name: download_url
+    type: string
+    nullable: true
+- name: InvoiceLine
+  description: A single line on an Invoice (plan fee, overage, provider passthrough rollup, credit).
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: invoice_id
+    type: FK:Invoice
+  - name: kind
+    type: string
+    description: plan_fee|commitment|overage|provider_passthrough|credit|adjustment
+  - name: description
+    type: string
+  - name: amount
+    type: number
+  - name: cost_center
+    type: string
+    nullable: true
+- name: InvoiceContest
+  description: A tenant-filed contest against an InvoiceLine. Distinct status machine from SupportTicket.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: invoice_line_id
+    type: FK:InvoiceLine
+  - name: org_id
+    type: FK:Org
+  - name: reason
+    type: string
+  - name: status
+    type: string
+    description: open|under_review|accepted|rejected|resolved
+  - name: opened_by_user_id
+    type: FK:User
+  - name: opened_at
+    type: timestamp
+  - name: resolved_at
+    type: timestamp
+    nullable: true
+- name: CreditRequest
+  description: A tenant-filed credit request (e.g., SLA-breach credit).
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+  - name: amount
+    type: number
+  - name: currency
+    type: string
+  - name: reason
+    type: string
+  - name: status
+    type: string
+    description: open|approved|denied|applied
+  - name: opened_by_user_id
+    type: FK:User
+  - name: opened_at
+    type: timestamp
+  - name: applied_invoice_line_id
+    type: FK:InvoiceLine
+    nullable: true
+- name: HelpArticleView
+  description: One row per help-palette article view. Aggregated by the worker fleet into hourly/daily rollups that STORY-398 AC-002 reads.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+  - name: article_id
+    type: FK:HelpArticle
+  - name: user_id
+    type: FK:User
+    nullable: true
+  - name: at
+    type: timestamp
+- name: StatusPageSubscriber
+  description: Public subscriber record for the FEAT-163 status page. Double-opt-in confirmed via email token; bounces auto-suspend.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: email
+    type: string
+    unique: true
+  - name: status
+    type: string
+    description: pending_confirm|confirmed|unsubscribed|bounced
+  - name: confirm_token_hash
+    type: string
+    nullable: true
+  - name: confirmed_at
+    type: timestamp
+    nullable: true
+  - name: unsubscribed_at
+    type: timestamp
+    nullable: true
+  - name: bounce_count
+    type: int
+  - name: last_bounce_at
+    type: timestamp
+    nullable: true
+- name: InstallBootstrapIntent
+  description: Persists the SSO-only bootstrap claim submitted at FEAT-177 wizard step 3; consumed by the first matching SSO sign-in to grant platform admin.
+  fields:
+  - name: install_id
+    type: string
+    pk: true
+  - name: claimed_identifier
+    type: string
+  - name: idp_config_snapshot
+    type: json
+  - name: created_at
+    type: timestamp
+  - name: consumed_at
+    type: timestamp
+    nullable: true
+- name: AbuseFlag
+  description: Cross-tenant abuse heuristic fire. Produced by the FEAT-196 aggregator and consumed by FEAT-176 operator dashboards.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: tenant_org_id
+    type: FK:Org
+  - name: rule
+    type: string
+    description: jailbreak_mill|credential_stuffing|scrape_pattern|prompt_injection_mill|csam_like|other
+  - name: severity
+    type: string
+    description: info|warn|crit
+  - name: first_seen_at
+    type: timestamp
+  - name: last_seen_at
+    type: timestamp
+  - name: sample_count
+    type: int
+  - name: resolved_at
+    type: timestamp
+    nullable: true
+  - name: resolved_by_operator_id
+    type: FK:OperatorPrincipal
+    nullable: true
+  - name: action
+    type: string
+    nullable: true
+    description: none|suspend_tenant|throttle|escalate
+- name: AccessLog
+  description: Pre-Request rejection record. Holds auth failures, size-cap violations, IP-allowlist violations and other rejections that never produced a Request row.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+    nullable: true
+    description: Null when the rejection happened before tenant resolution (e.g., unknown key)
+  - name: at
+    type: timestamp
+  - name: ip
+    type: string
+  - name: user_agent
+    type: string
+    nullable: true
+  - name: path
+    type: string
+  - name: method
+    type: string
+  - name: outcome
+    type: string
+    description: unauthorized|forbidden|size_violation|ip_denied|geo_blocked|rate_limited|other
+  - name: reason
+    type: string
+    nullable: true
+  - name: bytes_in
+    type: int
+    nullable: true
+- name: OrgSigningSecret
+  description: Org-level signing secret used for webhook HMAC defaults. Rotated by STORY-275 AC-003; previous secret remains valid for a 5-minute replay window after rotation.
+  fields:
+  - name: org_id
+    type: FK:Org
+    pk: true
+  - name: secret_hash
+    type: string
+  - name: previous_secret_hash
+    type: string
+    nullable: true
+  - name: previous_valid_until
+    type: timestamp
+    nullable: true
+  - name: rotated_at
+    type: timestamp
+  - name: rotated_by_user_id
+    type: FK:User
+    nullable: true
+- name: LicenseTier
+  description: Per-tier catalog entry read by FEAT-175 license issuance and FEAT-180 grace-window default. Managed by FEAT-194 on the Antirion-staff console.
+  fields:
+  - name: id
+    type: string
+    pk: true
+    description: enterprise|cloud_assist|... (free-form slug)
+  - name: seats_limit
+    type: int
+  - name: rps_limit
+    type: int
+  - name: retention_days_limit
+    type: int
+  - name: features
+    type: string[]
+  - name: grace_window_days
+    type: int
+  - name: default_phone_home_channels
+    type: string[]
+    description: Subset of (license|metrics|crash|security|support|docs)
+  - name: updated_at
+    type: timestamp
+- name: InstallIdentityKey
+  description: Signing identity key minted for each install at FEAT-177 wizard completion. Used to sign FEAT-179 phone-home payloads and to match SupportTicket.install_id on the Antirion-staff inbound queue (FEAT-181).
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: install_id
+    type: string
+    unique: true
+  - name: public_key_pem
+    type: text
+  - name: issued_at
+    type: timestamp
+  - name: expires_at
+    type: timestamp
+  - name: rotated_from_key_id
+    type: FK:InstallIdentityKey
+    nullable: true
+  - name: revoked_at
+    type: timestamp
+    nullable: true
+- name: TenantSurveyResponse
+  description: A per-User NPS or CSAT response. Saas installs collect via in-product surveys; self_hosted collect via FEAT-179 survey-response phone-home.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+  - name: user_id
+    type: FK:User
+    nullable: true
+  - name: kind
+    type: string
+    description: nps|csat
+  - name: score
+    type: int
+  - name: comment
+    type: string
+    nullable: true
+  - name: captured_at
+    type: timestamp
