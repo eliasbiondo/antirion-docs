@@ -15,7 +15,7 @@ project:
     deployment_model: Gateway data plane, control-plane API and background workers are each deployed as a horizontally scalable cluster of identical replicas behind a load balancer, scaled independently. No replica is a singleton. Loss of a single AZ or replica is transparent to callers.
     statelessness: Gateway and control-plane API nodes hold no request, session, routing or budget state in local memory or disk beyond the lifetime of a single request. All shared state — sessions, rate-limit and budget counters, idempotency keys, circuit-breaker state, cached responses, trusted-browser records, approval tokens — lives in Redis, Postgres or ClickHouse so any node can serve any request and a rolling restart is transparent.
     horizontal_scaling: Each fleet auto-scales on CPU, request rate and queue depth. Capacity plans hold the performance SLO under load with headroom for a 3x traffic burst without shedding. A node-loss event never loses more than that node's in-flight requests.
-    workers: Background work — metric aggregation, request-log ingestion, webhook delivery, cache eviction, retention sweeps, export generation, anomaly scoring, fine-tune job polling, SCIM sync, audit sink fan-out, notification delivery — runs in a dedicated worker fleet that consumes durable queues with visibility timeouts, exponential-backoff retry, poison-message dead-letter queues and at-least-once semantics. Handlers must be idempotent. Worker fleet health is surfaced by FEAT-167.
+    workers: Background work — metric aggregation, request-log ingestion, webhook delivery, cache eviction, retention sweeps, export generation, anomaly scoring, fine-tune job polling, SCIM sync, audit sink fan-out, notification delivery — runs in a dedicated worker fleet that consumes durable queues with visibility timeouts, exponential-backoff retry, poison-message dead-letter queues and at-least-once semantics. Handlers must be idempotent. Worker fleet health is surfaced by FEAT-170 (platform-operator observability) - FEAT-167 has been retired; tenant-admin cancel/requeue of owner_org_id-matched WorkerJob rows lives under FEAT-170 STORY-405.
     concurrency_and_backpressure: Each node enforces a max concurrent request cap and returns 429 or 503 with Retry-After when saturated; streaming connections count against the cap. Upstream provider pools, database connection pools and queue consumer pools are bounded with explicit acquire timeouts. Saturation on any tier surfaces as its own alert signal rather than bleeding into latency.
     shared_limiters: Edge rate limits (FEAT-138), budget counters (EPIC-008) and provider outbound limiters (FEAT-161) use a shared-store sliding-window implementation so horizontal scaling does not multiply a tenant's effective limit. Idempotency-Key lookup (FEAT-141) is cluster-wide and survives node loss.
     config_hot_reload: Routing rules, model catalog, safety and budget policies, rate limits, alert rules and feature flags propagate to every node within 30 seconds without restart and without dropping in-flight requests.
@@ -290,7 +290,6 @@ epics:
   - FEAT-164
   - FEAT-165
   - FEAT-166
-  - FEAT-167
   - FEAT-168
   - FEAT-169
 - id: EPIC-013
@@ -2046,16 +2045,6 @@ features:
   - STORY-398
   ui_references:
   - proto/shell.jsx
-- id: FEAT-167
-  epic: EPIC-012
-  title: Background worker observability
-  description: Surface internal job queues (metric aggregation, webhook delivery, cache eviction, retention) and their health.
-  priority: P1
-  stories:
-  - STORY-399
-  - STORY-400
-  ui_references:
-  - proto/settings-sections.jsx
 - id: FEAT-168
   epic: EPIC-012
   title: Pricing calculator and cost forecast
@@ -19736,105 +19725,6 @@ stories:
   - Long-running work runs in the worker fleet — no synchronous blocking on the request path
   - HelpArticleView events are written on each help-palette article view; an hourly/daily aggregator worker produces the time-range series read by AC-002
   - Surfaces that read shared state tolerate stale data up to the config-reload SLA
-- id: STORY-399
-  feature: FEAT-167
-  title: Monitor internal background workers
-  navigation: admin
-  narrative:
-    as_a: SRE
-    i_want: visibility into internal job queues
-    so_that: I know when aggregation, webhook delivery or retention falls behind
-  priority: P1
-  acceptance_criteria:
-  - id: AC-001
-    scenario: Worker dashboard
-    given:
-    - I am on /operator/workers — the worker fleet is platform infrastructure, so the dashboard lives under the EPIC-013 operator shell, not under tenant /settings
-    when:
-    - The page loads
-    then:
-    - I see a row per WorkerQueue with depth, oldest-age, success rate and p95 processing time
-    - A queue with depth above threshold is marked degraded
-    - Queue-degraded transitions page the platform operator audience — Antirion SRE in saas, platform admin in self_hosted — with severity "warn" and link to this dashboard; the event never pages tenant on-call because worker-fleet saturation is a platform-health signal, not a tenant signal
-  - id: AC-002
-    scenario: Drill into failures
-    given:
-    - A queue has failed jobs
-    when:
-    - I click the row
-    then:
-    - I see a table of recent WorkerJob rows with status "failed", last_error and a "Retry" action
-  ui:
-    screens:
-    - Settings
-    components:
-    - WorkerQueueList
-    - WorkerJobTable
-    states:
-    - ok
-    - degraded
-  api:
-  - method: GET
-    path: /api/workers/queues
-    response:
-      items: WorkerQueue[]
-    errors:
-    - 403
-    inferred: true
-  - method: POST
-    path: /api/workers/jobs/:id/retry
-    response:
-      ok: bool
-    errors:
-    - 403
-    - 404
-    inferred: true
-  data_models:
-  - WorkerQueue
-  - WorkerJob
-  non_functional:
-  - Long-running work runs in the worker fleet — no synchronous blocking on the request path
-  - Surfaces that read shared state tolerate stale data up to the config-reload SLA
-- id: STORY-400
-  feature: FEAT-167
-  title: Cancel running job and requeue dead-lettered job
-  narrative:
-    as_a: workspace admin
-    i_want: to cancel a running WorkerJob or requeue a dead-lettered one
-    so_that: I can recover from stuck or failed jobs
-  priority: P1
-  acceptance_criteria:
-  - id: AC-001
-    scenario: Cancel running tenant-scoped job
-    given:
-    - A WorkerJob is "running" and WorkerJob.owner_org_id = my_org_id
-    when:
-    - I click "Cancel" and confirm
-    then:
-    - The job is signalled to stop and its status becomes "cancelled"
-    - An AuditLog entry records the cancellation
-  - id: AC-002
-    scenario: Requeue dead-lettered tenant-scoped job
-    given:
-    - A WorkerJob is in the dead-letter queue and WorkerJob.owner_org_id = my_org_id
-    when:
-    - I click "Requeue"
-    then:
-    - The job is moved back to its queue with attempt counter reset
-  - id: AC-003
-    scenario: Cross-tenant cancel forbidden
-    given:
-    - A WorkerJob has owner_org_id != my_org_id (or is a platform-wide job with owner_org_id IS NULL)
-    when:
-    - I click "Cancel" or "Requeue" via the tenant-admin surface
-    then:
-    - The API returns 403 "worker_job.cross_tenant_cancel_forbidden" and the job status is unchanged; platform-wide jobs are managed via FEAT-170 STORY-405
-  data_models:
-  - WorkerJob
-  - AuditLog
-  non_functional:
-  - Long-running work runs in the worker fleet — no synchronous blocking on the request path
-  - Surfaces that read shared state tolerate stale data up to the config-reload SLA
 - id: STORY-401
   feature: FEAT-168
   title: Forecast monthly spend with a pricing calculator
@@ -19970,7 +19860,7 @@ stories:
   - id: AC-001
     scenario: Fleet overview
     given:
-    - I am on /settings/fleet
+    - I am on /operator/fleet
     when:
     - The page loads
     then:
@@ -20007,7 +19897,7 @@ stories:
     - deploying
   api:
   - method: GET
-    path: /api/fleet/replicas
+    path: /api/operator/fleet/replicas
     request:
       query:
         fleet: string
@@ -20075,7 +19965,7 @@ stories:
     - forced
   api:
   - method: POST
-    path: /api/fleet/replicas/:id/drain
+    path: /api/operator/fleet/replicas/:id/drain
     request:
       body:
         reason: string
@@ -20087,7 +19977,7 @@ stories:
     - 409
     inferred: true
   - method: POST
-    path: /api/fleet/replicas/:id/terminate
+    path: /api/operator/fleet/replicas/:id/terminate
     request:
       body:
         reason: string
@@ -20117,7 +20007,7 @@ stories:
   - id: AC-001
     scenario: Queue health table
     given:
-    - I am on /settings/fleet/queues
+    - I am on /operator/fleet/queues
     when:
     - The page loads
     then:
@@ -20154,14 +20044,14 @@ stories:
     - stalled
   api:
   - method: GET
-    path: /api/fleet/queues
+    path: /api/operator/fleet/queues
     response:
       items: WorkerQueue[]
     errors:
     - 403
     inferred: true
   - method: POST
-    path: /api/fleet/queues/:name/dlq/requeue
+    path: /api/operator/fleet/queues/:name/dlq/requeue
     request:
       body:
         job_ids: string[]
@@ -20172,7 +20062,7 @@ stories:
     - 404
     inferred: true
   - method: POST
-    path: /api/fleet/queues/:name/dlq/purge
+    path: /api/operator/fleet/queues/:name/dlq/purge
     request:
       body:
         job_ids: string[]
@@ -20204,7 +20094,7 @@ stories:
   - id: AC-001
     scenario: Propagation summary
     given:
-    - I am on /settings/fleet/config
+    - I am on /operator/fleet/config
     when:
     - The page loads
     then:
@@ -20241,7 +20131,7 @@ stories:
     - stalled
   api:
   - method: GET
-    path: /api/fleet/config/propagation
+    path: /api/operator/fleet/config/propagation
     request:
       query:
         limit: int
@@ -20251,7 +20141,7 @@ stories:
     - 403
     inferred: true
   - method: POST
-    path: /api/fleet/config/propagation/:id/retry
+    path: /api/operator/fleet/config/propagation/:id/retry
     request:
       body:
         replica_ids: string[]
@@ -23133,6 +23023,19 @@ models:
     type: int
     nullable: true
     description: Latest CSAT score collected from this Org; rendered by STORY-439
+  - name: ingress_paused_until
+    type: timestamp
+    nullable: true
+    description: When set in the future, tenant ingress is paused until this time; persisted here so the state survives node restarts per baseline statelessness
+  - name: dry_run_all_enabled
+    type: bool
+    description: When true, every request is routed through dry-run mode (no enforcement side-effects)
+  - name: dry_run_all_reason
+    type: string
+    nullable: true
+  - name: dry_run_all_set_by_user_id
+    type: FK:User
+    nullable: true
   - name: sso_enforced
     type: bool
     description: When true, password sign-in is blocked for users in require_for_domains
@@ -27163,7 +27066,7 @@ models:
     type: bool
     description: True when the row is forced-on by deployment_mode=saas (toggle API returns 403)
 - name: PhoneHomeCallLog
-  description: Append-only hash-chained record of every outbound phone-home call made by an install.
+  description: Append-only hash-chained record of every outbound phone-home call made by an install. The payload_sample column lets STORY-432 inspect a sample for diagnostic purposes; retention is time-bounded and the value is redacted on write via the same rules as the original send.
   fields:
   - name: id
     type: uuid
@@ -27174,6 +27077,14 @@ models:
     type: string
   - name: payload_digest
     type: string
+  - name: payload_sample
+    type: text
+    nullable: true
+    description: Optional redacted sample of the payload (same redaction rules as the send path); used by STORY-432 "inspect sample"
+  - name: sample_retained_until
+    type: timestamp
+    nullable: true
+    description: After this time, payload_sample is wiped to null and the UI renders "expired"
   - name: response_code
     type: int
   - name: latency_ms
