@@ -138,7 +138,7 @@ epics:
   - FEAT-044
 - id: EPIC-005
   title: Model catalog and routing
-  description: Manage upstream models and route traffic with weighted, failover, canary and shadow strategies.
+  description: Manage upstream models and route traffic with single, weighted, failover, least-loaded, canary and shadow strategies. The epic also houses the prompt/template registry (FEAT-058) and the model evaluation suite (FEAT-059).
   priority: P0
   features:
   - FEAT-045
@@ -848,7 +848,7 @@ features:
 - id: FEAT-051
   epic: EPIC-005
   title: Circuit breaker and fallback
-  description: Provider-level circuit breaker and per-rule fallback chain on errors, timeouts, rate-limits.
+  description: Per-rule trigger taxonomy and fallback-chain configuration on errors, timeouts and rate-limits; runtime (retry execution, circuit open/close transitions, cluster-wide state) is owned by FEAT-139 and FEAT-142.
   priority: P0
   stories:
   - STORY-121
@@ -929,7 +929,7 @@ features:
 - id: FEAT-059
   epic: EPIC-005
   title: Model evaluation and benchmarking
-  description: Golden datasets, compare models side-by-side, and a translation regression suite that exercises FEAT-072.
+  description: Golden datasets, compare models side-by-side, and a translation regression suite that exercises FEAT-146 (tool/function-calling passthrough) and the other EPIC-011 dialect translation features.
   priority: P1
   stories:
   - STORY-139
@@ -7050,7 +7050,7 @@ stories:
   - Provider
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-105
   feature: FEAT-045
   title: Inspect a model's detail panel
@@ -7098,7 +7098,7 @@ stories:
   - Team
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-106
   feature: FEAT-045
   title: View provider headroom strip on the models page
@@ -7153,7 +7153,7 @@ stories:
   - ProviderRateLimitWindow
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-107
   feature: FEAT-045
   title: View and edit the catalog policy panel
@@ -7180,7 +7180,7 @@ stories:
     - I click "Edit" on a row and change the value
     then:
     - The CatalogPolicy is updated and an AuditLog entry records action "catalog_policy.update" with old and new values
-    - Downstream resolvers (router, edge auth) pick up the change within 60 seconds
+    - Downstream resolvers (router, edge auth) pick up the change within the config-reload SLA
   - id: AC-003
     scenario: Read-only for non-admins
     given:
@@ -7223,12 +7223,12 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-108
   feature: FEAT-046
   title: Add a new model to the catalog
   narrative:
-    as_a: admin
+    as_a: workspace admin
     i_want: to add a model with provider, id, tier and initial status
     so_that: the workspace can start using it
   priority: P0
@@ -7275,7 +7275,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-109
   feature: FEAT-046
   title: Change model lifecycle status
@@ -7326,7 +7326,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-110
   feature: FEAT-047
   title: Manage model aliases
@@ -7375,7 +7375,7 @@ stories:
   - Model
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Failover cascade decisions execute in under 1 ms p95 and never exceed a single additional retry on the hot path
 - id: STORY-111
   feature: FEAT-047
@@ -7446,7 +7446,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Failover cascade decisions execute in under 1 ms p95 and never exceed a single additional retry on the hot path
 - id: STORY-112
   feature: FEAT-048
@@ -7489,7 +7489,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Canary rollbacks complete within 30 seconds of the trigger — no manual step required
 - id: STORY-113
   feature: FEAT-048
@@ -7525,7 +7525,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Canary rollbacks complete within 30 seconds of the trigger — no manual step required
 - id: STORY-114
   feature: FEAT-049
@@ -7593,7 +7593,7 @@ stories:
   - Model
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Shadow traffic is never billed to the tenant and never surfaces to the caller
 - id: STORY-115
   feature: FEAT-049
@@ -7661,7 +7661,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Shadow traffic is never billed to the tenant and never surfaces to the caller
 - id: STORY-116
   feature: FEAT-049
@@ -7696,7 +7696,7 @@ stories:
   - RoutingDeploy
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Shadow traffic is never billed to the tenant and never surfaces to the caller
 - id: STORY-117
   feature: FEAT-049
@@ -7772,7 +7772,7 @@ stories:
   - ProviderHealth
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Shadow traffic is never billed to the tenant and never surfaces to the caller
 - id: STORY-118
   feature: FEAT-050
@@ -7801,6 +7801,8 @@ stories:
   - AlertEvent
   non_functional:
   - Canary health evaluated at least every 30 seconds
+  - Routing and model-catalog changes reach every edge node within the config-reload SLA
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-119
   feature: FEAT-050
   title: Configure a shadow routing rule
@@ -7835,7 +7837,8 @@ stories:
   - Request
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
+  - Shadow traffic is never billed to the tenant and never surfaces to the caller
   - Sticky routing uses a consistent-hash ring so node loss minimally re-shuffles assignments
 - id: STORY-120
   feature: FEAT-050
@@ -7875,7 +7878,7 @@ stories:
   - RoutingRule
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Sticky routing uses a consistent-hash ring so node loss minimally re-shuffles assignments
 - id: STORY-121
   feature: FEAT-051
@@ -7914,7 +7917,7 @@ stories:
   - RoutingDecision
   - AlertEvent
   non_functional:
-  - Circuit breaker state persists in Redis (or equivalent) with TTL = cooldown
+  - Circuit breaker state persists in the shared store per project.non_functional_baseline.statelessness with TTL = cooldown; runtime transitions are owned by FEAT-142
 - id: STORY-122
   feature: FEAT-052
   title: Dry-run a routing rule against recent traffic
@@ -7966,7 +7969,7 @@ stories:
   - Request
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
   - Rule and catalog hot-reload must not drop in-flight streams
 - id: STORY-123
   feature: FEAT-052
@@ -8064,7 +8067,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-125
   feature: FEAT-053
   title: Auto-graduate canary when metrics pass
@@ -8101,7 +8104,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-126
   feature: FEAT-053
   title: Configure canary graduation metric thresholds
@@ -8120,7 +8123,7 @@ stories:
     when:
     - I set error_rate < 1%, p95_latency_ms < 1.2x primary and cost_per_request within 1.1x primary, all over 60m
     then:
-    - The thresholds persist on the rule and drive STORY-118 auto-graduation
+    - The thresholds persist on the rule and drive STORY-125 auto-graduation
   - id: AC-002
     scenario: Org default thresholds
     given:
@@ -8133,7 +8136,7 @@ stories:
   - RoutingRule
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-127
   feature: FEAT-054
   title: Record every routing-rule change as a deploy
@@ -8221,7 +8224,7 @@ stories:
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-129
   feature: FEAT-055
   title: Deprecate a model with migration runbook
@@ -8241,7 +8244,7 @@ stories:
     then:
     - The Model.status becomes "deprecated" and deprecated_on is set
     - A ModelDeprecationNotice is created listing keys and teams still calling the model in the last 7 days
-    - Each affected user with role admin or owner receives an email
+    - A Notification is delivered to the owning principal on each affected resource (ApiKey.owner_user_id, Team.owner) and to Org.tech_contact, with fallback to Org.owner_user_id in saas and platform admin in self_hosted per project.notifications_model; AuditLog records the resolved audience list
     - Requests continue to succeed but include an X-Antirion-Deprecation-Warning header
   - id: AC-002
     scenario: Migration progress
@@ -8365,14 +8368,14 @@ stories:
     when:
     - I click "Delete model" and type the slug
     then:
-    - Deletion proceeds as in STORY-122
+    - Deletion proceeds as in STORY-130
   data_models:
   - Model
   - Request
   - AuditLog
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-132
   feature: FEAT-057
   title: Request a routing rule change
@@ -8396,12 +8399,12 @@ stories:
   - RoutingRule
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-133
   feature: FEAT-057
   title: Approve or reject a routing rule change
   narrative:
-    as_a: platform engineering lead
+    as_a: engineering manager
     i_want: to approve or reject routing rule changes
     so_that: only sanctioned changes reach production
   priority: P1
@@ -8431,7 +8434,7 @@ stories:
   - RoutingDeploy
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-134
   feature: FEAT-058
   title: Version prompts and templates
@@ -8454,7 +8457,7 @@ stories:
   - PromptTemplateVersion
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-135
   feature: FEAT-058
   title: Assign owners to a prompt template
@@ -8477,7 +8480,7 @@ stories:
   - User
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-136
   feature: FEAT-058
   title: Approval gate for template changes
@@ -8500,7 +8503,7 @@ stories:
   - Approval
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-137
   feature: FEAT-058
   title: A/B test prompt templates
@@ -8524,7 +8527,7 @@ stories:
   - Request
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-138
   feature: FEAT-058
   title: Template lineage
@@ -8547,7 +8550,7 @@ stories:
   - PromptTemplateVersion
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-139
   feature: FEAT-059
   title: Define a golden dataset
@@ -8569,7 +8572,7 @@ stories:
   - GoldenDataset
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-140
   feature: FEAT-059
   title: Compare models on a golden dataset
@@ -8592,10 +8595,10 @@ stories:
   - Model
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-141
   feature: FEAT-059
-  title: Translation regression suite for FEAT-072
+  title: Translation regression suite for FEAT-146 (and related EPIC-011 dialect translation features)
   narrative:
     as_a: platform engineer
     i_want: a suite that exercises cross-dialect translation
@@ -8614,7 +8617,7 @@ stories:
   - GoldenDataset
   non_functional:
   - Routing and model-catalog changes reach every edge node within the config-reload SLA
-  - Routing decisions execute in under 2 ms p95 on the request path
+  - Routing decisions (rule match and target selection only, excluding translate and outbound) execute in under 200 µs p95 on the request path, as a sub-budget of the gateway-added latency baseline (p95 <= 1 ms end-to-end)
 - id: STORY-142
   feature: FEAT-060
   title: Configure caching per model
@@ -16678,7 +16681,7 @@ stories:
     when:
     - A request is served
     then:
-    - A span "antirion.gateway.request" is exported with attributes request_id, org_id, team_id, user_id, api_key_id, model, provider, cost, input_tokens, output_tokens, latency_ms, ttft_ms
+    - A span "antirion.gateway.request" is exported with attributes request_id, org_id, team_id, user_id, api_key_id, model, provider, routing_rule_id, routing_strategy, canary_arm, shadow, cost, input_tokens, output_tokens, latency_ms, ttft_ms
     - Child spans are emitted for dialect translation, outbound call, retry attempts and streaming
   - id: AC-002
     scenario: Inbound traceparent preserved
@@ -23220,7 +23223,7 @@ models:
     type: FK:RoutingRule
   - name: type
     type: string
-    description: edit|canary.promote|rollback|toggle
+    description: edit|canary.promote|rollback
   - name: before
     type: json
     nullable: true

@@ -36,3 +36,15 @@ Each entry: brief description, source audit citation, reason deferred.
 - **M6 FEAT-033 to EPIC-009 alerts integration** — add a story bridging Anomaly → Alert / AlertEvent. Needs product input. (docs/audit/epic-004-review.md §M6)
 - **m1 non_functional copy-paste drift** — broad editorial pass to prune per-story NFR lists that inherit inapplicable constraints. Deferred; out of scope for the targeted-fix round. (docs/audit/epic-004-review.md §m1)
 
+### EPIC-005
+
+- **C3 mid-stream retry semantics contradiction** — baseline says "retry the remaining prefix"; FEAT-139 STORY-327 AC-002 says "do not retry mid-stream". Needs product input. (docs/audit/epic-005-review.md §C3)
+- **C8 RoutingRule structured sub-schemas** — retry/canary/shadow/circuit still JSON blobs; audit proposes named sub-schemas. Structural change; needs product input. (docs/audit/epic-005-review.md §C8)
+- **M1 canary evaluation windows** — three windows (5m/15m/60m) across stories; audit proposes distinct named fields. Needs product input. (docs/audit/epic-005-review.md §M1)
+- **M2 missing strategy stories** — single, weighted, failover, least-loaded each lack a selection-semantics story. (docs/audit/epic-005-review.md §M2)
+- **M4 CatalogPolicy ↔ RoutingRule precedence** — overlapping retry/fallback policies with no merge rule. Needs product input. (docs/audit/epic-005-review.md §M4)
+- **M5 ModelAlias.fallback vs RoutingRule.fallback** — naming collision; needs product input. (docs/audit/epic-005-review.md §M5)
+- **M7 canary auto-promote chain mutation** — promote silently rewrites fallback chain; needs UX decision. (docs/audit/epic-005-review.md §M7)
+- **M10 cross-epic cache/safety interactions for canary/shadow** — unaddressed. (docs/audit/epic-005-review.md §M10)
+- **M11 catalog-sync feature** — no automated sync from upstream provider catalogs today. New feature. (docs/audit/epic-005-review.md §M11)
+

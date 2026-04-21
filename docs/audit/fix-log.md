@@ -121,3 +121,27 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-004 | X3 FEAT-102 export notification | applied | STORY-088 AC-002 rewired via FEAT-102 |
 | EPIC-004 | X4 EPIC-013 overlap note | applied | Added tenant-scoped clarification to EPIC-004 description |
 | EPIC-004 | R5 EPIC-004 scope | applied | Expanded epic description |
+| EPIC-005 | C1 routing latency budget | applied | Replaced repeated NFR line (32 stories) with 200µs p95 sub-budget note referencing baseline |
+| EPIC-005 | C2 FEAT-051 scope | applied | Description restated to config-only; runtime owned by FEAT-139/FEAT-142 |
+| EPIC-005 | C3 mid-stream retry | deferred | Baseline vs FEAT-139 contradiction needs product input |
+| EPIC-005 | C4 STORY-107 hot-reload SLA | applied | Changed 60s to config-reload SLA |
+| EPIC-005 | C5 STORY-131 ref | applied | STORY-122 → STORY-130 |
+| EPIC-005 | C6 STORY-126 ref | applied | STORY-118 → STORY-125 |
+| EPIC-005 | C7 FEAT-059 / STORY-141 ref | applied | FEAT-072 → FEAT-146 (dialect translation) |
+| EPIC-005 | C8 RoutingRule sub-schemas | deferred | Structural model change; requires product input |
+| EPIC-005 | M1 canary windows | deferred | Multiple named windows need product input |
+| EPIC-005 | M2 missing strategy stories | deferred | New stories needed |
+| EPIC-005 | M3 epic strategies list | applied | Description now lists six strategies + notes FEAT-058/059 inclusion |
+| EPIC-005 | M4 CatalogPolicy precedence | deferred | Needs product input on merge semantics |
+| EPIC-005 | M5 fallback naming collision | deferred | Structural; needs product input |
+| EPIC-005 | M6 shadow NFR placement | applied | Moved "Shadow traffic never billed" onto STORY-119 |
+| EPIC-005 | M7 canary auto-promote mutation | deferred | UX / product input required |
+| EPIC-005 | M8 STORY-118 NFRs | applied | Added config-reload SLA and routing decision sub-budget lines |
+| EPIC-005 | M9 STORY-129 audience | applied | Rewritten per canonical notifications_model roles |
+| EPIC-005 | M10 cache/safety cross-epic | deferred | Needs product input |
+| EPIC-005 | M11 catalog sync | deferred | New feature needed |
+| EPIC-005 | M12 FEAT-058/059 placement | applied | EPIC-005 description now acknowledges FEAT-058/059 |
+| EPIC-005 | m4 role drift | applied | STORY-108 narrator → "workspace admin"; STORY-133 → "engineering manager" |
+| EPIC-005 | m7 STORY-121 wording | applied | Redis phrasing generalized to shared-store reference |
+| EPIC-005 | m10 RoutingDeploy.type toggle | applied | Removed unused "toggle" from enum |
+| EPIC-005 | X5 STORY-338 routing span fields | applied | Added routing_rule_id, routing_strategy, canary_arm, shadow |
