@@ -93,3 +93,31 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | EPIC-003 | X5 Org.owner_user_id | applied | Added owner_user_id FK:User (nullable) to Org |
 | EPIC-003 | (b) STORY-065/066/067 depends_on STORY-049 | applied | Declared dependencies |
 | EPIC-003 | (c) BYOK rotation policy edit | deferred | New story needed under FEAT-025 — product input required |
+| EPIC-004 | C1 FEAT-041 description | conflict | EPIC-003 audit wanted FEAT-024; EPIC-004 audit wanted FEAT-033 (more specific) — preferred later fix. Noted in deferred. |
+| EPIC-004 | C2 AnomalyDetector model | applied | Added model with category/enabled/threshold_config/cooldown_seconds/last_fired_at; Anomaly gained detector_id and category; STORY-095/096/097 rewired |
+| EPIC-004 | C3 SavedView scope/view_type | applied | Added scope and view_type fields |
+| EPIC-004 | C4 Request tool/cancellation fields | applied | Added ToolInvocation model; Request.tools renamed to tool_count; added client_cancelled, mid_stream_dropped |
+| EPIC-004 | C5 STORY-085 audience | applied | Added AC-003 recording audience_snapshot + saas/self_hosted routing per notifications_model |
+| EPIC-004 | M1 FEAT-029 description | applied | Trimmed "embedded request log" from description |
+| EPIC-004 | M2 FEAT-031 tools/flags drill-in | deferred | Needs new AC or story; product input |
+| EPIC-004 | M3 duplicate replay | applied | STORY-079 no longer defines endpoint; STORY-090 is canonical |
+| EPIC-004 | M4 STORY-088 RBAC/audit/notification | applied | Added requests.export scope gate, AuditLog, FEAT-102 Notification |
+| EPIC-004 | M5 STORY-087 RBAC search | applied | Added AC-003 for role/team scope and redaction |
+| EPIC-004 | M6 FEAT-033 → FEAT-099 integration | deferred | Needs new story; product input |
+| EPIC-004 | M7 MetricSeries scope/cost | applied | Extended scope enum; added spend_input/spend_output/spend_cache columns |
+| EPIC-004 | M8 STORY-099 duplicate | applied | Collapsed to pointer referencing STORY-093 |
+| EPIC-004 | M9 mode declarations | applied (EPIC-scope) | Added tenant-scoped note to EPIC-004 description rather than per-feature declarations |
+| EPIC-004 | M10 STORY-085 review status | applied | Rewritten AC-002 against Anomaly.review_status enum |
+| EPIC-004 | m1 non_functional drift | deferred | Broad editorial pass; out of scope for this round |
+| EPIC-004 | m2 STORY-072 filters | applied | Added api_key_id, user_id to query |
+| EPIC-004 | m3 STORY-074 dangling ref | applied | Replaced with STORY-088 |
+| EPIC-004 | m4 STORY-092 AuditLog | applied | Added AuditLog to data_models |
+| EPIC-004 | m5 STORY-093 depends_on + NFR | applied | Added depends_on STORY-092 and signed-token NFR |
+| EPIC-004 | m6 detector PATCH endpoint | applied | Added PATCH /api/anomaly-detectors/:id to STORY-096 |
+| EPIC-004 | m7 STORY-094 breakdowns | applied | Added AC-003 covering project/api_key/env breakdowns |
+| EPIC-004 | m8 RetentionConfig.anomalies_days | applied | Added field |
+| EPIC-004 | X1 STORY-338 span attrs | applied | Added request_id, org_id, team_id, user_id to span attributes |
+| EPIC-004 | X2 time-range dependency | applied | Added depends_on STORY-086 to STORY-070/072/082/094 |
+| EPIC-004 | X3 FEAT-102 export notification | applied | STORY-088 AC-002 rewired via FEAT-102 |
+| EPIC-004 | X4 EPIC-013 overlap note | applied | Added tenant-scoped clarification to EPIC-004 description |
+| EPIC-004 | R5 EPIC-004 scope | applied | Expanded epic description |

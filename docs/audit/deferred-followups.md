@@ -29,3 +29,10 @@ Each entry: brief description, source audit citation, reason deferred.
 - **X1 FEAT-133 BYOK data class enumeration** — add BYOK credential ciphertext as a CMK-wrappable data class in FEAT-133. Deferred to EPIC-010 pass. (docs/audit/epic-003-review.md §X1)
 - **(c) BYOK rotation policy edit story** — `rotate_policy_days` observable but not editable; needs a new story under FEAT-025. Product input required. (docs/audit/epic-003-review.md §(c))
 
+### EPIC-004
+
+- **C1 conflict FEAT-041 citation** — EPIC-003 audit proposed FEAT-024; EPIC-004 audit proposed FEAT-033. Applied later (more specific) fix to FEAT-033. Flagging in case reviewers disagree. (docs/audit/epic-003-review.md §C4 + docs/audit/epic-004-review.md §C1)
+- **M2 FEAT-031 tools/flags drill-in** — add ACs surfacing per-request tool invocation list and safety/pii flag rationale. Needs product input on drawer UI. (docs/audit/epic-004-review.md §M2)
+- **M6 FEAT-033 to EPIC-009 alerts integration** — add a story bridging Anomaly → Alert / AlertEvent. Needs product input. (docs/audit/epic-004-review.md §M6)
+- **m1 non_functional copy-paste drift** — broad editorial pass to prune per-story NFR lists that inherit inapplicable constraints. Deferred; out of scope for the targeted-fix round. (docs/audit/epic-004-review.md §m1)
+

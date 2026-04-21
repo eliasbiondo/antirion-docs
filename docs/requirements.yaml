@@ -117,7 +117,7 @@ epics:
   - FEAT-028
 - id: EPIC-004
   title: Observability
-  description: Overview dashboard, request log, analytics, anomaly signals, search and export.
+  description: Overview dashboard, request log, request detail, analytics, anomaly signals and detector configuration, search and export, replay and comparison, share links, cost breakdown, saved views, tool-use and streaming views. All surfaces in this epic are tenant-scoped; the platform-wide analogues (cluster/fleet health, cross-tenant abuse signals, platform release rollups) live in EPIC-013 and are visible only to the platform operator. Telemetry is produced by FEAT-143 and the request-log ingestion worker.
   priority: P0
   features:
   - FEAT-029
@@ -614,7 +614,7 @@ features:
 - id: FEAT-029
   epic: EPIC-004
   title: Gateway overview dashboard
-  description: KPI strip, charts band, team/model/provider breakdowns, embedded request log.
+  description: KPI strip, charts band, team/model/provider breakdowns. Drill-in links jump to /requests for row-level inspection.
   priority: P0
   stories:
   - STORY-070
@@ -746,7 +746,7 @@ features:
 - id: FEAT-041
   epic: EPIC-004
   title: Anomaly detector configuration
-  description: Configure the anomaly detectors that drive FEAT-024 signals — list, set thresholds, enable/disable by category.
+  description: Configure the anomaly detectors that drive FEAT-033 anomaly signals — list, set thresholds, enable/disable by category.
   priority: P1
   stories:
   - STORY-095
@@ -5352,6 +5352,8 @@ stories:
     i_want: a single dashboard of KPIs, charts and breakdowns for the selected time range
     so_that: I know the health of the gateway at a glance
   priority: P0
+  depends_on:
+  - STORY-086
   acceptance_criteria:
   - id: AC-001
     scenario: Populated overview for 6h range
@@ -5458,9 +5460,11 @@ stories:
   title: Filter the request log
   narrative:
     as_a: engineer
-    i_want: to filter the request log by provider, team, model, env, status, tag, cached, streamed, flagged, latency and cost
+    i_want: to filter the request log by provider, team, model, env, status, tag, cached, streamed, flagged, latency, cost, api key and user
     so_that: I can find the exact requests I care about
   priority: P0
+  depends_on:
+  - STORY-086
   acceptance_criteria:
   - id: AC-001
     scenario: Apply multiple filters
@@ -5541,6 +5545,10 @@ stories:
         status_class:
         - string
         tag:
+        - string
+        api_key_id:
+        - string
+        user_id:
         - string
         cached: string
         streamed: string
@@ -5684,7 +5692,7 @@ stories:
     when:
     - I press "e"
     then:
-    - The CSV export flow starts for the current filtered view (see STORY for CSV export)
+    - The CSV export flow starts for the current filtered view (see STORY-088)
   - id: AC-007
     scenario: Shortcut hints footer
     given:
@@ -5929,14 +5937,14 @@ stories:
     - A cURL command with the original route, headers (key redacted) and body is placed on the clipboard
     - I see a "Copied" toast
   - id: AC-002
-    scenario: Replay a request
+    scenario: Replay entry point
     given:
     - The drawer is open for a request
     - My role has the "requests.replay" scope
     when:
     - I click "Replay"
     then:
-    - A new Request is sent through the gateway using the original prompt
+    - The replay flow owned by STORY-090 is invoked (canonical endpoint POST /api/requests/:id/replay)
     - A new drawer opens for the replay result
   - id: AC-003
     scenario: Replay blocked by role
@@ -5946,16 +5954,6 @@ stories:
     - I try to replay a request
     then:
     - The Replay button is disabled with a tooltip explaining the missing scope
-  api:
-  - method: POST
-    path: /api/requests/:id/replay
-    response:
-      new_request: Request
-    errors:
-    - 401
-    - 403
-    - 404
-    inferred: true
   data_models:
   - Request
   non_functional:
@@ -6019,6 +6017,8 @@ stories:
 - id: STORY-082
   feature: FEAT-032
   title: Explore spend and SLA analytics
+  depends_on:
+  - STORY-086
   narrative:
     as_a: engineering manager
     i_want: trend, SLA and efficiency analytics
@@ -6249,7 +6249,19 @@ stories:
     when:
     - I click "Mark reviewed"
     then:
-    - The anomaly's review status becomes "reviewed" with my user as the reviewer
+    - Anomaly.review_status becomes "reviewed"
+    - Anomaly.reviewed_at is set to now and Anomaly.reviewed_by_user_id is set to my user id
+  - id: AC-003
+    scenario: Sustained/critical anomaly resolves audience per notifications_model
+    given:
+    - An Anomaly of severity "crit" or a sustained anomaly is raised
+    when:
+    - The anomaly-detection worker writes the row
+    then:
+    - Anomaly.audience_snapshot records the resolved audience list per project.notifications_model (acting principal, owner, Org contacts)
+    - In saas mode the event is dispatched to the Antirion trust_and_safety sub-queue
+    - In self_hosted mode the cross-tenant signal is silently dropped (per project.notifications_model)
+    - The resolved audience list is visible in the drawer
   api:
   - method: GET
     path: /api/anomalies
@@ -6353,6 +6365,15 @@ stories:
     - I search "invoice totals"
     then:
     - /requests filters to rows whose prompt matches
+  - id: AC-003
+    scenario: RBAC and team scope honored
+    given:
+    - The caller has role "developer" in team "copilot"
+    when:
+    - Search results are computed
+    then:
+    - Results include only Request rows the caller can list in /requests per FEAT-005 roles and team membership
+    - When a row is redacted for the caller, only Request.prompt_redacted is matched and rendered
   api:
   - method: GET
     path: /api/search
@@ -6385,20 +6406,32 @@ stories:
     scenario: Export <= 10k rows
     given:
     - The filtered set has 4,200 rows
+    - The caller holds the "requests.export" scope
     when:
     - I click "Export CSV"
     then:
     - A CSV is downloaded with the displayed columns
     - Each row corresponds to one Request
+    - Exported bodies honor the caller's effective PII-redaction policy (per RetentionConfig / FEAT-113)
+    - An AuditLog entry records actor, filter set, row count and action "requests.export"
   - id: AC-002
     scenario: Export too large
     given:
     - The filtered set has 250k rows
+    - The caller holds the "requests.export" scope
     when:
     - I click "Export CSV"
     then:
     - A modal offers an async export
-    - I receive a download link by email/webhook when ready
+    - On completion a Notification is delivered to the acting principal via FEAT-102 channel routing
+  - id: AC-003
+    scenario: Missing scope
+    given:
+    - The caller does not hold the "requests.export" scope
+    when:
+    - I attempt to export
+    then:
+    - The response is 403 and no export job is created
   api:
   - method: POST
     path: /api/requests/export
@@ -6410,11 +6443,14 @@ stories:
       download_url: string
       async: bool
     errors:
-    - 401
     - 400
+    - 401
+    - 403
     inferred: true
   data_models:
   - Request
+  - AuditLog
+  - Notification
   non_functional:
   - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
   - Dashboards and analytics read from pre-aggregated rollups computed by the worker fleet; raw-log fallback only within the last minute
@@ -6633,6 +6669,7 @@ stories:
   - ShareLink
   - SavedView
   - Request
+  - AuditLog
   non_functional:
   - Tokens are signed with a rotating key; only the hash is stored
 - id: STORY-093
@@ -6643,6 +6680,8 @@ stories:
     i_want: to share a saved analytics view with a colleague via a signed link
     so_that: they can see the same dashboard without rebuilding it
   priority: P2
+  depends_on:
+  - STORY-092
   acceptance_criteria:
   - id: AC-001
     scenario: Create analytics_view share link
@@ -6668,6 +6707,7 @@ stories:
   non_functional:
   - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
   - Dashboards and analytics read from pre-aggregated rollups computed by the worker fleet; raw-log fallback only within the last minute
+  - Tokens are signed with a rotating key; only the hash is stored
 - id: STORY-094
   feature: FEAT-040
   title: View spend broken down by model, team and cost component
@@ -6676,6 +6716,8 @@ stories:
     i_want: cost broken down by model, team, project, key and environment
     so_that: I can allocate spend internally
   priority: P1
+  depends_on:
+  - STORY-086
   acceptance_criteria:
   - id: AC-001
     scenario: Breakdown for the current month
@@ -6694,6 +6736,14 @@ stories:
     - I click "Export CSV"
     then:
     - I receive a CSV with columns group_keys, input_cost, output_cost, cache_cost, total_cost, request_count
+  - id: AC-003
+    scenario: Breakdown by project, api_key and env
+    given:
+    - I am on /analytics
+    when:
+    - I group by Project, by API Key or by Environment
+    then:
+    - The chart and table recompute for each dimension using MetricSeries rollups when the range exceeds 7 days (MetricSeries.scope in project|api_key|env)
   ui:
     screens:
     - Analytics
@@ -6737,9 +6787,9 @@ stories:
     when:
     - The page loads
     then:
-    - I see each detector with category, enabled status, threshold summary and last_fired_at
+    - I see each AnomalyDetector with category, enabled status, threshold_config summary and last_fired_at
   data_models:
-  - Anomaly
+  - AnomalyDetector
   non_functional:
   - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
   - Dashboards and analytics read from pre-aggregated rollups computed by the worker fleet; raw-log fallback only within the last minute
@@ -6755,13 +6805,28 @@ stories:
   - id: AC-001
     scenario: Set thresholds
     given:
-    - A detector "latency_spike" has threshold "p95 > 2s for 5m"
+    - An AnomalyDetector "latency_spike" has threshold_config {"p95_ms":2000,"window_seconds":300}
     when:
-    - I change to "p95 > 3s for 10m" and save
+    - I change to {"p95_ms":3000,"window_seconds":600} and save
     then:
-    - The detector config is updated and an AuditLog entry records the change
+    - AnomalyDetector.threshold_config is updated and an AuditLog entry records the change
+  api:
+  - method: PATCH
+    path: /api/anomaly-detectors/:id
+    request:
+      body:
+        enabled: bool
+        threshold_config: json
+    response:
+      detector: AnomalyDetector
+    errors:
+    - 400
+    - 401
+    - 403
+    - 404
+    inferred: true
   data_models:
-  - Anomaly
+  - AnomalyDetector
   - AuditLog
   non_functional:
   - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
@@ -6778,14 +6843,14 @@ stories:
   - id: AC-001
     scenario: Disable category
     given:
-    - The "cost_spike" category is enabled
+    - An AnomalyDetector of category "cost_spike" is enabled
     when:
-    - I toggle it off
+    - I toggle it off via PATCH /api/anomaly-detectors/:id { enabled: false }
     then:
-    - No new Anomaly rows of that category are created
+    - AnomalyDetector.enabled becomes false and no new Anomaly rows of that category are created
     - An AuditLog entry records the toggle
   data_models:
-  - Anomaly
+  - AnomalyDetector
   - AuditLog
   non_functional:
   - Queries bound by an explicit time window and paginated with a cursor — no unbounded scans
@@ -6821,16 +6886,17 @@ stories:
     so_that: colleagues can open the same view
   priority: P1
   depends_on:
+  - STORY-093
   - STORY-098
   acceptance_criteria:
   - id: AC-001
-    scenario: Create share link
+    scenario: Reuses FEAT-039 share-link flow
     given:
     - I have a SavedView of type analytics
     when:
     - I click "Share"
     then:
-    - A ShareLink with resource_type="analytics_view" is created
+    - The flow owned by STORY-093 runs unchanged (ShareLink with resource_type="analytics_view" is created); this story exists only to surface the entry point on the analytics view picker
   data_models:
   - SavedView
   - ShareLink
@@ -16612,7 +16678,7 @@ stories:
     when:
     - A request is served
     then:
-    - A span "antirion.gateway.request" is exported with attributes model, provider, team, user, api_key_id, cost, input_tokens, output_tokens, latency_ms, ttft_ms
+    - A span "antirion.gateway.request" is exported with attributes request_id, org_id, team_id, user_id, api_key_id, model, provider, cost, input_tokens, output_tokens, latency_ms, ttft_ms
     - Child spans are emitted for dialect translation, outbound call, retry attempts and streaming
   - id: AC-002
     scenario: Inbound traceparent preserved
@@ -21654,8 +21720,15 @@ models:
     nullable: true
   - name: streamed
     type: bool
-  - name: tools
+  - name: tool_count
     type: int
+    description: Number of tool invocations on this request (see ToolInvocation)
+  - name: client_cancelled
+    type: bool
+    description: True when the client disconnected before the response completed
+  - name: mid_stream_dropped
+    type: bool
+    description: True when a streaming response was truncated by a transport error
   - name: pii_flag
     type: bool
   - name: safety_flag
@@ -21700,7 +21773,7 @@ models:
     type: FK:Org
   - name: scope
     type: string
-    description: org|team|provider|model
+    description: org|team|provider|model|project|api_key|env
   - name: scope_id
     type: string
     nullable: true
@@ -21708,6 +21781,15 @@ models:
     type: int
   - name: spend
     type: number
+  - name: spend_input
+    type: number
+    description: Portion of spend attributable to input tokens
+  - name: spend_output
+    type: number
+    description: Portion of spend attributable to output tokens
+  - name: spend_cache
+    type: number
+    description: Portion of spend attributable to cache read/write
   - name: errors
     type: int
   - name: p50_ms
@@ -21723,7 +21805,7 @@ models:
   - name: output_tokens
     type: int
 - name: SavedView
-  description: A saved request-log filter view.
+  description: A saved request-log or analytics filter view.
   fields:
   - name: id
     type: uuid
@@ -21735,6 +21817,12 @@ models:
     type: FK:Org
   - name: name
     type: string
+  - name: scope
+    type: string
+    description: personal|workspace (workspace requires admin to save)
+  - name: view_type
+    type: string
+    description: requests|analytics
   - name: filters
     type: json
   - name: starred
@@ -21752,8 +21840,15 @@ models:
     pk: true
   - name: org_id
     type: FK:Org
+  - name: detector_id
+    type: FK:AnomalyDetector
+    nullable: true
+  - name: category
+    type: string
+    description: cost_spike|latency_spike|error_spike|traffic_drop|other
   - name: severity
     type: string
+    description: info|warn|crit
   - name: provider_id
     type: FK:Provider
     nullable: true
@@ -21770,12 +21865,74 @@ models:
     type: json
   - name: detected_at
     type: timestamp
+  - name: review_status
+    type: string
+    description: open|reviewed|suppressed
   - name: reviewed_at
     type: timestamp
     nullable: true
   - name: reviewed_by_user_id
     type: FK:User
     nullable: true
+  - name: suppress_until
+    type: timestamp
+    nullable: true
+  - name: audience_snapshot
+    type: json
+    nullable: true
+    description: Resolved audience list (per project.notifications_model) at the time the anomaly was raised
+- name: AnomalyDetector
+  description: Configuration for an auto-detector that produces Anomaly rows.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: org_id
+    type: FK:Org
+  - name: category
+    type: string
+    description: cost_spike|latency_spike|error_spike|traffic_drop|other
+  - name: enabled
+    type: bool
+  - name: threshold_config
+    type: json
+    description: Category-specific thresholds (e.g. p95_ms, window_seconds)
+  - name: cooldown_seconds
+    type: int
+  - name: last_fired_at
+    type: timestamp
+    nullable: true
+  relations:
+  - type: has_many
+    model: Anomaly
+- name: ToolInvocation
+  description: A single tool (function) call recorded inside a Request for tool-use analytics.
+  fields:
+  - name: id
+    type: uuid
+    pk: true
+  - name: request_id
+    type: FK:Request
+  - name: tool_name
+    type: string
+  - name: tool_id
+    type: string
+    nullable: true
+  - name: input_tokens
+    type: int
+    nullable: true
+  - name: output_tokens
+    type: int
+    nullable: true
+  - name: latency_ms
+    type: int
+    nullable: true
+  - name: status
+    type: string
+    description: ok|error|timeout
+  relations:
+  - type: belongs_to
+    model: Request
 - name: RoutingRule
   description: A priority-ordered rule governing routing decisions.
   fields:
@@ -22635,6 +22792,9 @@ models:
     type: int
   - name: metadata_days
     type: int
+  - name: anomalies_days
+    type: int
+    description: Retention window for reviewed/suppressed Anomaly rows before the worker sweep deletes them
   - name: pii_redaction_enabled
     type: bool
   - name: custom_pii_entities
