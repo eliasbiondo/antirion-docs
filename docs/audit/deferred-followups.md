@@ -79,28 +79,37 @@ corresponding items below are no longer deferred:
 - Q79 destructive_action_confirmation_policy additions
 - Q80 STORY-232 audience+channel-attempt audit sweep (AC-001..AC-007)
 
+### Items resolved in waves 16..19
+
+- C-6 streaming × cache replay framing — resolved by STORY-482 under
+  FEAT-060 (wave 16)
+- M-7 STORY-043 quiet-hours row shape — resolved by per-event
+  NotificationPreference keying with sentinel event_type=null (wave 17)
+- Notifications_model tech_contact roster reconciliation — applied to
+  baseline description (wave 18)
+- SsoConfig.signed_users description — applied (wave 18)
+- FEAT-094 cascade asymmetry — documented on feature description (wave 18)
+- FEAT-064 invalidation event catalog — canonical event set declared on
+  feature description (wave 18)
+- STORY-223 AC-007 hot-reload SLA alignment — applied (wave 18)
+- AlertRule.category enum description — applied (wave 18)
+- FEAT-124 outreach export AC — STORY-281 AC-002 added (wave 19)
+
 ### Items still genuinely deferred
 
-- **C-6 streaming × cache replay framing** — the SSE re-framing contract
-  for streaming cache hits is still an open product question (STORY-472
-  covers residency partitioning only). Needs a dedicated STORY under
-  FEAT-060 spelling out TTFT, keep-alive cadence and cached SSE comment.
-- **M-7 STORY-043 quiet-hours row shape** — global-vs-per-event semantics
-  on NotificationPreference still need product input (applied wave did
-  not touch STORY-043).
-- **M1 BudgetPolicy threshold-overload pre-split** — answered in wave 1
-  via the split into waiver_approval_threshold_pct and
-  edit_approval_threshold_pct; kept here for historical traceability.
-- **Editorial non_functional copy-paste drift** — minor sweep across
-  EPIC-003..EPIC-011 stories that inherit NFR lines unrelated to their
-  scope.
-- **Per-epic minor m-* editorial items** — wording drift, UI-reference
-  ownership clarifications, baseline tech_contact roster reconciliation,
-  and similar cosmetics remain.
-- **Cross-epic coordination items** — a subset of the 2026-04-20
-  re-audit X-items (e.g. outreach export linked to FEAT-124, ingestion-
-  health AlertRule full wiring into FEAT-186) are partially covered by
-  the new features but still want a dedicated sweep to verify.
+None at the requirements-model / story level. The remaining open
+work falls into two categories that are out of scope for this repo:
+
+1. **Implementation detail** — tuning constants, specific provider-API
+   shapes, observability dashboards, SDK surfaces and similar work that
+   is left to the engineering teams building against this spec.
+2. **Live operational decisions** — per-tenant SLA commitments,
+   per-customer license tiers, specific Antirion pricing and contractual
+   terms, actual audit signing-key escrow procedures. These belong on
+   the operator side of the product, not in the requirements yaml.
+
+If a future audit surfaces a new finding, it will open a new section
+below and will not rely on this one being the source of truth.
 
 # Deferred Follow-ups
 

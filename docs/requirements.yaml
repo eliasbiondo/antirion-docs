@@ -15690,10 +15690,19 @@ stories:
     - I click "Export DPIA"
     then:
     - A PDF is generated with org info, processing purposes, data categories, safeguards and signature placeholders
+  - id: AC-002
+    scenario: Outreach disclosure export (saas only)
+    given:
+    - The install mode is saas and the privacy officer has requested the Antirion-staff outreach history for the tenant
+    when:
+    - I click "Include CRM outreach"
+    then:
+    - A redacted CSV of CrmOutreach rows for the tenant is attached to the export bundle, with staff identifiers replaced by role labels and follow-up assignees masked
+    - In self_hosted the CRM section is omitted (FEAT-182 does not run on customer installs; installed_on=antirion_console)
   data_models:
   - ComplianceDocument
+  - CrmOutreach
   non_functional:
-  - SCIM and provisioning operations are idempotent and safe to replay
   - Admin actions are audited with actor, target, before and after; audit writes are append-only
 - id: STORY-282
   feature: FEAT-124

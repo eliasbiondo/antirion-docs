@@ -666,3 +666,12 @@ One row per finding. Columns: epic | audit citation | action (applied / deferred
 | Cross-cutting (2026-04-20 answers) | Q80 audience+channel audit sweep | applied | STORY-232 expanded to 7 ACs including audit-of-audience and mode collapse |
 | Cross-cutting (2026-04-20 new features) | FEAT-183..200 | applied | 19 new features (see wave 4 commit) with stub stories STORY-442..462 |
 | Cross-cutting (2026-04-20 new models) | OperatorPrincipal, PiiPolicy, SafetyAllowanceGrant, AlertRuleSubscription, Invoice, InvoiceLine, InvoiceContest, CreditRequest, HelpArticleView, StatusPageSubscriber, InstallBootstrapIntent, AbuseFlag, AccessLog, OrgSigningSecret, LicenseTier, InstallIdentityKey, TenantSurveyResponse | applied | 17 new models added per wave 3 |
+| Cross-cutting (waves 16-19) | C-6 streaming cache replay | applied | STORY-482 defines write-path, SSE replay, TTFT on hit, FEAT-148 degraded path and abort-skip |
+| Cross-cutting (waves 16-19) | M-7 STORY-043 quiet hours | applied | NotificationPreference keyed on (scope, user/org, event_type) with sentinel event_type=null; STORY-043 PATCH body carries event_type; resolution walks event row → sentinel → notifications_model default |
+| Cross-cutting (waves 16-19) | notifications_model tech_contact | applied | Baseline roster now names tech_contact alongside the five existing Org contacts |
+| Cross-cutting (waves 16-19) | SsoConfig.signed_users | applied | Description adds "rolling 30-day count refreshed by FEAT-187" |
+| Cross-cutting (waves 16-19) | FEAT-094 cascade asymmetry | applied | Description explicitly separates non-destructive (cascades) from destructive (requires detachment) |
+| Cross-cutting (waves 16-19) | FEAT-064 event catalog | applied | Description enumerates canonical event names (session.logout, role.change, safety_policy.change, template.update, nightly.refresh, tenant.suspend, org.residency.pin, byok.rotate) and mandates save-time rejection of unknown events |
+| Cross-cutting (waves 16-19) | STORY-223 hot-reload | applied | Ten-second number replaced by config_hot_reload SLA reference |
+| Cross-cutting (waves 16-19) | AlertRule.category enum | applied | Canonical category enum documented on model |
+| Cross-cutting (waves 16-19) | FEAT-124 outreach export | applied | STORY-281 AC-002 emits a redacted CrmOutreach CSV in saas; omitted in self_hosted |
