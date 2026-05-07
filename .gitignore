@@ -1,3 +1,7 @@
 .claude/
 proto/
 ref
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/

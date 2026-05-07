@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://antirion.dev/schemas/requirements/v1.json",
+  "title": "Antirion requirements graph — frontmatter schema",
+  "description": "Validates the YAML frontmatter of every node file in docs/requirements/. The body markdown structure is enforced separately by tools/req/req.py validate.",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^gw_(epic|feature|story|policy|glossary)_[0-9]{5}$"
+    },
+    "iso_date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "lifecycle": {
+      "type": "string",
+      "enum": ["active", "retired", "deferred", "cancelled"]
+    },
+    "release": {
+      "type": "string",
+      "enum": ["mvp", "v1.1", "v2.0", "backlog"]
+    },
+    "discipline_state": {
+      "type": "string",
+      "enum": ["not_started", "in_progress", "review", "done", "blocked", "n_a"]
+    },
+    "status_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["backend", "frontend", "infra", "docs", "qa"],
+      "properties": {
+        "backend":  { "$ref": "#/$defs/discipline_state" },
+        "frontend": { "$ref": "#/$defs/discipline_state" },
+        "infra":    { "$ref": "#/$defs/discipline_state" },
+        "docs":     { "$ref": "#/$defs/discipline_state" },
+        "qa":       { "$ref": "#/$defs/discipline_state" }
+      }
+    },
+    "deployment_modes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "enum": ["saas", "self_hosted"] }
+    },
+    "installed_on": {
+      "type": "string",
+      "enum": ["tenant_install", "antirion_console", "both"]
+    },
+    "id_list": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "override": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy", "key", "reason"],
+      "properties": {
+        "policy": { "$ref": "#/$defs/id" },
+        "key":    { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "external": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "github_issue": { "type": ["string", "integer"] },
+        "github_pr":    { "type": ["string", "integer"] },
+        "linear":       { "type": "string" },
+        "jira":         { "type": "string" }
+      }
+    },
+    "narrative": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["as_a", "i_want", "so_that"],
+      "properties": {
+        "as_a":    { "type": "string", "minLength": 1 },
+        "i_want":  { "type": "string", "minLength": 1 },
+        "so_that": { "type": "string", "minLength": 1 }
+      }
+    },
+    "common_required": {
+      "type": "object",
+      "required": ["id", "type", "title", "lifecycle", "created", "updated"],
+      "properties": {
+        "id":        { "$ref": "#/$defs/id" },
+        "title":     { "type": "string", "minLength": 1 },
+        "lifecycle": { "$ref": "#/$defs/lifecycle" },
+        "created":   { "$ref": "#/$defs/iso_date" },
+        "updated":   { "$ref": "#/$defs/iso_date" }
+      }
+    },
+    "epic": {
+      "allOf": [{ "$ref": "#/$defs/common_required" }],
+      "type": "object",
+      "required": ["id", "type", "title", "lifecycle", "created", "updated", "release", "order", "owners", "tags"],
+      "properties": {
+        "id":        { "$ref": "#/$defs/id", "pattern": "^gw_epic_[0-9]{5}$" },
+        "type":      { "const": "epic" },
+        "title":     { "type": "string", "minLength": 1 },
+        "lifecycle": { "$ref": "#/$defs/lifecycle" },
+        "created":   { "$ref": "#/$defs/iso_date" },
+        "updated":   { "$ref": "#/$defs/iso_date" },
+        "release":   { "$ref": "#/$defs/release" },
+        "order":     { "type": "integer", "minimum": 0 },
+        "owners":    { "type": "array", "items": { "type": "string" } },
+        "tags":      { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "feature": {
+      "allOf": [{ "$ref": "#/$defs/common_required" }],
+      "type": "object",
+      "required": [
+        "id", "type", "title", "lifecycle", "created", "updated",
+        "parent", "release", "order", "status",
+        "deployment_modes", "installed_on", "owners", "tags"
+      ],
+      "properties": {
+        "id":        { "$ref": "#/$defs/id", "pattern": "^gw_feature_[0-9]{5}$" },
+        "type":      { "const": "feature" },
+        "title":     { "type": "string", "minLength": 1 },
+        "lifecycle": { "$ref": "#/$defs/lifecycle" },
+        "created":   { "$ref": "#/$defs/iso_date" },
+        "updated":   { "$ref": "#/$defs/iso_date" },
+        "parent":    { "$ref": "#/$defs/id", "pattern": "^gw_epic_[0-9]{5}$" },
+        "also_under":      { "$ref": "#/$defs/id_list" },
+        "release":         { "$ref": "#/$defs/release" },
+        "order":           { "type": "integer", "minimum": 0 },
+        "depends_on":      { "$ref": "#/$defs/id_list" },
+        "related":         { "$ref": "#/$defs/id_list" },
+        "supersedes":      { "$ref": "#/$defs/id_list" },
+        "superseded_by":   { "$ref": "#/$defs/id" },
+        "status":          { "$ref": "#/$defs/status_block" },
+        "deployment_modes": { "$ref": "#/$defs/deployment_modes" },
+        "installed_on":     { "$ref": "#/$defs/installed_on" },
+        "owners":          { "type": "array", "items": { "type": "string" } },
+        "tags":            { "type": "array", "items": { "type": "string" } },
+        "ui_references":   { "type": "array", "items": { "type": "string" } },
+        "inherits_policies": { "$ref": "#/$defs/id_list" },
+        "overrides":       { "type": "array", "items": { "$ref": "#/$defs/override" } },
+        "external":        { "$ref": "#/$defs/external" }
+      },
+      "additionalProperties": false
+    },
+    "story": {
+      "allOf": [{ "$ref": "#/$defs/common_required" }],
+      "type": "object",
+      "required": [
+        "id", "type", "title", "lifecycle", "created", "updated",
+        "parent", "release", "order", "status", "narrative", "owners", "tags"
+      ],
+      "properties": {
+        "id":        { "$ref": "#/$defs/id", "pattern": "^gw_story_[0-9]{5}$" },
+        "type":      { "const": "story" },
+        "title":     { "type": "string", "minLength": 1 },
+        "lifecycle": { "$ref": "#/$defs/lifecycle" },
+        "created":   { "$ref": "#/$defs/iso_date" },
+        "updated":   { "$ref": "#/$defs/iso_date" },
+        "parent":    { "$ref": "#/$defs/id", "pattern": "^gw_feature_[0-9]{5}$" },
+        "also_under":      { "$ref": "#/$defs/id_list" },
+        "release":         { "$ref": "#/$defs/release" },
+        "order":           { "type": "integer", "minimum": 0 },
+        "depends_on":      { "$ref": "#/$defs/id_list" },
+        "related":         { "$ref": "#/$defs/id_list" },
+        "supersedes":      { "$ref": "#/$defs/id_list" },
+        "superseded_by":   { "$ref": "#/$defs/id" },
+        "status":          { "$ref": "#/$defs/status_block" },
+        "narrative":       { "$ref": "#/$defs/narrative" },
+        "audiences":       { "type": "array", "items": { "type": "string" } },
+        "owners":          { "type": "array", "items": { "type": "string" } },
+        "tags":             { "type": "array", "items": { "type": "string" } },
+        "inherits_policies": { "$ref": "#/$defs/id_list" },
+        "overrides":       { "type": "array", "items": { "$ref": "#/$defs/override" } },
+        "external":        { "$ref": "#/$defs/external" }
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": ["id", "type", "title", "lifecycle", "summary", "created", "updated"],
+      "properties": {
+        "id":        { "$ref": "#/$defs/id", "pattern": "^gw_policy_[0-9]{5}$" },
+        "type":      { "const": "policy" },
+        "title":     { "type": "string", "minLength": 1 },
+        "lifecycle": { "$ref": "#/$defs/lifecycle" },
+        "summary":   { "type": "string", "minLength": 1 },
+        "created":   { "$ref": "#/$defs/iso_date" },
+        "updated":   { "$ref": "#/$defs/iso_date" }
+      },
+      "additionalProperties": false
+    },
+    "glossary": {
+      "type": "object",
+      "required": ["id", "type", "title", "lifecycle", "summary", "created", "updated"],
+      "properties": {
+        "id":        { "$ref": "#/$defs/id", "pattern": "^gw_glossary_[0-9]{5}$" },
+        "type":      { "const": "glossary" },
+        "title":     { "type": "string", "minLength": 1 },
+        "lifecycle": { "$ref": "#/$defs/lifecycle" },
+        "summary":   { "type": "string", "minLength": 1 },
+        "created":   { "$ref": "#/$defs/iso_date" },
+        "updated":   { "$ref": "#/$defs/iso_date" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "required": ["type"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["epic", "feature", "story", "policy", "glossary"]
+    }
+  },
+  "oneOf": [
+    { "properties": { "type": { "const": "epic"     } }, "$ref": "#/$defs/epic"     },
+    { "properties": { "type": { "const": "feature"  } }, "$ref": "#/$defs/feature"  },
+    { "properties": { "type": { "const": "story"    } }, "$ref": "#/$defs/story"    },
+    { "properties": { "type": { "const": "policy"   } }, "$ref": "#/$defs/policy"   },
+    { "properties": { "type": { "const": "glossary" } }, "$ref": "#/$defs/glossary" }
+  ]
+}

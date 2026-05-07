@@ -1,0 +1,2304 @@
+{
+  "generated_at": "2026-05-07T21:36:39+00:00",
+  "generator_version": "1",
+  "nodes": {
+    "gw_epic_00008": {
+      "id": "gw_epic_00008",
+      "type": "epic",
+      "title": "Budgets and cost control",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/EPIC.md",
+      "lifecycle": "active",
+      "release": "mvp",
+      "order": 8,
+      "parent": null,
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": null,
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": [
+        "gw_feature_00081",
+        "gw_feature_00082",
+        "gw_feature_00083",
+        "gw_feature_00084",
+        "gw_feature_00085",
+        "gw_feature_00086",
+        "gw_feature_00087",
+        "gw_feature_00088",
+        "gw_feature_00089",
+        "gw_feature_00090",
+        "gw_feature_00091",
+        "gw_feature_00092",
+        "gw_feature_00093",
+        "gw_feature_00094",
+        "gw_feature_00095",
+        "gw_feature_00096",
+        "gw_feature_00097",
+        "gw_feature_00186",
+        "gw_feature_00187",
+        "gw_feature_00197"
+      ]
+    },
+    "gw_feature_00081": {
+      "id": "gw_feature_00081",
+      "type": "feature",
+      "title": "Org and team budget overview",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00081_org-and-team-budget-overview/FEATURE.md",
+      "lifecycle": "active",
+      "release": "mvp",
+      "order": 81,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00183",
+        "gw_story_00184",
+        "gw_story_00185",
+        "gw_story_00186"
+      ]
+    },
+    "gw_feature_00082": {
+      "id": "gw_feature_00082",
+      "type": "feature",
+      "title": "Project and user budget allocation",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00082_project-and-user-budget-allocation/FEATURE.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 82,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00187"
+      ]
+    },
+    "gw_feature_00083": {
+      "id": "gw_feature_00083",
+      "type": "feature",
+      "title": "Budget policies and enforcement",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00083_budget-policies-and-enforcement/FEATURE.md",
+      "lifecycle": "active",
+      "release": "mvp",
+      "order": 83,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00188",
+        "gw_story_00189"
+      ]
+    },
+    "gw_feature_00084": {
+      "id": "gw_feature_00084",
+      "type": "feature",
+      "title": "Forecasts and runout projections",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00084_forecasts-and-runout-projections/FEATURE.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 84,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00190",
+        "gw_story_00191"
+      ]
+    },
+    "gw_feature_00085": {
+      "id": "gw_feature_00085",
+      "type": "feature",
+      "title": "Waivers and budget events",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00085_waivers-and-budget-events/FEATURE.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 85,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00192",
+        "gw_story_00193"
+      ]
+    },
+    "gw_feature_00086": {
+      "id": "gw_feature_00086",
+      "type": "feature",
+      "title": "Approvals",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00086_approvals/FEATURE.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 86,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00194",
+        "gw_story_00195"
+      ]
+    },
+    "gw_feature_00087": {
+      "id": "gw_feature_00087",
+      "type": "feature",
+      "title": "Update budget",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00087_update-budget/FEATURE.md",
+      "lifecycle": "active",
+      "release": "mvp",
+      "order": 87,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00196"
+      ]
+    },
+    "gw_feature_00088": {
+      "id": "gw_feature_00088",
+      "type": "feature",
+      "title": "Delete budget",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00088_delete-budget/FEATURE.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 88,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00197"
+      ]
+    },
+    "gw_feature_00089": {
+      "id": "gw_feature_00089",
+      "type": "feature",
+      "title": "Budget rollover and reset schedule",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00089_budget-rollover-and-reset-schedule/FEATURE.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 89,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00198"
+      ]
+    },
+    "gw_feature_00090": {
+      "id": "gw_feature_00090",
+      "type": "feature",
+      "title": "Overage notifications",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00090_overage-notifications/FEATURE.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 90,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00199"
+      ]
+    },
+    "gw_feature_00091": {
+      "id": "gw_feature_00091",
+      "type": "feature",
+      "title": "Multi-currency budgets",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00091_multi-currency-budgets/FEATURE.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 91,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00200",
+        "gw_story_00201"
+      ]
+    },
+    "gw_feature_00092": {
+      "id": "gw_feature_00092",
+      "type": "feature",
+      "title": "Project lifecycle",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00092_project-lifecycle/FEATURE.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 92,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00202",
+        "gw_story_00203",
+        "gw_story_00204",
+        "gw_story_00205",
+        "gw_story_00206"
+      ]
+    },
+    "gw_feature_00093": {
+      "id": "gw_feature_00093",
+      "type": "feature",
+      "title": "Budget policy library",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00093_budget-policy-library/FEATURE.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 93,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00207"
+      ]
+    },
+    "gw_feature_00094": {
+      "id": "gw_feature_00094",
+      "type": "feature",
+      "title": "Billing operations",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00094_billing-operations/FEATURE.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 94,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00208",
+        "gw_story_00209",
+        "gw_story_00210",
+        "gw_story_00211",
+        "gw_story_00212",
+        "gw_story_00213"
+      ]
+    },
+    "gw_feature_00095": {
+      "id": "gw_feature_00095",
+      "type": "feature",
+      "title": "Plan lifecycle",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00095_plan-lifecycle/FEATURE.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 95,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00214",
+        "gw_story_00215",
+        "gw_story_00216",
+        "gw_story_00217",
+        "gw_story_00218"
+      ]
+    },
+    "gw_feature_00096": {
+      "id": "gw_feature_00096",
+      "type": "feature",
+      "title": "Finance export and showback",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00096_finance-export-and-showback/FEATURE.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 96,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00219",
+        "gw_story_00220"
+      ]
+    },
+    "gw_feature_00097": {
+      "id": "gw_feature_00097",
+      "type": "feature",
+      "title": "Contract commitment burn-down UI",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00097_contract-commitment-burn-down-ui/FEATURE.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 97,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00221"
+      ]
+    },
+    "gw_feature_00186": {
+      "id": "gw_feature_00186",
+      "type": "feature",
+      "title": "Budget metering and ledger reconciliation",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00186_budget-metering-and-ledger-reconciliation/FEATURE.md",
+      "lifecycle": "active",
+      "release": "mvp",
+      "order": 186,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00447"
+      ]
+    },
+    "gw_feature_00187": {
+      "id": "gw_feature_00187",
+      "type": "feature",
+      "title": "Gateway budget admission",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00187_gateway-budget-admission/FEATURE.md",
+      "lifecycle": "active",
+      "release": "mvp",
+      "order": 187,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00448"
+      ]
+    },
+    "gw_feature_00197": {
+      "id": "gw_feature_00197",
+      "type": "feature",
+      "title": "Budget to AlertRule bridge",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00197_budget-to-alertrule-bridge/FEATURE.md",
+      "lifecycle": "active",
+      "release": "mvp",
+      "order": 197,
+      "parent": "gw_epic_00008",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": [
+        "saas",
+        "self_hosted"
+      ],
+      "installed_on": "tenant_install",
+      "children": [
+        "gw_story_00458"
+      ]
+    },
+    "gw_glossary_00001": {
+      "id": "gw_glossary_00001",
+      "type": "glossary",
+      "title": "Shared limiters",
+      "path": "docs/requirements/_glossary/shared_limiters.md",
+      "lifecycle": "active",
+      "release": null,
+      "order": null,
+      "parent": null,
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": null,
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_glossary_00002": {
+      "id": "gw_glossary_00002",
+      "type": "glossary",
+      "title": "Tenant isolation",
+      "path": "docs/requirements/_glossary/tenant_isolation.md",
+      "lifecycle": "active",
+      "release": null,
+      "order": null,
+      "parent": null,
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": null,
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_glossary_00003": {
+      "id": "gw_glossary_00003",
+      "type": "glossary",
+      "title": "Platform operator",
+      "path": "docs/requirements/_glossary/platform_operator.md",
+      "lifecycle": "active",
+      "release": null,
+      "order": null,
+      "parent": null,
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": null,
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_glossary_00004": {
+      "id": "gw_glossary_00004",
+      "type": "glossary",
+      "title": "Idempotency key",
+      "path": "docs/requirements/_glossary/idempotency_key.md",
+      "lifecycle": "active",
+      "release": null,
+      "order": null,
+      "parent": null,
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": null,
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_glossary_00005": {
+      "id": "gw_glossary_00005",
+      "type": "glossary",
+      "title": "Budget counter",
+      "path": "docs/requirements/_glossary/budget_counter.md",
+      "lifecycle": "active",
+      "release": null,
+      "order": null,
+      "parent": null,
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": null,
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_policy_00001": {
+      "id": "gw_policy_00001",
+      "type": "policy",
+      "title": "UI baseline",
+      "path": "docs/requirements/_policies/ui_baseline.md",
+      "lifecycle": "active",
+      "release": null,
+      "order": null,
+      "parent": null,
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": null,
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_policy_00002": {
+      "id": "gw_policy_00002",
+      "type": "policy",
+      "title": "Non-functional baseline",
+      "path": "docs/requirements/_policies/non_functional_baseline.md",
+      "lifecycle": "active",
+      "release": null,
+      "order": null,
+      "parent": null,
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": null,
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_policy_00003": {
+      "id": "gw_policy_00003",
+      "type": "policy",
+      "title": "Notifications model",
+      "path": "docs/requirements/_policies/notifications_model.md",
+      "lifecycle": "active",
+      "release": null,
+      "order": null,
+      "parent": null,
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": null,
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_policy_00004": {
+      "id": "gw_policy_00004",
+      "type": "policy",
+      "title": "Destructive action confirmation",
+      "path": "docs/requirements/_policies/destructive_action_confirmation.md",
+      "lifecycle": "active",
+      "release": null,
+      "order": null,
+      "parent": null,
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": null,
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_policy_00005": {
+      "id": "gw_policy_00005",
+      "type": "policy",
+      "title": "Deployment modes",
+      "path": "docs/requirements/_policies/deployment_modes.md",
+      "lifecycle": "active",
+      "release": null,
+      "order": null,
+      "parent": null,
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": null,
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00183": {
+      "id": "gw_story_00183",
+      "type": "story",
+      "title": "View org-wide budget health",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00081_org-and-team-budget-overview/gw_story_00183_view-org-wide-budget-health/STORY.md",
+      "lifecycle": "active",
+      "release": "mvp",
+      "order": 183,
+      "parent": "gw_feature_00081",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00184": {
+      "id": "gw_story_00184",
+      "type": "story",
+      "title": "Drill into a team budget",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00081_org-and-team-budget-overview/gw_story_00184_drill-into-a-team-budget/STORY.md",
+      "lifecycle": "active",
+      "release": "mvp",
+      "order": 184,
+      "parent": "gw_feature_00081",
+      "also_under": [],
+      "depends_on": [
+        "gw_story_00183"
+      ],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00185": {
+      "id": "gw_story_00185",
+      "type": "story",
+      "title": "Create a budget",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00081_org-and-team-budget-overview/gw_story_00185_create-a-budget/STORY.md",
+      "lifecycle": "active",
+      "release": "mvp",
+      "order": 185,
+      "parent": "gw_feature_00081",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00186": {
+      "id": "gw_story_00186",
+      "type": "story",
+      "title": "Reconcile direct-waiver and Approval-based budget paths",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00081_org-and-team-budget-overview/gw_story_00186_reconcile-direct-waiver-and-approval-based-budget-paths/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 186,
+      "parent": "gw_feature_00081",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00187": {
+      "id": "gw_story_00187",
+      "type": "story",
+      "title": "Allocate project and user budgets",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00082_project-and-user-budget-allocation/gw_story_00187_allocate-project-and-user-budgets/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 187,
+      "parent": "gw_feature_00082",
+      "also_under": [],
+      "depends_on": [
+        "gw_story_00184"
+      ],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00188": {
+      "id": "gw_story_00188",
+      "type": "story",
+      "title": "Set a budget policy with soft and hard thresholds",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00083_budget-policies-and-enforcement/gw_story_00188_set-a-budget-policy-with-soft-and-hard-thresholds/STORY.md",
+      "lifecycle": "active",
+      "release": "mvp",
+      "order": 188,
+      "parent": "gw_feature_00083",
+      "also_under": [],
+      "depends_on": [
+        "gw_story_00184"
+      ],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00189": {
+      "id": "gw_story_00189",
+      "type": "story",
+      "title": "Downgrade to a cheaper model near budget cap",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00083_budget-policies-and-enforcement/gw_story_00189_downgrade-to-a-cheaper-model-near-budget-cap/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 189,
+      "parent": "gw_feature_00083",
+      "also_under": [],
+      "depends_on": [
+        "gw_story_00188"
+      ],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00190": {
+      "id": "gw_story_00190",
+      "type": "story",
+      "title": "See projected spend and runout date",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00084_forecasts-and-runout-projections/gw_story_00190_see-projected-spend-and-runout-date/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 190,
+      "parent": "gw_feature_00084",
+      "also_under": [],
+      "depends_on": [
+        "gw_story_00184"
+      ],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00191": {
+      "id": "gw_story_00191",
+      "type": "story",
+      "title": "Backtest forecast accuracy",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00084_forecasts-and-runout-projections/gw_story_00191_backtest-forecast-accuracy/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 191,
+      "parent": "gw_feature_00084",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00192": {
+      "id": "gw_story_00192",
+      "type": "story",
+      "title": "Grant a one-time budget waiver",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00085_waivers-and-budget-events/gw_story_00192_grant-a-one-time-budget-waiver/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 192,
+      "parent": "gw_feature_00085",
+      "also_under": [],
+      "depends_on": [
+        "gw_story_00188"
+      ],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00193": {
+      "id": "gw_story_00193",
+      "type": "story",
+      "title": "Review the budget event timeline",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00085_waivers-and-budget-events/gw_story_00193_review-the-budget-event-timeline/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 193,
+      "parent": "gw_feature_00085",
+      "also_under": [],
+      "depends_on": [
+        "gw_story_00183"
+      ],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00194": {
+      "id": "gw_story_00194",
+      "type": "story",
+      "title": "View the approvals queue",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00086_approvals/gw_story_00194_view-the-approvals-queue/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 194,
+      "parent": "gw_feature_00086",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00195": {
+      "id": "gw_story_00195",
+      "type": "story",
+      "title": "Approve or reject a pending request",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00086_approvals/gw_story_00195_approve-or-reject-a-pending-request/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 195,
+      "parent": "gw_feature_00086",
+      "also_under": [],
+      "depends_on": [
+        "gw_story_00194"
+      ],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00196": {
+      "id": "gw_story_00196",
+      "type": "story",
+      "title": "Update a budget",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00087_update-budget/gw_story_00196_update-a-budget/STORY.md",
+      "lifecycle": "active",
+      "release": "mvp",
+      "order": 196,
+      "parent": "gw_feature_00087",
+      "also_under": [],
+      "depends_on": [
+        "gw_story_00187"
+      ],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00197": {
+      "id": "gw_story_00197",
+      "type": "story",
+      "title": "Delete a budget",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00088_delete-budget/gw_story_00197_delete-a-budget/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 197,
+      "parent": "gw_feature_00088",
+      "also_under": [],
+      "depends_on": [
+        "gw_story_00196"
+      ],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00198": {
+      "id": "gw_story_00198",
+      "type": "story",
+      "title": "Configure budget rollover at cycle reset",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00089_budget-rollover-and-reset-schedule/gw_story_00198_configure-budget-rollover-at-cycle-reset/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 198,
+      "parent": "gw_feature_00089",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00199": {
+      "id": "gw_story_00199",
+      "type": "story",
+      "title": "Notify on budget overage",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00090_overage-notifications/gw_story_00199_notify-on-budget-overage/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 199,
+      "parent": "gw_feature_00090",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00200": {
+      "id": "gw_story_00200",
+      "type": "story",
+      "title": "Budget in a non-USD currency with FX conversion",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00091_multi-currency-budgets/gw_story_00200_budget-in-a-non-usd-currency-with-fx-conversion/STORY.md",
+      "lifecycle": "active",
+      "release": "v2.0",
+      "order": 200,
+      "parent": "gw_feature_00091",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00201": {
+      "id": "gw_story_00201",
+      "type": "story",
+      "title": "View FX history, force override and alert on stale rate",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00091_multi-currency-budgets/gw_story_00201_view-fx-history-force-override-and-alert-on-stale-rate/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 201,
+      "parent": "gw_feature_00091",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00202": {
+      "id": "gw_story_00202",
+      "type": "story",
+      "title": "Create a project",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00092_project-lifecycle/gw_story_00202_create-a-project/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 202,
+      "parent": "gw_feature_00092",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00203": {
+      "id": "gw_story_00203",
+      "type": "story",
+      "title": "List projects",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00092_project-lifecycle/gw_story_00203_list-projects/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 203,
+      "parent": "gw_feature_00092",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00204": {
+      "id": "gw_story_00204",
+      "type": "story",
+      "title": "Edit a project",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00092_project-lifecycle/gw_story_00204_edit-a-project/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 204,
+      "parent": "gw_feature_00092",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00205": {
+      "id": "gw_story_00205",
+      "type": "story",
+      "title": "Delete a project",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00092_project-lifecycle/gw_story_00205_delete-a-project/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 205,
+      "parent": "gw_feature_00092",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00206": {
+      "id": "gw_story_00206",
+      "type": "story",
+      "title": "Assign project owners",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00092_project-lifecycle/gw_story_00206_assign-project-owners/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 206,
+      "parent": "gw_feature_00092",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00207": {
+      "id": "gw_story_00207",
+      "type": "story",
+      "title": "CRUD reusable budget policies",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00093_budget-policy-library/gw_story_00207_crud-reusable-budget-policies/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 207,
+      "parent": "gw_feature_00093",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00208": {
+      "id": "gw_story_00208",
+      "type": "story",
+      "title": "Contest an invoice",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00094_billing-operations/gw_story_00208_contest-an-invoice/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 208,
+      "parent": "gw_feature_00094",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00209": {
+      "id": "gw_story_00209",
+      "type": "story",
+      "title": "Request a credit",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00094_billing-operations/gw_story_00209_request-a-credit/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 209,
+      "parent": "gw_feature_00094",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00210": {
+      "id": "gw_story_00210",
+      "type": "story",
+      "title": "Update payment method",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00094_billing-operations/gw_story_00210_update-payment-method/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 210,
+      "parent": "gw_feature_00094",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00211": {
+      "id": "gw_story_00211",
+      "type": "story",
+      "title": "Upload a purchase order",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00094_billing-operations/gw_story_00211_upload-a-purchase-order/STORY.md",
+      "lifecycle": "active",
+      "release": "v2.0",
+      "order": 211,
+      "parent": "gw_feature_00094",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00212": {
+      "id": "gw_story_00212",
+      "type": "story",
+      "title": "Set tax id",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00094_billing-operations/gw_story_00212_set-tax-id/STORY.md",
+      "lifecycle": "active",
+      "release": "v2.0",
+      "order": 212,
+      "parent": "gw_feature_00094",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00213": {
+      "id": "gw_story_00213",
+      "type": "story",
+      "title": "View invoice history",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00094_billing-operations/gw_story_00213_view-invoice-history/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 213,
+      "parent": "gw_feature_00094",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00214": {
+      "id": "gw_story_00214",
+      "type": "story",
+      "title": "Start a trial",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00095_plan-lifecycle/gw_story_00214_start-a-trial/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 214,
+      "parent": "gw_feature_00095",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00215": {
+      "id": "gw_story_00215",
+      "type": "story",
+      "title": "Upgrade plan",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00095_plan-lifecycle/gw_story_00215_upgrade-plan/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 215,
+      "parent": "gw_feature_00095",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00216": {
+      "id": "gw_story_00216",
+      "type": "story",
+      "title": "Downgrade plan",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00095_plan-lifecycle/gw_story_00216_downgrade-plan/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 216,
+      "parent": "gw_feature_00095",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00217": {
+      "id": "gw_story_00217",
+      "type": "story",
+      "title": "Cancel plan",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00095_plan-lifecycle/gw_story_00217_cancel-plan/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 217,
+      "parent": "gw_feature_00095",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00218": {
+      "id": "gw_story_00218",
+      "type": "story",
+      "title": "View plan change history",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00095_plan-lifecycle/gw_story_00218_view-plan-change-history/STORY.md",
+      "lifecycle": "active",
+      "release": "v2.0",
+      "order": 218,
+      "parent": "gw_feature_00095",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00219": {
+      "id": "gw_story_00219",
+      "type": "story",
+      "title": "Monthly CSV showback per cost-center",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00096_finance-export-and-showback/gw_story_00219_monthly-csv-showback-per-cost-center/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 219,
+      "parent": "gw_feature_00096",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00220": {
+      "id": "gw_story_00220",
+      "type": "story",
+      "title": "Scheduled dispatch to finance email",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00096_finance-export-and-showback/gw_story_00220_scheduled-dispatch-to-finance-email/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 220,
+      "parent": "gw_feature_00096",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00221": {
+      "id": "gw_story_00221",
+      "type": "story",
+      "title": "Contract commitment burn-down UI",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00097_contract-commitment-burn-down-ui/gw_story_00221_contract-commitment-burn-down-ui/STORY.md",
+      "lifecycle": "active",
+      "release": "v1.1",
+      "order": 221,
+      "parent": "gw_feature_00097",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00447": {
+      "id": "gw_story_00447",
+      "type": "story",
+      "title": "Write back Request.cost into Budget.spent",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00186_budget-metering-and-ledger-reconciliation/gw_story_00447_write-back-request-cost-into-budget-spent/STORY.md",
+      "lifecycle": "active",
+      "release": "mvp",
+      "order": 447,
+      "parent": "gw_feature_00186",
+      "also_under": [],
+      "depends_on": [],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00448": {
+      "id": "gw_story_00448",
+      "type": "story",
+      "title": "Reject over-budget requests at the gateway",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00187_gateway-budget-admission/gw_story_00448_reject-over-budget-requests-at-the-gateway/STORY.md",
+      "lifecycle": "active",
+      "release": "mvp",
+      "order": 448,
+      "parent": "gw_feature_00187",
+      "also_under": [],
+      "depends_on": [
+        "gw_story_00447"
+      ],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    },
+    "gw_story_00458": {
+      "id": "gw_story_00458",
+      "type": "story",
+      "title": "Provision Budget AlertRules",
+      "path": "docs/requirements/gw_epic_00008_budgets-and-cost-control/gw_feature_00197_budget-to-alertrule-bridge/gw_story_00458_provision-budget-alertrules/STORY.md",
+      "lifecycle": "active",
+      "release": "mvp",
+      "order": 458,
+      "parent": "gw_feature_00197",
+      "also_under": [],
+      "depends_on": [
+        "gw_story_00447"
+      ],
+      "related": [],
+      "status": {
+        "backend": "not_started",
+        "frontend": "not_started",
+        "infra": "not_started",
+        "docs": "not_started",
+        "qa": "not_started"
+      },
+      "owners": [],
+      "tags": [],
+      "deployment_modes": null,
+      "installed_on": null,
+      "children": []
+    }
+  },
+  "edges": [
+    {
+      "type": "depends_on",
+      "from": "gw_story_00184",
+      "to": "gw_story_00183"
+    },
+    {
+      "type": "depends_on",
+      "from": "gw_story_00187",
+      "to": "gw_story_00184"
+    },
+    {
+      "type": "depends_on",
+      "from": "gw_story_00188",
+      "to": "gw_story_00184"
+    },
+    {
+      "type": "depends_on",
+      "from": "gw_story_00189",
+      "to": "gw_story_00188"
+    },
+    {
+      "type": "depends_on",
+      "from": "gw_story_00190",
+      "to": "gw_story_00184"
+    },
+    {
+      "type": "depends_on",
+      "from": "gw_story_00192",
+      "to": "gw_story_00188"
+    },
+    {
+      "type": "depends_on",
+      "from": "gw_story_00193",
+      "to": "gw_story_00183"
+    },
+    {
+      "type": "depends_on",
+      "from": "gw_story_00195",
+      "to": "gw_story_00194"
+    },
+    {
+      "type": "depends_on",
+      "from": "gw_story_00196",
+      "to": "gw_story_00187"
+    },
+    {
+      "type": "depends_on",
+      "from": "gw_story_00197",
+      "to": "gw_story_00196"
+    },
+    {
+      "type": "depends_on",
+      "from": "gw_story_00448",
+      "to": "gw_story_00447"
+    },
+    {
+      "type": "depends_on",
+      "from": "gw_story_00458",
+      "to": "gw_story_00447"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00081",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00082",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00083",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00084",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00085",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00086",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00087",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00088",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00089",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00090",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00091",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00092",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00093",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00094",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00095",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00096",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00097",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00186",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00187",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_feature_00197",
+      "to": "gw_epic_00008"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00183",
+      "to": "gw_feature_00081"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00184",
+      "to": "gw_feature_00081"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00185",
+      "to": "gw_feature_00081"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00186",
+      "to": "gw_feature_00081"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00187",
+      "to": "gw_feature_00082"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00188",
+      "to": "gw_feature_00083"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00189",
+      "to": "gw_feature_00083"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00190",
+      "to": "gw_feature_00084"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00191",
+      "to": "gw_feature_00084"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00192",
+      "to": "gw_feature_00085"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00193",
+      "to": "gw_feature_00085"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00194",
+      "to": "gw_feature_00086"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00195",
+      "to": "gw_feature_00086"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00196",
+      "to": "gw_feature_00087"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00197",
+      "to": "gw_feature_00088"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00198",
+      "to": "gw_feature_00089"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00199",
+      "to": "gw_feature_00090"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00200",
+      "to": "gw_feature_00091"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00201",
+      "to": "gw_feature_00091"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00202",
+      "to": "gw_feature_00092"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00203",
+      "to": "gw_feature_00092"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00204",
+      "to": "gw_feature_00092"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00205",
+      "to": "gw_feature_00092"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00206",
+      "to": "gw_feature_00092"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00207",
+      "to": "gw_feature_00093"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00208",
+      "to": "gw_feature_00094"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00209",
+      "to": "gw_feature_00094"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00210",
+      "to": "gw_feature_00094"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00211",
+      "to": "gw_feature_00094"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00212",
+      "to": "gw_feature_00094"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00213",
+      "to": "gw_feature_00094"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00214",
+      "to": "gw_feature_00095"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00215",
+      "to": "gw_feature_00095"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00216",
+      "to": "gw_feature_00095"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00217",
+      "to": "gw_feature_00095"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00218",
+      "to": "gw_feature_00095"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00219",
+      "to": "gw_feature_00096"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00220",
+      "to": "gw_feature_00096"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00221",
+      "to": "gw_feature_00097"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00447",
+      "to": "gw_feature_00186"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00448",
+      "to": "gw_feature_00187"
+    },
+    {
+      "type": "parent",
+      "from": "gw_story_00458",
+      "to": "gw_feature_00197"
+    }
+  ]
+}
