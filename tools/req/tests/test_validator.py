@@ -9,6 +9,7 @@ pytest installed.
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import shutil
 import sys
@@ -16,8 +17,16 @@ import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import req as req_mod  # noqa: E402
+# Load tools/req/req.py as a standalone module regardless of pytest's import
+# mode. We can't `import req` directly because the parent package
+# `tools/req/__init__.py` would shadow `tools/req/req.py` under pytest's
+# package-aware collection mode (you'd get the package's empty __init__.py).
+_REQ_PATH = Path(__file__).resolve().parents[1] / "req.py"
+_spec = importlib.util.spec_from_file_location("_req_under_test", _REQ_PATH)
+assert _spec and _spec.loader, f"failed to load {_REQ_PATH}"
+req_mod = importlib.util.module_from_spec(_spec)
+sys.modules["_req_under_test"] = req_mod
+_spec.loader.exec_module(req_mod)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

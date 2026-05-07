@@ -1,5 +1,3 @@
-import sys
-from pathlib import Path
-
-# Add tools/req to sys.path so `import req` works in tests.
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+# Tests load tools/req/req.py via importlib (see test_validator.py); no path
+# manipulation required here. This file exists so pytest treats this directory
+# as a test rootdir and discovers the cases.
