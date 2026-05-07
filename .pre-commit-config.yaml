@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: req-validate
+        name: req validate
+        entry: python tools/req/req.py validate
+        language: system
+        pass_filenames: false
+        files: ^(docs/requirements/|tools/req/)
