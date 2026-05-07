@@ -1,5 +1,5 @@
 ---
-id: gw_glossary_00003
+id: gw_glossary_01K9DSQQJ8NZWYJ3008T83A44G
 type: glossary
 title: Platform operator
 lifecycle: active

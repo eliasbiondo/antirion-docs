@@ -1,5 +1,5 @@
 ---
-id: gw_glossary_00005
+id: gw_glossary_01K9DSQSGRA08KAQ0XHQAEHH3F
 type: glossary
 title: Budget counter
 lifecycle: active

@@ -5,12 +5,15 @@ project: block in docs/requirements.yaml. Idempotent. Run via:
 
     python tools/req/_seed_policies.py
 
-Pass-1 only. Pass 2 will continue using these same files (frontmatter ids
-are stable: gw_policy_00001..00005, gw_glossary_00001..00005).
+Pass-1 only. Pass 2 will continue using these same files. Frontmatter ids
+are deterministic synthetic ULIDs (sha256-derived randomness portion +
+fixed timestamp portion), so re-running this script regenerates the same
+ids byte-for-byte.
 """
 
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -20,6 +23,32 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 LEGACY = REPO_ROOT / "docs" / "requirements.yaml"
 REQ = REPO_ROOT / "docs" / "requirements"
 DATE = "2026-05-07"
+
+
+def _load_ulid_module():
+    spec = importlib.util.spec_from_file_location(
+        "_req_ulid", Path(__file__).resolve().parent / "_ulid.py"
+    )
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_ULID = _load_ulid_module()
+# Policies + glossary anchor a few minutes before the migration features so
+# they sort first when ordered by id (which is timestamp-prefixed). Same seed
+# every run → byte-identical output.
+_POLICY_BASE_MS = 1_762_473_540_000   # 1 minute before MIGRATION_BASE_MS
+_GLOSSARY_BASE_MS = 1_762_473_530_000  # 30 seconds earlier
+
+
+def _policy_id(seed: str, slot: int) -> str:
+    return f"gw_policy_{_ULID.synthetic_ulid(seed, _POLICY_BASE_MS + slot * 1000)}"
+
+
+def _glossary_id(seed: str, slot: int) -> str:
+    return f"gw_glossary_{_ULID.synthetic_ulid(seed, _GLOSSARY_BASE_MS + slot * 1000)}"
 
 
 def yaml_dump(data: Dict[str, Any]) -> str:
@@ -63,7 +92,7 @@ def main() -> int:
     write_file(
         policies / "ui_baseline.md",
         {
-            "id": "gw_policy_00001",
+            "id": _policy_id("ui_baseline", 1),
             "type": "policy",
             "title": "UI baseline",
             "lifecycle": "active",
@@ -104,7 +133,7 @@ def main() -> int:
     write_file(
         policies / "non_functional_baseline.md",
         {
-            "id": "gw_policy_00002",
+            "id": _policy_id("non_functional_baseline", 2),
             "type": "policy",
             "title": "Non-functional baseline",
             "lifecycle": "active",
@@ -119,7 +148,7 @@ def main() -> int:
     write_file(
         policies / "notifications_model.md",
         {
-            "id": "gw_policy_00003",
+            "id": _policy_id("notifications_model", 3),
             "type": "policy",
             "title": "Notifications model",
             "lifecycle": "active",
@@ -136,7 +165,7 @@ def main() -> int:
     write_file(
         policies / "destructive_action_confirmation.md",
         {
-            "id": "gw_policy_00004",
+            "id": _policy_id("destructive_action_confirmation", 4),
             "type": "policy",
             "title": "Destructive action confirmation",
             "lifecycle": "active",
@@ -151,7 +180,7 @@ def main() -> int:
     write_file(
         policies / "deployment_modes.md",
         {
-            "id": "gw_policy_00005",
+            "id": _policy_id("deployment_modes", 5),
             "type": "policy",
             "title": "Deployment modes",
             "lifecycle": "active",
@@ -167,7 +196,7 @@ def main() -> int:
     # ---- Glossary ------------------------------------------------------------
     glossary_entries = [
         {
-            "id": "gw_glossary_00001",
+            "id": _glossary_id("shared_limiters", 1),
             "title": "Shared limiters",
             "summary": "Edge rate limits, budget counters and provider outbound limiters share a sliding-window store so horizontal scaling does not multiply effective limits.",
             "body": (
@@ -180,7 +209,7 @@ def main() -> int:
             ),
         },
         {
-            "id": "gw_glossary_00002",
+            "id": _glossary_id("tenant_isolation", 2),
             "title": "Tenant isolation",
             "summary": "Every query partitioned by org_id; per-tenant quotas; continuously verified by FEAT-134.",
             "body": (
@@ -191,7 +220,7 @@ def main() -> int:
             ),
         },
         {
-            "id": "gw_glossary_00003",
+            "id": _glossary_id("platform_operator", 3),
             "title": "Platform operator",
             "summary": "The principal class that operates Antirion in saas (Antirion staff) or self_hosted (platform admin role).",
             "body": (
@@ -202,7 +231,7 @@ def main() -> int:
             ),
         },
         {
-            "id": "gw_glossary_00004",
+            "id": _glossary_id("idempotency_key", 4),
             "title": "Idempotency key",
             "summary": "Cluster-wide Idempotency-Key lookup that lets the gateway dedupe retries; FEAT-141.",
             "body": (
@@ -213,7 +242,7 @@ def main() -> int:
             ),
         },
         {
-            "id": "gw_glossary_00005",
+            "id": _glossary_id("budget_counter", 5),
             "title": "Budget counter",
             "summary": "Per-Budget shared-store counter that the hot path consults before admitting a request; reconciled to the persisted ledger by FEAT-186.",
             "body": (

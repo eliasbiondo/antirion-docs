@@ -25,6 +25,7 @@ The script is the helper called for both pass 1 (EPIC-008 only) and pass 2
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import re
 import sys
 from dataclasses import dataclass
@@ -42,6 +43,32 @@ PRIORITY_TO_RELEASE = {"P0": "mvp", "P1": "v1.1", "P2": "v2.0", "P3": "backlog"}
 
 OLD_ID_RE = re.compile(r"^(EPIC|FEAT|STORY)-(\d{1,5})$")
 
+# ULID timestamp anchor for the migration. Each migrated node gets a
+# deterministic synthetic ULID whose 48-bit timestamp portion is
+# MIGRATION_BASE_MS + 60_000 * legacy_seq_no, so id-sort order mirrors the
+# legacy YAML's numeric order. Real new nodes (post-migration) get current-time
+# ULIDs that necessarily sort after every migrated id.
+MIGRATION_BASE_MS = 1_762_473_600_000  # 2026-05-07T00:00:00Z (anchor)
+SECOND_MS = 1_000
+
+
+def _load_ulid_module():
+    spec = importlib.util.spec_from_file_location(
+        "_req_ulid", Path(__file__).resolve().parent / "_ulid.py"
+    )
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_ULID = _load_ulid_module()
+
+
+def _legacy_ts_ms(seq: int) -> int:
+    """One-minute spacing per legacy seq number (gives ~99 years of headroom)."""
+    return MIGRATION_BASE_MS + seq * 60_000
+
 
 def slugify(title: str, max_len: int = 60) -> str:
     s = title.lower()
@@ -52,11 +79,17 @@ def slugify(title: str, max_len: int = 60) -> str:
 
 
 def map_id(old: str) -> str:
+    """Legacy id (EPIC-NNN / FEAT-NNN / STORY-NNN) → deterministic synthetic
+    ULID. Same input always yields the same ULID (sha256-derived randomness
+    portion + per-seq timestamp portion), so re-running the migration is
+    byte-identical."""
     m = OLD_ID_RE.match(old)
     if not m:
         raise ValueError(f"unrecognised legacy id: {old}")
     kind = {"EPIC": "epic", "FEAT": "feature", "STORY": "story"}[m.group(1)]
-    return f"gw_{kind}_{int(m.group(2)):05d}"
+    seq = int(m.group(2))
+    ulid = _ULID.synthetic_ulid(old, _legacy_ts_ms(seq))
+    return f"gw_{kind}_{ulid}"
 
 
 def map_id_list(values: Optional[List[str]]) -> List[str]:
@@ -65,11 +98,14 @@ def map_id_list(values: Optional[List[str]]) -> List[str]:
     return [map_id(v) for v in values]
 
 
-def order_from_old_id(old: str) -> int:
+def order_from_old_id(old: str, step: int = 100) -> int:
+    """Sparse-step integer order, derived from the legacy seq number so the
+    migration's initial ordering matches the YAML. Step is wide enough that
+    several midpoint inserts can land between any two original siblings."""
     m = OLD_ID_RE.match(old)
     if not m:
-        return 0
-    return int(m.group(2))
+        return step
+    return int(m.group(2)) * step
 
 
 def initial_status_block() -> Dict[str, str]:

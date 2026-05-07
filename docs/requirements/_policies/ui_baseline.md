@@ -1,5 +1,5 @@
 ---
-id: gw_policy_00001
+id: gw_policy_01K9DSQZC8MSMNAG91FTN9KA57
 type: policy
 title: UI baseline
 lifecycle: active

@@ -6,7 +6,7 @@
   "$defs": {
     "id": {
       "type": "string",
-      "pattern": "^gw_(epic|feature|story|policy|glossary)_[0-9]{5}$"
+      "pattern": "^gw_(epic|feature|story|policy|glossary)_[0-9A-HJKMNP-TV-Z]{26}$"
     },
     "iso_date": {
       "type": "string",
@@ -97,7 +97,7 @@
       "type": "object",
       "required": ["id", "type", "title", "lifecycle", "created", "updated", "release", "order", "owners", "tags"],
       "properties": {
-        "id":        { "$ref": "#/$defs/id", "pattern": "^gw_epic_[0-9]{5}$" },
+        "id":        { "$ref": "#/$defs/id", "pattern": "^gw_epic_[0-9A-HJKMNP-TV-Z]{26}$" },
         "type":      { "const": "epic" },
         "title":     { "type": "string", "minLength": 1 },
         "lifecycle": { "$ref": "#/$defs/lifecycle" },
@@ -119,13 +119,13 @@
         "deployment_modes", "installed_on", "owners", "tags"
       ],
       "properties": {
-        "id":        { "$ref": "#/$defs/id", "pattern": "^gw_feature_[0-9]{5}$" },
+        "id":        { "$ref": "#/$defs/id", "pattern": "^gw_feature_[0-9A-HJKMNP-TV-Z]{26}$" },
         "type":      { "const": "feature" },
         "title":     { "type": "string", "minLength": 1 },
         "lifecycle": { "$ref": "#/$defs/lifecycle" },
         "created":   { "$ref": "#/$defs/iso_date" },
         "updated":   { "$ref": "#/$defs/iso_date" },
-        "parent":    { "$ref": "#/$defs/id", "pattern": "^gw_epic_[0-9]{5}$" },
+        "parent":    { "$ref": "#/$defs/id", "pattern": "^gw_epic_[0-9A-HJKMNP-TV-Z]{26}$" },
         "also_under":      { "$ref": "#/$defs/id_list" },
         "release":         { "$ref": "#/$defs/release" },
         "order":           { "type": "integer", "minimum": 0 },
@@ -153,13 +153,13 @@
         "parent", "release", "order", "status", "narrative", "owners", "tags"
       ],
       "properties": {
-        "id":        { "$ref": "#/$defs/id", "pattern": "^gw_story_[0-9]{5}$" },
+        "id":        { "$ref": "#/$defs/id", "pattern": "^gw_story_[0-9A-HJKMNP-TV-Z]{26}$" },
         "type":      { "const": "story" },
         "title":     { "type": "string", "minLength": 1 },
         "lifecycle": { "$ref": "#/$defs/lifecycle" },
         "created":   { "$ref": "#/$defs/iso_date" },
         "updated":   { "$ref": "#/$defs/iso_date" },
-        "parent":    { "$ref": "#/$defs/id", "pattern": "^gw_feature_[0-9]{5}$" },
+        "parent":    { "$ref": "#/$defs/id", "pattern": "^gw_feature_[0-9A-HJKMNP-TV-Z]{26}$" },
         "also_under":      { "$ref": "#/$defs/id_list" },
         "release":         { "$ref": "#/$defs/release" },
         "order":           { "type": "integer", "minimum": 0 },
@@ -182,7 +182,7 @@
       "type": "object",
       "required": ["id", "type", "title", "lifecycle", "summary", "created", "updated"],
       "properties": {
-        "id":        { "$ref": "#/$defs/id", "pattern": "^gw_policy_[0-9]{5}$" },
+        "id":        { "$ref": "#/$defs/id", "pattern": "^gw_policy_[0-9A-HJKMNP-TV-Z]{26}$" },
         "type":      { "const": "policy" },
         "title":     { "type": "string", "minLength": 1 },
         "lifecycle": { "$ref": "#/$defs/lifecycle" },
@@ -196,7 +196,7 @@
       "type": "object",
       "required": ["id", "type", "title", "lifecycle", "summary", "created", "updated"],
       "properties": {
-        "id":        { "$ref": "#/$defs/id", "pattern": "^gw_glossary_[0-9]{5}$" },
+        "id":        { "$ref": "#/$defs/id", "pattern": "^gw_glossary_[0-9A-HJKMNP-TV-Z]{26}$" },
         "type":      { "const": "glossary" },
         "title":     { "type": "string", "minLength": 1 },
         "lifecycle": { "$ref": "#/$defs/lifecycle" },

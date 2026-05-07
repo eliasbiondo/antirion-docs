@@ -1,5 +1,5 @@
 ---
-id: gw_glossary_00004
+id: gw_glossary_01K9DSQRHG03P40BBKWBER8X0R
 type: glossary
 title: Idempotency key
 lifecycle: active

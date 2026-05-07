@@ -30,6 +30,21 @@ _spec.loader.exec_module(req_mod)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
+# Fixture IDs (deterministic synthetic ULIDs — see fixtures/_seed.txt for how
+# they're derived). Hard-coding the strings here keeps the test cases readable.
+EPIC_ID = "gw_epic_01HK153X008Z153RH6PXMAA44F"
+FEAT_ID = "gw_feature_01HK155QK09WV6HWWHVCX52PXR"
+S1_ID   = "gw_story_01HK157J60NYCKP5P8TGA6QP6Y"
+S2_ID   = "gw_story_01HK159CS0R8A333HA5YH9JMDF"
+
+EPIC_DIR = f"{EPIC_ID}_sample"
+FEAT_DIR = f"{FEAT_ID}_alpha"
+S1_DIR   = f"{S1_ID}_first"
+S2_DIR   = f"{S2_ID}_second"
+
+# A non-existent ULID we can drop into depends_on for the broken-ref test.
+NONEXISTENT_FEATURE = "gw_feature_01HK1ZZZ000000000000000000"
+
 
 class _Patcher:
     """Save & restore module-level paths so tests can point at a temp tree."""
@@ -80,21 +95,29 @@ class ValidatorTests(unittest.TestCase):
 
     # 2. Broken cross-ref --------------------------------------------------
     def test_broken_cross_ref(self) -> None:
-        target = self.root / "gw_epic_00001_sample" / "gw_feature_00001_alpha" / "FEATURE.md"
+        target = self.root / EPIC_DIR / FEAT_DIR / "FEATURE.md"
         text = target.read_text(encoding="utf-8")
         target.write_text(
-            text.replace("tags: []\n", "tags: []\ndepends_on:\n- gw_feature_99999\n"),
+            text.replace(
+                "tags: []\n",
+                f"tags: []\ndepends_on:\n- {NONEXISTENT_FEATURE}\n",
+            ),
             encoding="utf-8",
         )
         _refresh_index(self.root)
         v = req_mod.Validator()
         self.assertNotEqual(v.run(), 0)
-        self.assertTrue(any("unknown id 'gw_feature_99999'" in e for e in v.errors), v.errors)
+        self.assertTrue(
+            any(f"unknown id '{NONEXISTENT_FEATURE}'" in e for e in v.errors),
+            v.errors,
+        )
 
     # 3. Folder/id mismatch ------------------------------------------------
     def test_folder_id_mismatch(self) -> None:
-        src = self.root / "gw_epic_00001_sample" / "gw_feature_00001_alpha"
-        dst = self.root / "gw_epic_00001_sample" / "gw_feature_00009_alpha"
+        src = self.root / EPIC_DIR / FEAT_DIR
+        # Pick a different (but well-formed) feature ULID in the folder name.
+        wrong = NONEXISTENT_FEATURE + "_alpha"
+        dst = self.root / EPIC_DIR / wrong
         src.rename(dst)
         _refresh_index(self.root)
         v = req_mod.Validator()
@@ -103,13 +126,7 @@ class ValidatorTests(unittest.TestCase):
 
     # 4. Missing required heading -----------------------------------------
     def test_missing_required_heading(self) -> None:
-        target = (
-            self.root
-            / "gw_epic_00001_sample"
-            / "gw_feature_00001_alpha"
-            / "gw_story_00001_first"
-            / "STORY.md"
-        )
+        target = self.root / EPIC_DIR / FEAT_DIR / S1_DIR / "STORY.md"
         text = target.read_text(encoding="utf-8")
         target.write_text(text.replace("## Open Questions\n", ""), encoding="utf-8")
         _refresh_index(self.root)
@@ -119,17 +136,17 @@ class ValidatorTests(unittest.TestCase):
 
     # 5. depends_on cycle --------------------------------------------------
     def test_depends_on_cycle(self) -> None:
-        a = self.root / "gw_epic_00001_sample" / "gw_feature_00001_alpha" / "gw_story_00001_first" / "STORY.md"
-        b = self.root / "gw_epic_00001_sample" / "gw_feature_00001_alpha" / "gw_story_00002_second" / "STORY.md"
+        a = self.root / EPIC_DIR / FEAT_DIR / S1_DIR / "STORY.md"
+        b = self.root / EPIC_DIR / FEAT_DIR / S2_DIR / "STORY.md"
         a.write_text(
             a.read_text(encoding="utf-8").replace(
-                "tags: []\n", "tags: []\ndepends_on:\n- gw_story_00002\n"
+                "tags: []\n", f"tags: []\ndepends_on:\n- {S2_ID}\n"
             ),
             encoding="utf-8",
         )
         b.write_text(
             b.read_text(encoding="utf-8").replace(
-                "tags: []\n", "tags: []\ndepends_on:\n- gw_story_00001\n"
+                "tags: []\n", f"tags: []\ndepends_on:\n- {S1_ID}\n"
             ),
             encoding="utf-8",
         )
@@ -141,7 +158,7 @@ class ValidatorTests(unittest.TestCase):
     # 6. Index freshness ---------------------------------------------------
     def test_index_stale_detected(self) -> None:
         _refresh_index(self.root)
-        target = self.root / "gw_epic_00001_sample" / "gw_feature_00001_alpha" / "FEATURE.md"
+        target = self.root / EPIC_DIR / FEAT_DIR / "FEATURE.md"
         target.write_text(
             target.read_text(encoding="utf-8").replace(
                 "title: Alpha feature", "title: Alpha feature edited"

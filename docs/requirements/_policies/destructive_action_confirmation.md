@@ -1,5 +1,5 @@
 ---
-id: gw_policy_00004
+id: gw_policy_01K9DSR2A0VM5W8WJA8QKMM4SS
 type: policy
 title: Destructive action confirmation
 lifecycle: active

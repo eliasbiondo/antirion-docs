@@ -1,5 +1,5 @@
 ---
-id: gw_glossary_00002
+id: gw_glossary_01K9DSQPK05FXT40B1Z6KH0T9K
 type: glossary
 title: Tenant isolation
 lifecycle: active

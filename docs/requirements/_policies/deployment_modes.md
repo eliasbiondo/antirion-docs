@@ -1,5 +1,5 @@
 ---
-id: gw_policy_00005
+id: gw_policy_01K9DSR398ZXB8TR9FTQ34AZJR
 type: policy
 title: Deployment modes
 lifecycle: active

@@ -45,10 +45,16 @@ REQ_ROOT = REPO_ROOT / "docs" / "requirements"
 SCHEMA_PATH = REQ_ROOT / "_schema.json"
 INDEX_PATH = REQ_ROOT / "_index.json"
 
-ID_RE = re.compile(r"^gw_(epic|feature|story|policy|glossary)_(\d{5})$")
+_ULID_BODY = r"[0-9A-HJKMNP-TV-Z]{26}"
+ID_RE = re.compile(rf"^gw_(epic|feature|story|policy|glossary)_({_ULID_BODY})$")
 SLUG_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
-FOLDER_RE = re.compile(r"^(gw_(?:epic|feature|story|policy|glossary)_\d{5})_([a-z0-9-]+)$")
+FOLDER_RE = re.compile(rf"^(gw_(?:epic|feature|story|policy|glossary)_{_ULID_BODY})_([a-z0-9-]+)$")
 AC_HEADING_RE = re.compile(r"^### AC-\d{3} — .+")
+
+# Order is a per-parent integer rank. Default sparse step lets us insert ~7
+# nested midpoints before exhausting a gap; if a gap collapses, run
+# `req rebalance <parent>` to space siblings out again.
+DEFAULT_ORDER_STEP = 100
 
 VALID_TYPES = ("epic", "feature", "story", "policy", "glossary")
 VALID_RELEASES = ("mvp", "v1.1", "v2.0", "backlog")
@@ -184,47 +190,58 @@ def slugify(title: str, max_len: int = 60) -> str:
     return s or "untitled"
 
 
-def make_id(kind: str, n: int) -> str:
-    return f"gw_{kind}_{n:05d}"
+# Lazy import: the ULID generator lives in tools/req/_ulid.py. We avoid a
+# package-level import at module top because tools/req's __init__.py would
+# shadow it under some pytest collection modes.
+def _import_ulid():
+    import importlib.util
+    here = Path(__file__).resolve().parent
+    spec = importlib.util.spec_from_file_location("_req_ulid", here / "_ulid.py")
+    assert spec and spec.loader, "could not load _ulid.py"
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
-def parse_id(node_id: str) -> Tuple[str, int]:
+def make_id(kind: str) -> str:
+    """Allocate a new id for `kind` using a real ULID (timestamp + random)."""
+    if kind not in VALID_TYPES:
+        raise ValueError(f"invalid kind: {kind}")
+    return f"gw_{kind}_{_import_ulid().ulid_now()}"
+
+
+def parse_id(node_id: str) -> Tuple[str, str]:
+    """Return (kind, ulid_body) for a node id."""
     m = ID_RE.match(node_id)
     if not m:
         raise ValueError(f"invalid id: {node_id}")
-    return m.group(1), int(m.group(2))
+    return m.group(1), m.group(2)
 
 
 def folder_name(node_id: str, slug: str) -> str:
     return f"{node_id}_{slug}"
 
 
-def next_counter(kind: str) -> int:
-    """Highest existing counter + 1 across the tree (and the legacy YAML so we never
-    accidentally collide with a future migrated id)."""
-    used: set[int] = set()
-    if REQ_ROOT.exists():
-        for path in REQ_ROOT.rglob("*.md"):
-            try:
-                fm, _ = parse_file(path)
-            except Exception:
-                continue
-            nid = fm.get("id")
-            if isinstance(nid, str):
-                m = ID_RE.match(nid)
-                if m and m.group(1) == kind:
-                    used.add(int(m.group(2)))
-    legacy = REPO_ROOT / "docs" / "requirements.yaml"
-    if legacy.exists():
-        legacy_re_map = {
-            "epic": re.compile(r"^- id: EPIC-(\d+)\b", re.M),
-            "feature": re.compile(r"^- id: FEAT-(\d+)\b", re.M),
-            "story": re.compile(r"^- id: STORY-(\d+)\b", re.M),
-        }
-        if kind in legacy_re_map:
-            text = legacy.read_text(encoding="utf-8")
-            used.update(int(x) for x in legacy_re_map[kind].findall(text))
-    return (max(used) + 1) if used else 1
+def order_for_new_child(parent_id: Optional[str], nodes: Optional[Dict[str, "Node"]] = None) -> int:
+    """Pick an integer order that places this node after every existing sibling.
+    If there are no siblings, returns DEFAULT_ORDER_STEP. Always non-negative."""
+    if nodes is None:
+        nodes = load_tree()
+    siblings = [n for n in nodes.values() if n.frontmatter.get("parent") == parent_id]
+    if not siblings:
+        return DEFAULT_ORDER_STEP
+    max_order = max(int(s.frontmatter.get("order") or 0) for s in siblings)
+    return max_order + DEFAULT_ORDER_STEP
+
+
+def order_between(left_order: int, right_order: int) -> int:
+    """Midpoint integer order strictly between left and right, or raise if gap collapsed."""
+    if right_order - left_order < 2:
+        raise ValueError(
+            f"order gap collapsed (between {left_order} and {right_order}); "
+            f"run `req rebalance <parent>` to space siblings out again"
+        )
+    return (left_order + right_order) // 2
 
 
 # ---------------------------------------------------------------------------
@@ -622,17 +639,19 @@ def cmd_new(args: argparse.Namespace) -> int:
         print(f"error: unknown type {kind}", file=sys.stderr)
         return 2
     title = args.title
-    nid = make_id(kind, next_counter(kind))
+    nid = make_id(kind)
     slug = slugify(title)
+    nodes = load_tree() if kind in ("feature", "story") else {}
     if kind == "epic":
         folder = REQ_ROOT / folder_name(nid, slug)
         path = folder / "EPIC.md"
+        order = args.order if args.order is not None else order_for_new_child(None, load_tree())
         fm = {
             "id": nid, "type": "epic", "title": title,
             "lifecycle": "active",
             "created": today(), "updated": today(),
             "release": args.release or "backlog",
-            "order": args.order if args.order is not None else 0,
+            "order": order,
             "owners": [], "tags": [],
         }
         body = epic_body(title)
@@ -640,20 +659,20 @@ def cmd_new(args: argparse.Namespace) -> int:
         if not args.parent:
             print("error: feature requires --parent <epic-id>", file=sys.stderr)
             return 2
-        nodes = load_tree()
         parent_node = nodes.get(args.parent)
         if not parent_node or parent_node.type != "epic":
             print(f"error: parent {args.parent} is not an epic in tree", file=sys.stderr)
             return 2
         folder = parent_node.path.parent / folder_name(nid, slug)
         path = folder / "FEATURE.md"
+        order = args.order if args.order is not None else order_for_new_child(args.parent, nodes)
         fm = {
             "id": nid, "type": "feature", "title": title,
             "lifecycle": "active",
             "created": today(), "updated": today(),
             "parent": args.parent,
             "release": args.release or "backlog",
-            "order": args.order if args.order is not None else 0,
+            "order": order,
             "status": initial_status_block(),
             "deployment_modes": ["saas", "self_hosted"],
             "installed_on": "tenant_install",
@@ -664,20 +683,20 @@ def cmd_new(args: argparse.Namespace) -> int:
         if not args.parent:
             print("error: story requires --parent <feature-id>", file=sys.stderr)
             return 2
-        nodes = load_tree()
         parent_node = nodes.get(args.parent)
         if not parent_node or parent_node.type != "feature":
             print(f"error: parent {args.parent} is not a feature in tree", file=sys.stderr)
             return 2
         folder = parent_node.path.parent / folder_name(nid, slug)
         path = folder / "STORY.md"
+        order = args.order if args.order is not None else order_for_new_child(args.parent, nodes)
         fm = {
             "id": nid, "type": "story", "title": title,
             "lifecycle": "active",
             "created": today(), "updated": today(),
             "parent": args.parent,
             "release": args.release or "backlog",
-            "order": args.order if args.order is not None else 0,
+            "order": order,
             "status": initial_status_block(),
             "narrative": {"as_a": "TBD", "i_want": "TBD", "so_that": "TBD"},
             "owners": [], "tags": [],
@@ -690,7 +709,34 @@ def cmd_new(args: argparse.Namespace) -> int:
         print(f"error: {path} already exists", file=sys.stderr)
         return 2
     write_file(path, fm, body)
-    print(f"created {path.relative_to(REPO_ROOT)} ({nid})")
+    print(f"created {path.relative_to(REPO_ROOT)} ({nid}, order={order})")
+    return 0
+
+
+def cmd_rebalance(args: argparse.Namespace) -> int:
+    """Re-space order values for all children of a parent so future midpoint
+    inserts have room. Stable sort by current order, then assign step*1, step*2..."""
+    nodes = load_tree()
+    parent = args.parent
+    parent_node = nodes.get(parent) if parent else None
+    if parent and parent_node is None:
+        print(f"error: unknown parent {parent}", file=sys.stderr)
+        return 2
+    siblings = [n for n in nodes.values() if n.frontmatter.get("parent") == parent]
+    siblings.sort(key=lambda n: (int(n.frontmatter.get("order") or 0), n.id))
+    if not siblings:
+        print(f"no children of {parent}; nothing to rebalance")
+        return 0
+    step = args.step
+    for i, n in enumerate(siblings, start=1):
+        new_order = i * step
+        fm, body = parse_file(n.path)
+        if int(fm.get("order") or 0) == new_order:
+            continue
+        fm["order"] = new_order
+        fm["updated"] = today()
+        write_file(n.path, fm, body)
+    print(f"rebalanced {len(siblings)} children of {parent or '<root>'} (step={step})")
     return 0
 
 
@@ -1063,6 +1109,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("mvp", help="list release: mvp items by epic")
     sp.set_defaults(func=cmd_mvp)
+
+    sp = sub.add_parser("rebalance", help="re-space order values for a parent's children")
+    sp.add_argument("parent", nargs="?", default=None,
+                    help="parent id; omit to rebalance the top-level epics")
+    sp.add_argument("--step", type=int, default=DEFAULT_ORDER_STEP)
+    sp.set_defaults(func=cmd_rebalance)
     return p
 
 

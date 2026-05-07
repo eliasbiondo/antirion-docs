@@ -1,5 +1,5 @@
 ---
-id: gw_glossary_00001
+id: gw_glossary_01K9DSQNKR1XKKFEBWMJBJH9H2
 type: glossary
 title: Shared limiters
 lifecycle: active

@@ -1,5 +1,5 @@
 ---
-id: gw_policy_00003
+id: gw_policy_01K9DSR1AR4Q8EMKJCSKTR3MHV
 type: policy
 title: Notifications model
 lifecycle: active
